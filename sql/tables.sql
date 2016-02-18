@@ -276,27 +276,27 @@ CREATE TABLE publication (
 
 /**
 
-@experiment_publication table
-@desc Link table between experiments and publications.
+@study_publication table
+@desc Link table between studies and publications.
 
-@exp_lnk_pub_id         Experiment-Publication link id. Primary key, internal identifier.
-@experiment_id          Experiment table primary id (foreign key).
+@study_pub_link_id      Study-Publication link id. Primary key, internal identifier.
+@study_id               Study table primary id (foreign key).
 @publication_id         Publication table primary id (foreign key).
-@metasum                Checksum of @pub_id + @experiment_id.
+@metasum                Checksum of @study_id + @pub_id.
 @date                   Entry timestamp.
 @status                 Active (True) or retired (False) row.
 
 */
 
-CREATE TABLE experiment_publication (
-  exp_pub_link_id       INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  experiment_id         INT(10),
+CREATE TABLE study_publication (
+  study_pub_link_id     INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  study_id              INT(10),
   publication_id        INT(10),
   metasum               CHAR(32),
   date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status                BOOLEAN DEFAULT True,
   
-  KEY exp_pub_link_id_idx   (exp_pub_link_id),
-  UNIQUE KEY                (exp_pub_link_id)
+  KEY study_pub_link_id_idx   (study_pub_link_id),
+  UNIQUE KEY                  (study_pub_link_id)
 ) ENGINE=MyISAM;
 

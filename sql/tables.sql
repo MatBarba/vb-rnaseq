@@ -60,15 +60,17 @@ CREATE TABLE study (
 
 CREATE TABLE experiment (
   experiment_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  study_id               INT(10),
   experiment_sra_acc     CHAR(9) NOT NULL,
   title                  TEXT,
   metasum                CHAR(32),
   date                   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status                 BOOLEAN DEFAULT True,
   
-  KEY experiment_id_idx       (experiment_id),
-  KEY experiment_sra_acc_idx  (experiment_sra_acc),
-  UNIQUE KEY                  (experiment_id, experiment_sra_acc)
+  KEY experiment_id_idx            (experiment_id),
+  KEY experiment_study_id_idx      (study_id),
+  KEY experiment_sra_acc_idx       (experiment_sra_acc),
+  UNIQUE KEY                       (experiment_id, study_id, experiment_sra_acc)
 ) ENGINE=MyISAM;
 
 /**
@@ -89,6 +91,7 @@ CREATE TABLE experiment (
 
 CREATE TABLE run (
   run_id                 INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  experiment_id          INT(10),
   run_sra_acc            CHAR(9) NOT NULL,
   title                  TEXT,
   submitter              TEXT,
@@ -96,9 +99,10 @@ CREATE TABLE run (
   date                   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status                 BOOLEAN DEFAULT True,
   
-  KEY run_id_idx        (run_id),
-  KEY run_sra_acc_idx   (run_sra_acc),
-  UNIQUE KEY            (run_id, run_sra_acc)
+  KEY run_id_idx              (run_id),
+  KEY run_experiment_id_idx   (experiment_id),
+  KEY run_sra_acc_idx         (run_sra_acc),
+  UNIQUE KEY                  (run_id, experiment_id, run_sra_acc)
 ) ENGINE=MyISAM;
 
 
@@ -201,7 +205,7 @@ CREATE TABLE analysis_param (
   
   KEY analysis_param_id_idx            (analysis_param_id),
   KEY analysis_param_analysis_id_idx   (analysis_id),
-  UNIQUE KEY                           (analysis_param_id)
+  UNIQUE KEY                           (analysis_param_id, analysis_id)
 ) ENGINE=MyISAM;
 
 

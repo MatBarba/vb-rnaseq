@@ -309,3 +309,38 @@ CREATE TABLE study_publication (
   UNIQUE KEY                  (study_pub_link_id, study_id, publication_id)
 ) ENGINE=MyISAM;
 
+
+/**
+
+DRUPAL TABLES
+
+*/
+
+/**
+
+@drupal_node table
+@desc Contains data that will be displayed in drupal nodes.
+
+@drupal_node_id         Publication id (primary key, internal identifier).
+@experiment_id          Experiment table primary id (foreign key).
+@autogen_txt            Programmatically generated text.
+@manual_txt             Manually curated text.
+@metasum                Checksum of @autogen_txt + @manual_txt.
+@date                   Entry timestamp.
+@status                 Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE drupal_node (
+  drupal_node_id        INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  experiment_id         INT(10),
+  autogene_txt          TEXT,
+  manual_txt            TEXT,
+  metasum               CHAR(32),
+  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  status                BOOLEAN DEFAULT True,
+  
+  KEY drupal_node_id_idx        (drupal_node_id),
+  KEY experiment_id_idx             (experiment_id),
+  UNIQUE KEY                    (drupal_node_id, experiment_id)
+) ENGINE=MyISAM;

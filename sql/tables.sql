@@ -178,8 +178,8 @@ CREATE TABLE analysis (
 
 @analysis_param_id      Analysis parameters id (primary key, internal identifier).
 @analysis_id            Analysis table primary id (foreigh key).
-@in_file                Input file, file table id (foreign key).
-@out_file               Output file, file table id (foreign key).
+@in_file_id             Input file, file table id (foreign key).
+@out_file_id            Output file, file table id (foreign key).
 @program                Name of the Program used.
 @parameters             Command line parameters used.
 @metasum                Checksum of @in_file + @out_file + @program + @parameters.
@@ -191,8 +191,8 @@ CREATE TABLE analysis (
 CREATE TABLE analysis_param (
   analysis_param_id     INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   analysis_id           INT(10),
-  in_file               TEXT,
-  out_file              TEXT,
+  in_file_id            TEXT,
+  out_file_id           TEXT,
   program               TEXT,
   parameters            TEXT,
   metasum               CHAR(32),

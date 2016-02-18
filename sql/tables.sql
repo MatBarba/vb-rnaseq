@@ -52,7 +52,6 @@ CREATE TABLE study (
 @study_id                Study table primary id (foreign key).
 @experiment_sra_acc      SRA experiment accession.
 @title                   Title of the SRA experiment.
-@description             Description of the SRA experiment.
 @metasum                 Checksum of @title + @description.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
@@ -63,14 +62,13 @@ CREATE TABLE experiment (
   experiment_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   experiment_sra_acc     CHAR(9) NOT NULL,
   title                  TEXT,
-  description            TEXT,
   metasum                CHAR(32),
   date                   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status                 BOOLEAN DEFAULT True,
   
-  KEY experiment_id_idx  (experiment_id),
+  KEY experiment_id_idx       (experiment_id),
   KEY experiment_sra_acc_idx  (experiment_sra_acc),
-  UNIQUE KEY (experiment_id, experiment_sra_acc)
+  UNIQUE KEY                  (experiment_id, experiment_sra_acc)
 ) ENGINE=MyISAM;
 
 /**

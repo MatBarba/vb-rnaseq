@@ -19,8 +19,8 @@ SRA tracking tables
 @study table
 @desc The study tables contains data defining SRA studies.
 
-@study_id           SRA study id. Primary key, internal identifier.
-@study_sra_acc      SRA study accession.
+@study_id           SRA study id (primary key, internal identifier).
+@study_sra_acc      SRA study accession (e.g. SRP000000).
 @title              Title of the SRA study.
 @abstract           Abstract of the SRA study.
 @metasum            Checksum of @title + @abstract.
@@ -38,9 +38,9 @@ CREATE TABLE study (
   date              DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status            BOOLEAN DEFAULT True,
   
-  KEY study_id_idx  (study_id),
-  KEY study_sra_acc_idx  (study_sra_acc),
-  UNIQUE KEY (study_id, study_sra_acc)
+  KEY study_id_idx        (study_id),
+  KEY study_sra_acc_idx   (study_sra_acc),
+  UNIQUE KEY              (study_id, study_sra_acc)
 ) ENGINE=MyISAM;
 
 /**
@@ -48,9 +48,9 @@ CREATE TABLE study (
 @experiment table
 @desc The experiment tables contains data defining SRA experiments.
 
-@experiment_id           SRA experiment id. Primary key, internal identifier.
+@experiment_id           SRA experiment id (primary key, internal identifier).
 @study_id                Study table primary id (foreign key).
-@experiment_sra_acc      SRA experiment accession.
+@experiment_sra_acc      SRA experiment accession (e.g. SRX000000).
 @title                   Title of the SRA experiment.
 @metasum                 Checksum of @title + @description.
 @date                    Entry timestamp.
@@ -76,9 +76,9 @@ CREATE TABLE experiment (
 @run table
 @desc The run tables contains data defining SRA runs.
 
-@run_id                  SRA run id. Primary key, internal identifier.
+@run_id                  SRA run id (primary key, internal identifier).
 @experiment_id           Experiment table primary key (Foreign key).
-@run_sra_acc             SRA run accession.
+@run_sra_acc             SRA run accession (e.g. SRR000000).
 @title                   Title of the SRA run.
 @submitter               Submitter id of the SRA run.
 @metasum                 Checksum of @title.
@@ -111,9 +111,9 @@ PIPELINE TABLES
 /**
 
 @file table
-@desc The table where all metadata about the tracks files are stored.
+@desc The table where all metadata about the files are stored. The files are both the input (e.g. fastq) and the output (e.g. bigwig) of the program (analysis) used to create tracks.
 
-@file_id                File id. Primary key, internal identifier.
+@file_id                File id (primary key, internal identifier).
 @run_id                 Run table primary id (foreign key).
 @path                   Path of the file.
 @type                   File type.
@@ -138,17 +138,18 @@ CREATE TABLE file (
   date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status                BOOLEAN DEFAULT True,
   
-  KEY file_id_idx       (file_id),
-  UNIQUE KEY            (file_id)
+  KEY file_id_idx            (file_id),
+  KEY file_run_id_idx        (run_id),
+  UNIQUE KEY                 (file_id, run_id)
 ) ENGINE=MyISAM;
 
 
 /**
 
 @analysis table
-@desc The table the analysis are stored.
+@desc The table where all the analysis to create tracks are described.
 
-@analysis_id            Analysis id. Primary key, internal identifier.
+@analysis_id            Analysis id (primary key, internal identifier).
 @name                   Name of the analysis.
 @description            Description of the analysis.
 @metasum                Checksum of @name + @description.
@@ -173,9 +174,9 @@ CREATE TABLE analysis (
 /**
 
 @analysis_param table
-@desc The table where the analysis parameters are stored.
+@desc The table where the analysis parameters used to create each track are stored.
 
-@analysis_param_id      Analysis parameters id. Primary key, internal identifier.
+@analysis_param_id      Analysis parameters id (primary key, internal identifier).
 @analysis_id            Analysis table primary id (foreigh key).
 @in_file                Input file, file table id (foreign key).
 @out_file               Output file, file table id (foreign key).
@@ -198,17 +199,18 @@ CREATE TABLE analysis_param (
   date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status                BOOLEAN DEFAULT True,
   
-  KEY analysis_param_id_idx   (analysis_param_id),
-  UNIQUE KEY                  (analysis_param_id)
+  KEY analysis_param_id_idx            (analysis_param_id),
+  KEY analysis_param_analysis_id_idx   (analysis_id),
+  UNIQUE KEY                           (analysis_param_id)
 ) ENGINE=MyISAM;
 
 
 /**
 
 @track table
-@desc The table where the tracks are stored.
+@desc The table where the tracks are stored, with a link to the analysis that created them.
 
-@track_id               Track id. Primary key, internal identifier.
+@track_id               Track id (primary key, internal identifier).
 @analysis_param_id      Analysis_param table primary id (foreigh key).
 @title                  Title of the track in E! genome browser.
 @description            Description of the track in E! genome browser.
@@ -227,8 +229,9 @@ CREATE TABLE track (
   date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
   status                BOOLEAN DEFAULT True,
   
-  KEY track_id_idx      (track_id),
-  UNIQUE KEY            (track_id)
+  KEY track_id_idx                     (track_id),
+  KEY track_analysis_param_id_idx      (analysis_param_id),
+  UNIQUE KEY                           (track_id)
 ) ENGINE=MyISAM;
 
 
@@ -243,7 +246,7 @@ PUBLICATIONS TABLES
 @publication table
 @desc The table where the publication infos are stored.
 
-@publication_id         Publication id. Primary key, internal identifier.
+@publication_id         Publication id (primary key, internal identifier).
 @pubmed_id              Pubmed id.
 @doi                    Digital object identifier.
 @authors                List of authors.
@@ -270,7 +273,7 @@ CREATE TABLE publication (
   
   KEY publication_id_idx        (publication_id),
   KEY pubmed_id_idx             (pubmed_id),
-  UNIQUE KEY                    (publication_id)
+  UNIQUE KEY                    (publication_id, pubmed_id)
 ) ENGINE=MyISAM;
 
 
@@ -279,7 +282,7 @@ CREATE TABLE publication (
 @study_publication table
 @desc Link table between studies and publications.
 
-@study_pub_link_id      Study-Publication link id. Primary key, internal identifier.
+@study_pub_link_id      Study-Publication link id (primary key, internal identifier).
 @study_id               Study table primary id (foreign key).
 @publication_id         Publication table primary id (foreign key).
 @metasum                Checksum of @study_id + @pub_id.
@@ -297,6 +300,8 @@ CREATE TABLE study_publication (
   status                BOOLEAN DEFAULT True,
   
   KEY study_pub_link_id_idx   (study_pub_link_id),
-  UNIQUE KEY                  (study_pub_link_id)
+  KEY study_pub_study_id_idx   (study_id),
+  KEY study_pub_publication_id_idx   (publication_id),
+  UNIQUE KEY                  (study_pub_link_id, study_id, publication_id)
 ) ENGINE=MyISAM;
 

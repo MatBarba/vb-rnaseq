@@ -35,7 +35,7 @@ CREATE TABLE study (
   title             TEXT,
   abstract          TEXT,
   metasum           CHAR(32),
-  date              DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date              TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status            BOOLEAN DEFAULT True,
   
   KEY study_id_idx        (study_id),
@@ -64,7 +64,7 @@ CREATE TABLE experiment (
   experiment_sra_acc     CHAR(9) NOT NULL,
   title                  TEXT,
   metasum                CHAR(32),
-  date                   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 BOOLEAN DEFAULT True,
   
   KEY experiment_id_idx            (experiment_id),
@@ -96,7 +96,7 @@ CREATE TABLE run (
   title                  TEXT,
   submitter              TEXT,
   metasum                CHAR(32),
-  date                   DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 BOOLEAN DEFAULT True,
   
   KEY run_id_idx              (run_id),
@@ -139,7 +139,7 @@ CREATE TABLE file (
   species               TEXT,
   md5                   CHAR(32),
   metasum               CHAR(32),
-  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                BOOLEAN DEFAULT True,
   
   KEY file_id_idx            (file_id),
@@ -167,7 +167,7 @@ CREATE TABLE analysis (
   name                  TEXT,
   description           TEXT,
   metasum               CHAR(32),
-  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                BOOLEAN DEFAULT True,
   
   KEY analysis_id_idx      (analysis_id),
@@ -200,7 +200,7 @@ CREATE TABLE analysis_param (
   program               TEXT,
   parameters            TEXT,
   metasum               CHAR(32),
-  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                BOOLEAN DEFAULT True,
   
   KEY analysis_param_id_idx            (analysis_param_id),
@@ -230,7 +230,7 @@ CREATE TABLE track (
   title                 TEXT,
   description           TEXT,
   metasum               CHAR(32),
-  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                BOOLEAN DEFAULT True,
   
   KEY track_id_idx                     (track_id),
@@ -272,7 +272,7 @@ CREATE TABLE publication (
   abstract              TEXT,
   year                  INT(4),
   metasum               CHAR(32),
-  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                BOOLEAN DEFAULT True,
   
   KEY publication_id_idx        (publication_id),
@@ -300,7 +300,7 @@ CREATE TABLE study_publication (
   study_id              INT(10),
   publication_id        INT(10),
   metasum               CHAR(32),
-  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                BOOLEAN DEFAULT True,
   
   KEY study_pub_link_id_idx   (study_pub_link_id),
@@ -337,7 +337,7 @@ CREATE TABLE drupal_node (
   autogene_txt          TEXT,
   manual_txt            TEXT,
   metasum               CHAR(32),
-  date                  DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                BOOLEAN DEFAULT True,
   
   KEY drupal_node_id_idx        (drupal_node_id),

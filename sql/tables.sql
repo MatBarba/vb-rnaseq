@@ -36,7 +36,7 @@ CREATE TABLE study (
   abstract          TEXT,
   metasum           CHAR(32),
   date              TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status            BOOLEAN DEFAULT True,
+  status            ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY study_id_idx        (study_id),
   KEY study_sra_acc_idx   (study_sra_acc),
@@ -70,7 +70,7 @@ CREATE TABLE experiment (
   title                  TEXT,
   metasum                CHAR(32),
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                 BOOLEAN DEFAULT True,
+  status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY experiment_id_idx            (experiment_id),
   KEY experiment_study_id_idx      (study_id),
@@ -107,7 +107,7 @@ CREATE TABLE run (
   submitter              TEXT,
   metasum                CHAR(32),
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                 BOOLEAN DEFAULT True,
+  status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY run_id_idx              (run_id),
   KEY run_experiment_id_idx   (experiment_id),
@@ -154,7 +154,7 @@ CREATE TABLE file (
   md5                   CHAR(32),
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                BOOLEAN DEFAULT True,
+  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY file_id_idx            (file_id),
   KEY file_run_id_idx        (run_id),
@@ -186,7 +186,7 @@ CREATE TABLE analysis (
   description           TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                BOOLEAN DEFAULT True,
+  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY analysis_id_idx      (analysis_id),
   UNIQUE KEY               (analysis_id)
@@ -223,7 +223,7 @@ CREATE TABLE analysis_param (
   parameters            TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                BOOLEAN DEFAULT True,
+  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY analysis_param_id_idx            (analysis_param_id),
   KEY analysis_param_analysis_id_idx   (analysis_id),
@@ -257,7 +257,7 @@ CREATE TABLE track (
   description           TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                BOOLEAN DEFAULT True,
+  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY track_id_idx                     (track_id),
   KEY track_analysis_param_id_idx      (analysis_param_id),
@@ -303,7 +303,7 @@ CREATE TABLE publication (
   year                  INT(4),
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                BOOLEAN DEFAULT True,
+  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY publication_id_idx        (publication_id),
   KEY pubmed_id_idx             (pubmed_id),
@@ -335,7 +335,7 @@ CREATE TABLE study_publication (
   publication_id        INT(10),
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                BOOLEAN DEFAULT True,
+  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY study_pub_link_id_idx   (study_pub_link_id),
   KEY study_pub_study_id_idx   (study_id),
@@ -376,7 +376,7 @@ CREATE TABLE drupal_node (
   manual_txt            TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                BOOLEAN DEFAULT True,
+  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY drupal_node_id_idx        (drupal_node_id),
   KEY experiment_id_idx         (experiment_id),

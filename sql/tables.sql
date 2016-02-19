@@ -149,9 +149,8 @@ CREATE TABLE sample (
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY sample_id_idx              (sample_id),
-  KEY sample_experiment_id_idx   (experiment_id),
   KEY sample_sra_acc_idx         (sample_sra_acc),
-  UNIQUE KEY                  (sample_id, experiment_id, sample_sra_acc)
+  UNIQUE KEY                  (sample_id, sample_sra_acc)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample

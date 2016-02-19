@@ -122,6 +122,79 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 
 /**
 
+@sample table
+@desc The sample tables contains data defining SRA samples.
+
+@sample_id               SRA sample id (primary key, internal identifier).
+@sample_sra_acc          SRA sample accession (e.g. SRS000000).
+@run_id                  Run table primary key (Foreign key).
+@title                   Title of the SRA sample.
+@taxon                   NCBI taxon id.
+@strain                  Name of the strain.
+@metasum                 Checksum of @title.
+@date                    Entry timestamp.
+@status                  Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE sample (
+  sample_id                 INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  sample_sra_acc            CHAR(9) NOT NULL,
+  run_id                    INT(10),
+  title                     TEXT,
+  taxon_id                  INT(10),
+  strain                    TEXT,
+  metasum                   CHAR(32),
+  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  
+  KEY sample_id_idx              (sample_id),
+  KEY sample_experiment_id_idx   (experiment_id),
+  KEY sample_sra_acc_idx         (sample_sra_acc),
+  UNIQUE KEY                  (sample_id, experiment_id, sample_sra_acc)
+) ENGINE=MyISAM;
+
+CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title) );
+CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title) );
+
+/**
+
+@species table
+@desc A list of all existing (allowed) species, with the corresponding production names.
+
+@species_id              Species id (primary key, internal identifier).
+@species_name            Production name for this species (species + strain).
+@taxon_id                NCBI species id.
+@strain                  Name of the strain.
+@metasum                 Checksum of @species_name + @taxon + @strain.
+@date                    Entry timestamp.
+@status                  Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE species (
+  species_id                INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  species_name              TEXT,
+  taxon_id                  INT(10),
+  strain                    TEXT,
+  metasum                   CHAR(32),
+  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  
+  KEY species_id_idx              (species_id),
+  UNIQUE KEY                      (species_id)
+) ENGINE=MyISAM;
+
+CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.species_name, NEW.taxon_id, NEW.strain) );
+CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.species_name, NEW.taxon_id, NEW.strain) );
+
+
+/**
+
 PIPELINE TABLES
 
 */
@@ -135,8 +208,6 @@ PIPELINE TABLES
 @run_id                 Run table primary id (foreign key).
 @path                   Path of the file.
 @type                   File type.
-@taxon_id               NCBI taxon id of the species.
-@species                Binomial name of the species.
 @md5                    md5 checksum of the file.
 @metasum                Checksum of @species + @md5.
 @date                   Entry timestamp.
@@ -149,8 +220,6 @@ CREATE TABLE file (
   run_id                INT(10),
   path                  TEXT,
   type                  ENUM('fastq', 'bam', 'bed', 'bigwig'),
-  taxon_id              INT(10),
-  species               TEXT,
   md5                   CHAR(32),
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

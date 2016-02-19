@@ -204,10 +204,8 @@ CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
 
 @analysis_param_id      Analysis parameters id (primary key, internal identifier).
 @analysis_id            Analysis table primary id (foreigh key).
-@in_file_id             Input file, file table id (foreign key).
-@out_file_id            Output file, file table id (foreign key).
 @program                Name of the Program used.
-@parameters             Command line parameters used.
+@parameters             Complete command line parameters used.
 @metasum                Checksum of @in_file + @out_file + @program + @parameters.
 @date                   Entry timestamp.
 @status                 Active (True) or retired (False) row.
@@ -217,8 +215,6 @@ CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
 CREATE TABLE analysis_param (
   analysis_param_id     INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   analysis_id           INT(10),
-  in_file_id            TEXT,
-  out_file_id           TEXT,
   program               TEXT,
   parameters            TEXT,
   metasum               CHAR(32),
@@ -231,9 +227,36 @@ CREATE TABLE analysis_param (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_param_md5_upd_tr BEFORE UPDATE ON analysis_param
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.in_file_id, NEW.out_file_id, NEW.program, NEW.parameters) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.parameters) );
 CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.in_file_id, NEW.out_file_id, NEW.program, NEW.parameters) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.parameters) );
+
+/**
+
+@file_anap_link table
+@desc Linker between file_id and analysis_parameter_id.
+
+@file_anap_link_id            Analysis parameters id (primary key, internal identifier).
+@file_id                      File table primary id (foreign key).
+@analysis_parameter_id        Analysis_parameter table primary id (foreigh key).
+@file_type                    If the file is an input or an output.
+@metasum                      Checksum of @file_id + @analysis_parameter_id.
+
+*/
+
+CREATE TABLE file_anap_link (
+  file_anap_link_id           INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  file_id                     INT(10),
+  analysis_parameter_id       INT(10),
+  file_type                   ENUM('INPUT', 'OUTPUT'),
+  metasum                     CHAR(32),
+  
+  KEY file_anap_link_id_idx                      (file_anap_link_id),
+  KEY file_anap_link_file_id_idx                 (file_id),
+  KEY file_anap_link_analysis_parameter_id_idx   (analysis_parameter_id),
+  UNIQUE KEY                                     (file_anap_link_id, file_id, analysis_parameter_id)
+) ENGINE=MyISAM;
+ 
 
 /**
 
@@ -324,8 +347,6 @@ CREATE TRIGGER publication_md5_ins_tr BEFORE INSERT ON publication
 @study_id               Study table primary id (foreign key).
 @publication_id         Publication table primary id (foreign key).
 @metasum                Checksum of @study_id + @pub_id.
-@date                   Entry timestamp.
-@status                 Active (True) or retired (False) row.
 
 */
 
@@ -334,8 +355,6 @@ CREATE TABLE study_publication (
   study_id              INT(10),
   publication_id        INT(10),
   metasum               CHAR(32),
-  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY study_pub_link_id_idx   (study_pub_link_id),
   KEY study_pub_study_id_idx   (study_id),

@@ -230,9 +230,9 @@ CREATE TABLE file (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER file_md5_upd_tr BEFORE UPDATE ON file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.species, NEW.md5) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.md5) );
 CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.species, NEW.md5) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.md5) );
 
 /**
 

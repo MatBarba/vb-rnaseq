@@ -238,10 +238,10 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 /**
 
 @track table
-@desc The table where the tracks are stored, with a link to the analysis that created them.
+@desc The table where the tracks are stored, with a link to the corresponding file.
 
 @track_id               Track id (primary key, internal identifier).
-@analysis_param_id      Analysis_param table primary id (foreigh key).
+@file_id                File table primary id (foreigh key).
 @title                  Title of the track in E! genome browser.
 @description            Description of the track in E! genome browser.
 @metasum                Checksum of @title + @description.
@@ -252,7 +252,7 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 
 CREATE TABLE track (
   track_id              INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  analysis_param_id     INT(10),
+  file_id               INT(10),
   title                 TEXT,
   description           TEXT,
   metasum               CHAR(32),
@@ -260,7 +260,7 @@ CREATE TABLE track (
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY track_id_idx                     (track_id),
-  KEY track_analysis_param_id_idx      (analysis_param_id),
+  KEY track_analysis_param_id_idx      (file_id),
   UNIQUE KEY                           (track_id)
 ) ENGINE=MyISAM;
 
@@ -318,7 +318,7 @@ CREATE TRIGGER publication_md5_ins_tr BEFORE INSERT ON publication
 /**
 
 @study_publication table
-@desc Link table between studies and publications.
+@desc Linker table between studies and publications.
 
 @study_pub_link_id      Study-Publication link id (primary key, internal identifier).
 @study_id               Study table primary id (foreign key).

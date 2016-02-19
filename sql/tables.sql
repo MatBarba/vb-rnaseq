@@ -219,7 +219,7 @@ CREATE TABLE file (
   file_id               INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   run_id                INT(10),
   path                  TEXT,
-  type                  ENUM('fastq', 'bam', 'bed', 'bigwig'),
+  type                  ENUM('fastq', 'bam', 'bai', 'bed', 'bigwig'),
   md5                   CHAR(32),
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

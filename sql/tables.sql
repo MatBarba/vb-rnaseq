@@ -31,7 +31,7 @@ SRA tracking tables
 
 CREATE TABLE study (
   study_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  study_sra_acc     CHAR(9) NOT NULL,
+  study_sra_acc     CHAR(12) NOT NULL,
   title             TEXT,
   abstract          TEXT,
   metasum           CHAR(32),
@@ -66,7 +66,7 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 CREATE TABLE experiment (
   experiment_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   study_id               INT(10),
-  experiment_sra_acc     CHAR(9) NOT NULL,
+  experiment_sra_acc     CHAR(12) NOT NULL,
   title                  TEXT,
   metasum                CHAR(32),
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -102,7 +102,7 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 CREATE TABLE run (
   run_id                 INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   experiment_id          INT(10),
-  run_sra_acc            CHAR(9) NOT NULL,
+  run_sra_acc            CHAR(12) NOT NULL,
   title                  TEXT,
   submitter              TEXT,
   metasum                CHAR(32),
@@ -139,7 +139,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 
 CREATE TABLE sample (
   sample_id                 INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  sample_sra_acc            CHAR(9) NOT NULL,
+  sample_sra_acc            CHAR(12) NOT NULL,
   run_id                    INT(10),
   title                     TEXT,
   taxon_id                  INT(10),

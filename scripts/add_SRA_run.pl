@@ -25,8 +25,30 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-# Add the SRA run(s) data to the database
-$db->add_run( $opt{run} );
+# Add a single run from the command-line
+if ($opt{run}) {
+  $db->add_run( $opt{run} );
+}
+# Or add a list from a file (more efficient)
+else {
+  my @runs = get_runs_from_file($opt{file});
+  for my $run_acc (@runs) {
+    $db->add_run( $run_acc );
+  }
+}
+
+sub get_runs_from_file {
+  my $file = shift;
+  
+  my @run_accs;
+  open my $RUNS_FH, '<', $file;
+  while( my $line = readline $RUNS_FH ) {
+    chomp $line;
+    push @run_accs, $line;
+  }
+  close $RUNS_FH;
+  return @run_accs;
+}
 
 ###############################################################################
 # Parameters and usage
@@ -47,7 +69,9 @@ sub usage {
     --password <str>  : password
     --db <str>        : database name
     
-    --run <str>       : SRA run identifier (e.g. SRR000000)
+    --run <str>       : SRA run accession (e.g. SRR000000)
+    or
+    --file <path>     : path to a file with a list of SRA run accessions
 EOF
   print STDERR "$help\n";
   exit(1);
@@ -63,6 +87,7 @@ sub opt_check {
     "password=s",
     "db=s",
     "run=s",
+    "file=s",
     "help",
   );
 
@@ -71,7 +96,7 @@ sub opt_check {
   usage("Need --port") if not $opt{port};
   usage("Need --user") if not $opt{user};
   usage("Need --db") if not $opt{db};
-  usage("Need --run") if not $opt{run};
+  usage("Need --run or --file") if not ($opt{run} xor $opt{file});
   $opt{password} ||= '';
   return \%opt;
 }

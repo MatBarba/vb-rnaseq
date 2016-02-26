@@ -127,6 +127,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 
 @sample_id               SRA sample id (primary key, internal identifier).
 @sample_sra_acc          SRA sample accession (e.g. SRS000000).
+@title                   Title of the SRA sample.
 @description             Description of the SRA sample.
 @taxon_id                NCBI taxon id.
 @strain                  Name of the strain.
@@ -139,6 +140,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 CREATE TABLE sample (
   sample_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   sample_sra_acc            CHAR(12) NOT NULL UNIQUE,
+  title                     TEXT,
   description               TEXT,
   taxon_id                  INT(10),
   strain                    TEXT,
@@ -151,9 +153,9 @@ CREATE TABLE sample (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.description, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description, NEW.taxon_id, NEW.strain) );
 CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.description, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description, NEW.taxon_id, NEW.strain) );
 
 /**
 

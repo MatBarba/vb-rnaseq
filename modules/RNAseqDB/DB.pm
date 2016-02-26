@@ -140,6 +140,7 @@ sub _get_sample_id {
     $logger->info("ADDING sample " . $sample->accession() . "");
     my $insertion = $self->resultset('Sample')->create({
         sample_sra_acc    => $sample->accession(),
+        title             => $sample->title(),
         description       => $sample->description(),
         taxon_id          => $sample->taxon()->taxon_id(),
       });

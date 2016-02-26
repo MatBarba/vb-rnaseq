@@ -36,6 +36,11 @@ __PACKAGE__->table("sample");
   is_nullable: 0
   size: 12
 
+=head2 title
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 description
 
   data_type: 'text'
@@ -83,6 +88,8 @@ __PACKAGE__->add_columns(
   },
   "sample_sra_acc",
   { data_type => "char", is_nullable => 0, size => 12 },
+  "title",
+  { data_type => "text", is_nullable => 1 },
   "description",
   { data_type => "text", is_nullable => 1 },
   "taxon_id",
@@ -134,8 +141,8 @@ __PACKAGE__->set_primary_key("sample_id");
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:35:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:95Ye2IY6e9gbfw23QLXpyA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 17:08:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bD7OxpcCxoAcWUyqc4kOHA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

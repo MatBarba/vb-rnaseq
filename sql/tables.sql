@@ -43,9 +43,9 @@ CREATE TABLE study (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER study_md5_upd_tr BEFORE UPDATE ON study
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.abstract) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.abstract) );
 CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.abstract) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.abstract) );
 
 /**
 
@@ -77,9 +77,9 @@ CREATE TABLE experiment (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER experiment_md5_upd_tr BEFORE UPDATE ON experiment
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title) );
 CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title) );
 
 /**
 
@@ -116,9 +116,9 @@ CREATE TABLE run (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.submitter) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.submitter) );
 CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.submitter) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.submitter) );
 
 /**
 
@@ -127,7 +127,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 
 @sample_id               SRA sample id (primary key, internal identifier).
 @sample_sra_acc          SRA sample accession (e.g. SRS000000).
-@title                   Title of the SRA sample.
+@description             Description of the SRA sample.
 @taxon_id                NCBI taxon id.
 @strain                  Name of the strain.
 @metasum                 Checksum of @title.
@@ -139,7 +139,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 CREATE TABLE sample (
   sample_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
   sample_sra_acc            CHAR(12) NOT NULL UNIQUE,
-  title                     TEXT,
+  description               TEXT,
   taxon_id                  INT(10),
   strain                    TEXT,
   metasum                   CHAR(32),
@@ -151,9 +151,9 @@ CREATE TABLE sample (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.description, NEW.taxon_id, NEW.strain) );
 CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.description, NEW.taxon_id, NEW.strain) );
 
 /**
 
@@ -184,9 +184,9 @@ CREATE TABLE species (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.production_name, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.taxon_id, NEW.strain) );
 CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.production_name, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.taxon_id, NEW.strain) );
 
 
 /**
@@ -223,9 +223,9 @@ CREATE TABLE file (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER file_md5_upd_tr BEFORE UPDATE ON file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.path, NEW.type, NEW.md5) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.path, NEW.type, NEW.md5) );
 CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.path, NEW.type, NEW.md5) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.path, NEW.type, NEW.md5) );
 
 /**
 
@@ -253,9 +253,9 @@ CREATE TABLE analysis (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.name, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description) );
 CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.name, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description) );
 
 /**
 
@@ -286,9 +286,9 @@ CREATE TABLE analysis_param (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_param_md5_upd_tr BEFORE UPDATE ON analysis_param
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.program, NEW.parameters) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.parameters) );
 CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.program, NEW.parameters) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.parameters) );
 
 /**
 
@@ -321,9 +321,9 @@ CREATE TABLE analysis_file (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_file_md5_upd_tr BEFORE UPDATE ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.scope, NEW.scope_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.scope, NEW.scope_id) );
 CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.scope, NEW.scope_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.scope, NEW.scope_id) );
 
 /**
 
@@ -357,9 +357,9 @@ CREATE TABLE track (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description) );
 CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description) );
 
 /**
 
@@ -402,9 +402,9 @@ CREATE TABLE publication (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER publication_md5_upd_tr BEFORE UPDATE ON publication
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.pubmed_id, NEW.doi, NEW.authors, NEW.title, NEW.abstract, NEW.year) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.pubmed_id, NEW.doi, NEW.authors, NEW.title, NEW.abstract, NEW.year) );
 CREATE TRIGGER publication_md5_ins_tr BEFORE INSERT ON publication
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.pubmed_id, NEW.doi, NEW.authors, NEW.title, NEW.abstract, NEW.year) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.pubmed_id, NEW.doi, NEW.authors, NEW.title, NEW.abstract, NEW.year) );
 
 /**
 
@@ -462,7 +462,7 @@ CREATE TABLE drupal_node (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.autogen_txt, NEW.manual_txt) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.autogen_txt, NEW.manual_txt) );
 CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT(NEW.autogen_txt, NEW.manual_txt) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.autogen_txt, NEW.manual_txt) );
 

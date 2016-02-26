@@ -21,7 +21,7 @@ sub add_run {
   my $num_run = scalar @run_rows;
   if ($num_run == 1) {
     $logger->debug("Run " . $run_acc . " has 1 id already.");
-    return $run_rows[0]->run_id;
+    return 0;
   }
   
   # Retrieve run data from ENA
@@ -34,7 +34,7 @@ sub add_run {
   
   if (    defined $experiment_id
       and defined $sample_id) {
-    $logger->debug("ADDING run " . $run->accession() . "");
+    $logger->info("ADDING run " . $run->accession() . "");
     $self->resultset('Run')->create({
         run_sra_acc     => $run->accession(),
         experiment_id   => $experiment_id,
@@ -43,9 +43,10 @@ sub add_run {
       });
   } else {
     $logger->warn("An error occured: can't insert the run " . $run_acc);
+    return 0;
   }
   
-  return;
+  return 1;
 }
 
 sub _get_experiment_id {
@@ -72,7 +73,7 @@ sub _get_experiment_id {
     my $study_id = $self->_get_study_id($experiment->study());
     
     if (defined $study_id) {
-      $logger->debug("ADDING experiment " . $experiment->accession() . "");
+      $logger->info("ADDING experiment " . $experiment->accession() . "");
       my $insertion = $self->resultset('Experiment')->create({
           experiment_sra_acc     => $experiment->accession(),
           title                  => $experiment->title(),
@@ -104,7 +105,7 @@ sub _get_study_id {
   }
   # Last case: we have to add this study
   else {
-    $logger->debug("ADDING study " . $study->accession() . "");
+    $logger->info("ADDING study " . $study->accession() . "");
     my $insertion = $self->resultset('Study')->create({
         study_sra_acc   => $study->accession(),
         title           => $study->title(),
@@ -136,7 +137,7 @@ sub _get_sample_id {
   }
   # Last case: we have to add this sample
   else {
-    $logger->debug("ADDING sample " . $sample->accession() . "");
+    $logger->info("ADDING sample " . $sample->accession() . "");
     my $insertion = $self->resultset('Sample')->create({
         sample_sra_acc    => $sample->accession(),
         description       => $sample->description(),

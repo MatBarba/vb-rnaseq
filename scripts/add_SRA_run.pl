@@ -10,8 +10,8 @@ use Getopt::Long qw(:config no_ignore_case);
 
 use RNAseqDB::DB;
 use Log::Log4perl qw( :easy );
-Log::Log4perl->easy_init($DEBUG);
-
+Log::Log4perl->easy_init($WARN);
+my $logger = get_logger();
 
 ###############################################################################
 # MAIN
@@ -26,17 +26,24 @@ my $db = RNAseqDB::DB->connect(
 );
 
 # Add a single run from the command-line
+my $runs_added = 0;
 if ($opt{run}) {
-  $db->add_run( $opt{run} );
+  my $added = $db->add_run( $opt{run} );
+  $runs_added += $added;
 }
 # Or add a list from a file (more efficient)
 else {
   my @runs = get_runs_from_file($opt{file});
   for my $run_acc (@runs) {
-    $db->add_run( $run_acc );
+    my $added = $db->add_run( $run_acc );
+    $runs_added += $added;
   }
 }
 
+$logger->info("$runs_added new runs added");
+
+###############################################################################
+# UTILITY SUBS
 sub get_runs_from_file {
   my $file = shift;
   
@@ -69,9 +76,15 @@ sub usage {
     --password <str>  : password
     --db <str>        : database name
     
+    Input:
     --run <str>       : SRA run accession (e.g. SRR000000)
     or
     --file <path>     : path to a file with a list of SRA run accessions
+    
+    Other:
+    --help            : show this help message
+    --verbose         : show detailed progress
+    --debug           : show even more information (for debugging purposes)
 EOF
   print STDERR "$help\n";
   exit(1);
@@ -89,6 +102,8 @@ sub opt_check {
     "run=s",
     "file=s",
     "help",
+    "verbose",
+    "debug",
   );
 
   usage()              if $opt{help};
@@ -98,6 +113,8 @@ sub opt_check {
   usage("Need --db") if not $opt{db};
   usage("Need --run or --file") if not ($opt{run} xor $opt{file});
   $opt{password} ||= '';
+  Log::Log4perl->easy_init($INFO) if $opt{verbose};
+  Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;
 }
 

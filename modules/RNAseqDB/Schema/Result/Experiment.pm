@@ -100,9 +100,7 @@ __PACKAGE__->add_columns(
   },
 );
 
-=head1 UNIQUE CONSTRAINTS
-
-=head2 C<experiment_id>
+=head1 PRIMARY KEY
 
 =over 4
 
@@ -112,7 +110,9 @@ __PACKAGE__->add_columns(
 
 =cut
 
-__PACKAGE__->add_unique_constraint("experiment_id", ["experiment_id"]);
+__PACKAGE__->set_primary_key("experiment_id");
+
+=head1 UNIQUE CONSTRAINTS
 
 =head2 C<experiment_sra_acc>
 
@@ -127,8 +127,8 @@ __PACKAGE__->add_unique_constraint("experiment_id", ["experiment_id"]);
 __PACKAGE__->add_unique_constraint("experiment_sra_acc", ["experiment_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 13:26:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IF3vQgCrBqdfiVx0N2VsgA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OgBoYMNj8AXb87Tdi5VVJA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

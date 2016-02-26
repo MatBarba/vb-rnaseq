@@ -30,7 +30,7 @@ SRA tracking tables
 */
 
 CREATE TABLE study (
-  study_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  study_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   study_sra_acc     CHAR(12) NOT NULL UNIQUE,
   title             TEXT,
   abstract          TEXT,
@@ -63,7 +63,7 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 */
 
 CREATE TABLE experiment (
-  experiment_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  experiment_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   study_id               INT(10) NOT NULL,
   experiment_sra_acc     CHAR(12) NOT NULL UNIQUE,
   title                  TEXT,
@@ -99,7 +99,7 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 */
 
 CREATE TABLE run (
-  run_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  run_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   experiment_id          INT(10) NOT NULL,
   sample_id              INT(10) NOT NULL,
   run_sra_acc            CHAR(12) NOT NULL UNIQUE,
@@ -137,7 +137,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 */
 
 CREATE TABLE sample (
-  sample_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  sample_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   sample_sra_acc            CHAR(12) NOT NULL UNIQUE,
   description               TEXT,
   taxon_id                  INT(10),
@@ -171,7 +171,7 @@ CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
 */
 
 CREATE TABLE species (
-  species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   production_name           VARCHAR(64) NOT NULL UNIQUE,
   taxon_id                  INT(10),
   strain                    VARCHAR(32),
@@ -211,7 +211,7 @@ PIPELINE TABLES
 */
 
 CREATE TABLE file (
-  file_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  file_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   path                  TEXT NOT NULL,
   type                  ENUM('fastq', 'bam', 'bai', 'bed', 'bigwig'),
   md5                   CHAR(32),
@@ -242,7 +242,7 @@ CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
 */
 
 CREATE TABLE analysis (
-  analysis_id           INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  analysis_id           INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   name                  VARCHAR(32) UNIQUE,
   description           TEXT,
   metasum               CHAR(32),
@@ -273,7 +273,7 @@ CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
 */
 
 CREATE TABLE analysis_param (
-  analysis_param_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  analysis_param_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   analysis_id           INT(10),
   program               TEXT,
   parameters            TEXT,
@@ -306,7 +306,7 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 */
 
 CREATE TABLE analysis_file (
-  analysis_file_id            INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  analysis_file_id            INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   analysis_parameter_id       INT(10),
   file_id                     INT(10),
   file_io                     ENUM('INPUT', 'OUTPUT'),
@@ -342,7 +342,7 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 */
 
 CREATE TABLE track (
-  track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   file_id               INT(10) NOT NULL UNIQUE,
   sample_id             INT(10) NOT NULL,
   title                 TEXT,
@@ -372,7 +372,7 @@ PUBLICATIONS TABLES
 @publication table
 @desc The table where the publication infos are stored.
 
-@publication_id         Publication id (primary key, internal identifier).
+@publication_id         Publication id (primary key, internal identifier) PRIMARY KEY.
 @pubmed_id              Pubmed id.
 @doi                    Digital object identifier.
 @authors                List of authors.
@@ -386,7 +386,7 @@ PUBLICATIONS TABLES
 */
 
 CREATE TABLE publication (
-  publication_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  publication_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   pubmed_id             INT(10) UNIQUE,
   doi                   VARCHAR(32),
   authors               TEXT,
@@ -418,7 +418,7 @@ CREATE TRIGGER publication_md5_ins_tr BEFORE INSERT ON publication
 */
 
 CREATE TABLE study_publication (
-  study_pub_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  study_pub_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   study_id              INT(10) NOT NULL,
   publication_id        INT(10) NOT NULL,
   
@@ -449,7 +449,7 @@ DRUPAL TABLES
 */
 
 CREATE TABLE drupal_node (
-  drupal_node_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  drupal_node_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   study_id              INT(10) UNIQUE,
   autogen_txt           TEXT,
   manual_txt            TEXT,

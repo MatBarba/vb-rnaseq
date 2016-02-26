@@ -106,6 +106,18 @@ __PACKAGE__->add_columns(
   },
 );
 
+=head1 PRIMARY KEY
+
+=over 4
+
+=item * L</track_id>
+
+=back
+
+=cut
+
+__PACKAGE__->set_primary_key("track_id");
+
 =head1 UNIQUE CONSTRAINTS
 
 =head2 C<file_id>
@@ -120,21 +132,9 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
 
-=head2 C<track_id>
 
-=over 4
-
-=item * L</track_id>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("track_id", ["track_id"]);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 13:26:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qSQODZINf9v+UDgElYCHIw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:clXX/mtXaf8Uf0i1PX0h7g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

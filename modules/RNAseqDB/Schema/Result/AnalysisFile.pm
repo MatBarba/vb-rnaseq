@@ -95,9 +95,7 @@ __PACKAGE__->add_columns(
   { data_type => "char", is_nullable => 1, size => 32 },
 );
 
-=head1 UNIQUE CONSTRAINTS
-
-=head2 C<analysis_file_id>
+=head1 PRIMARY KEY
 
 =over 4
 
@@ -107,11 +105,11 @@ __PACKAGE__->add_columns(
 
 =cut
 
-__PACKAGE__->add_unique_constraint("analysis_file_id", ["analysis_file_id"]);
+__PACKAGE__->set_primary_key("analysis_file_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 13:26:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wdzNtysY3659Qnc/2nPHcQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ym+VbBw6k0Slc7Ya7Y3jwg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

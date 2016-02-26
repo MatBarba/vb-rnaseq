@@ -73,11 +73,12 @@ sub _get_experiment_id {
     
     if (defined $study_id) {
       $logger->debug("ADDING experiment " . $experiment->accession() . "");
-      $self->resultset('Experiment')->create({
+      my $insertion = $self->resultset('Experiment')->create({
           experiment_sra_acc     => $experiment->accession(),
           title                  => $experiment->title(),
           study_id               => $study_id,
         });
+      return $insertion->id();
     }
   }
 }
@@ -104,11 +105,12 @@ sub _get_study_id {
   # Last case: we have to add this study
   else {
     $logger->debug("ADDING study " . $study->accession() . "");
-    $self->resultset('Study')->create({
+    my $insertion = $self->resultset('Study')->create({
         study_sra_acc   => $study->accession(),
         title           => $study->title(),
         abstract        => $study->abstract(),
       });
+    return $insertion->id();
   }
 }
 
@@ -135,11 +137,12 @@ sub _get_sample_id {
   # Last case: we have to add this sample
   else {
     $logger->debug("ADDING sample " . $sample->accession() . "");
-    $self->resultset('Sample')->create({
+    my $insertion = $self->resultset('Sample')->create({
         sample_sra_acc    => $sample->accession(),
-        title             => $sample->title(),
+        description       => $sample->description(),
         taxon_id          => $sample->taxon()->taxon_id(),
       });
+    return $insertion->id();
   }
 }
 1;

@@ -30,8 +30,8 @@ SRA tracking tables
 */
 
 CREATE TABLE study (
-  study_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  study_sra_acc     CHAR(12) NOT NULL,
+  study_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  study_sra_acc     CHAR(12) NOT NULL UNIQUE,
   title             TEXT,
   abstract          TEXT,
   metasum           CHAR(32),
@@ -39,8 +39,7 @@ CREATE TABLE study (
   status            ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY study_id_idx        (study_id),
-  KEY study_sra_acc_idx   (study_sra_acc),
-  UNIQUE KEY              (study_id, study_sra_acc)
+  KEY study_sra_acc_idx   (study_sra_acc)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER study_md5_upd_tr BEFORE UPDATE ON study
@@ -64,9 +63,9 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 */
 
 CREATE TABLE experiment (
-  experiment_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  experiment_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
   study_id               INT(10) NOT NULL,
-  experiment_sra_acc     CHAR(12) NOT NULL,
+  experiment_sra_acc     CHAR(12) NOT NULL UNIQUE,
   title                  TEXT,
   metasum                CHAR(32),
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -74,8 +73,7 @@ CREATE TABLE experiment (
   
   KEY experiment_id_idx            (experiment_id),
   KEY experiment_study_id_idx      (study_id),
-  KEY experiment_sra_acc_idx       (experiment_sra_acc),
-  UNIQUE KEY                       (experiment_id, study_id, experiment_sra_acc)
+  KEY experiment_sra_acc_idx       (experiment_sra_acc)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER experiment_md5_upd_tr BEFORE UPDATE ON experiment
@@ -101,10 +99,10 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 */
 
 CREATE TABLE run (
-  run_id                 INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  run_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
   experiment_id          INT(10) NOT NULL,
   sample_id              INT(10) NOT NULL,
-  run_sra_acc            CHAR(12) NOT NULL,
+  run_sra_acc            CHAR(12) NOT NULL UNIQUE,
   title                  TEXT,
   submitter              TEXT,
   metasum                CHAR(32),
@@ -114,8 +112,7 @@ CREATE TABLE run (
   KEY run_id_idx              (run_id),
   KEY run_experiment_id_idx   (experiment_id),
   KEY run_sample_id_idx       (sample_id),
-  KEY run_sra_acc_idx         (run_sra_acc),
-  UNIQUE KEY                  (run_id, experiment_id, sample_id, run_sra_acc)
+  KEY run_sra_acc_idx         (run_sra_acc)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
@@ -140,8 +137,8 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 */
 
 CREATE TABLE sample (
-  sample_id                 INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  sample_sra_acc            CHAR(12) NOT NULL,
+  sample_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  sample_sra_acc            CHAR(12) NOT NULL UNIQUE,
   title                     TEXT,
   taxon_id                  INT(10),
   strain                    TEXT,
@@ -150,8 +147,7 @@ CREATE TABLE sample (
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY sample_id_idx              (sample_id),
-  KEY sample_sra_acc_idx         (sample_sra_acc),
-  UNIQUE KEY                     (sample_id, sample_sra_acc)
+  KEY sample_sra_acc_idx         (sample_sra_acc)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
@@ -175,16 +171,16 @@ CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
 */
 
 CREATE TABLE species (
-  species_id                INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  production_name           TEXT,
+  species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  production_name           VARCHAR(64) NOT NULL UNIQUE,
   taxon_id                  INT(10),
-  strain                    TEXT,
+  strain                    VARCHAR(32),
   metasum                   CHAR(32),
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY species_id_idx              (species_id),
-  UNIQUE KEY                      (species_id)
+  UNIQUE KEY                      (taxon_id, strain)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
@@ -215,16 +211,15 @@ PIPELINE TABLES
 */
 
 CREATE TABLE file (
-  file_id               INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  path                  TEXT,
+  file_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  path                  TEXT NOT NULL,
   type                  ENUM('fastq', 'bam', 'bai', 'bed', 'bigwig'),
   md5                   CHAR(32),
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  KEY file_id_idx            (file_id),
-  UNIQUE KEY                 (file_id)
+  KEY file_id_idx            (file_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER file_md5_upd_tr BEFORE UPDATE ON file
@@ -247,15 +242,14 @@ CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
 */
 
 CREATE TABLE analysis (
-  analysis_id           INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  name                  TEXT,
+  analysis_id           INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  name                  VARCHAR(32) UNIQUE,
   description           TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  KEY analysis_id_idx      (analysis_id),
-  UNIQUE KEY               (analysis_id)
+  KEY analysis_id_idx      (analysis_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis
@@ -279,7 +273,7 @@ CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
 */
 
 CREATE TABLE analysis_param (
-  analysis_param_id     INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  analysis_param_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
   analysis_id           INT(10),
   program               TEXT,
   parameters            TEXT,
@@ -288,8 +282,7 @@ CREATE TABLE analysis_param (
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY analysis_param_id_idx            (analysis_param_id),
-  KEY analysis_param_analysis_id_idx   (analysis_id),
-  UNIQUE KEY                           (analysis_param_id, analysis_id)
+  KEY analysis_param_analysis_id_idx   (analysis_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_param_md5_upd_tr BEFORE UPDATE ON analysis_param
@@ -313,7 +306,7 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 */
 
 CREATE TABLE analysis_file (
-  analysis_file_id            INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  analysis_file_id            INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
   analysis_parameter_id       INT(10),
   file_id                     INT(10),
   file_io                     ENUM('INPUT', 'OUTPUT'),
@@ -324,8 +317,7 @@ CREATE TABLE analysis_file (
   KEY analysis_file_id_idx                      (analysis_file_id),
   KEY analysis_file_analysis_parameter_id_idx   (analysis_parameter_id),
   KEY analysis_file_file_id_idx                 (file_id),
-  KEY analysis_file_scope_id_idx                (scope_id),
-  UNIQUE KEY                                    (analysis_file_id)
+  KEY analysis_file_scope_id_idx                (scope_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_file_md5_upd_tr BEFORE UPDATE ON analysis_file
@@ -350,9 +342,9 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 */
 
 CREATE TABLE track (
-  track_id              INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  file_id               INT(10),
-  sample_id             INT(10),
+  track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  file_id               INT(10) NOT NULL UNIQUE,
+  sample_id             INT(10) NOT NULL,
   title                 TEXT,
   description           TEXT,
   metasum               CHAR(32),
@@ -361,8 +353,7 @@ CREATE TABLE track (
   
   KEY track_id_idx                     (track_id),
   KEY track_file_id_idx                (file_id),
-  KEY track_sample_id_idx              (sample_id),
-  UNIQUE KEY                           (track_id)
+  KEY track_sample_id_idx              (sample_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
@@ -395,8 +386,8 @@ PUBLICATIONS TABLES
 */
 
 CREATE TABLE publication (
-  publication_id        INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  pubmed_id             INT(10),
+  publication_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  pubmed_id             INT(10) UNIQUE,
   doi                   VARCHAR(32),
   authors               TEXT,
   title                 TEXT,
@@ -407,8 +398,7 @@ CREATE TABLE publication (
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY publication_id_idx        (publication_id),
-  KEY pubmed_id_idx             (pubmed_id),
-  UNIQUE KEY                    (publication_id, pubmed_id)
+  KEY pubmed_id_idx             (pubmed_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER publication_md5_upd_tr BEFORE UPDATE ON publication
@@ -428,14 +418,13 @@ CREATE TRIGGER publication_md5_ins_tr BEFORE INSERT ON publication
 */
 
 CREATE TABLE study_publication (
-  study_pub_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  study_id              INT(10),
-  publication_id        INT(10),
+  study_pub_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  study_id              INT(10) NOT NULL,
+  publication_id        INT(10) NOT NULL,
   
   KEY study_pub_id_idx                (study_pub_id),
   KEY study_pub_study_id_idx          (study_id),
-  KEY study_pub_publication_id_idx    (publication_id),
-  UNIQUE KEY                          (study_pub_id)
+  KEY study_pub_publication_id_idx    (publication_id)
 ) ENGINE=MyISAM;
 
 /**
@@ -460,8 +449,8 @@ DRUPAL TABLES
 */
 
 CREATE TABLE drupal_node (
-  drupal_node_id        INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  study_id              INT(10),
+  drupal_node_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT,
+  study_id              INT(10) UNIQUE,
   autogen_txt           TEXT,
   manual_txt            TEXT,
   metasum               CHAR(32),
@@ -469,8 +458,7 @@ CREATE TABLE drupal_node (
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY drupal_node_id_idx        (drupal_node_id),
-  KEY study_id_idx              (study_id),
-  UNIQUE KEY                    (drupal_node_id, study_id)
+  KEY study_id_idx              (study_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node

@@ -149,3 +149,94 @@ sub _get_sample_id {
 }
 1;
 
+__END__
+
+
+=head1 NAME
+
+RNAseqDB::DB - Interface for the RNAseq DB.
+
+
+=head1 VERSION
+
+This document describes RNAseqDB::DB version 0.0.1
+
+
+=head1 SYNOPSIS
+
+    use RNAseqDB::DB;
+
+    # Connect to an RNAseqDB
+    my $rdb = RNAseqDB::DB->connect(
+      "dbi:mysql:host=$host:port=$port:database=$db",
+      $user,
+      $password
+    );
+    
+    # Add a run to the database
+    $rdb->add_run('SRR000000');
+
+
+=head1 DESCRIPTION
+
+This module is an object interface for the RNAseqDB. It inherits the RNAseqDB::Schema object, which is a DBIx class.
+
+
+The purpose of the interface is to simplify the population of the database.
+
+
+The module logs with Log4perl (easy mode).
+
+=head1 INTERFACE
+
+=over
+
+=item BUILD connect()
+
+  (Inherited from RNAseqDB::Schema)
+  Args           : DBI connection arguments
+  Function       : create a connection to an RNAseq DB
+  Usage:
+
+    my $rdb = RNAseqDB::DB->connect(
+      "dbi:mysql:host=$host:port=$port:database=$db",
+      $user,
+      $password
+    );
+
+
+=item add_run()
+
+  Function       : add an SRA run to the RNAseq DB, as well as any corresponding sample, experiment, and study.
+  Arg[1]         : String:  an SRA run accession
+  Returntype     : Integer: 0 = run not added, 1 = run added
+  Usage:
+
+    # Those are equivalent
+    $rdb->add_run('SRR000000');
+
+  NB: the run will not be added if it is not already in the database. It will also not be added if it fails to retrieve the corresponding sample and experiment ids.
+
+=back
+
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+RNAseqDB::DB requires no configuration files or environment variables.
+
+
+=head1 DEPENDENCIES
+
+* Bio::EnsEMBL::ENA (eg-ena)
+* Log::Log4perl
+* DBIx::Class
+
+
+=head1 BUGS AND LIMITATIONS
+
+...
+
+=head1 AUTHOR
+
+Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
+

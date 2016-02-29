@@ -3,8 +3,10 @@ package RNAseqDB::DB;
 
 use strict;
 use warnings;
+use List::Util qw( first );
 use Log::Log4perl qw( :easy );
 my $logger = get_logger();
+use Data::Dumper;
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 use base 'RNAseqDB::Schema';
@@ -137,12 +139,18 @@ sub _get_sample_id {
   }
   # Last case: we have to add this sample
   else {
+    my $attribs_aref = $sample->attributes();
+    my @strain_attrib = grep {
+      lc($_->{TAG}) eq 'strain' and $_->{VALUE} ne 'missing'
+    } @$attribs_aref;
+    my $strain = join(',', map { $_->{VALUE} } @strain_attrib);
     $logger->info("ADDING sample " . $sample->accession() . "");
     my $insertion = $self->resultset('Sample')->create({
         sample_sra_acc    => $sample->accession(),
         title             => $sample->title(),
         description       => $sample->description(),
         taxon_id          => $sample->taxon()->taxon_id(),
+        strain            => $strain
       });
     return $insertion->id();
   }

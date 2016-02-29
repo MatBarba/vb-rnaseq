@@ -147,6 +147,61 @@ sub _get_sample_id {
     return $insertion->id();
   }
 }
+
+sub add_species {
+  my ($self, $species_href) = @_;
+  
+  my $nname   = $species_href->{production_name};
+  my $ntax    = $species_href->{taxon_id};
+  my $nstrain = $species_href->{strain};
+  $nstrain ||= '';
+  
+  if (    defined $nname
+      and defined $ntax
+  ) {
+    # Check that the taxon doesn't already exists
+    my $currents = $self->resultset('Species')->search({
+        production_name => $nname
+      });
+    
+    my ($current_sp) = $currents->all;
+    
+    # Already exists? Check that it is the same
+    if (defined $current_sp) {
+      my $cname   = $current_sp->production_name;
+      my $ctax    = $current_sp->taxon_id;
+      my $cstrain = $current_sp->strain;
+      $cstrain ||= '';
+      
+      if (   (defined $ntax and not defined $ctax)
+          or (defined $ctax and not defined $ntax)
+          or ($ctax != $ntax)
+      ) {
+        $logger->warn("WARNING: Trying to add an existing name $cname with a different taxon_id: $ntax / $ctax");
+      }
+      elsif ( (defined $nstrain and not defined $cstrain)
+          or  (defined $cstrain and not defined $nstrain)
+          or  (defined $cstrain and defined $nstrain and $cstrain ne $nstrain)
+      ) {
+        $logger->warn("WARNING: Trying to add an existing name $cname with a different strain: $nstrain / $cstrain");
+      }
+      else {
+        $logger->debug("Species $cname already in the database");
+      }
+      return 0;
+      
+    # Ok? Add it
+    } else {
+      $self->resultset('Species')->create( $species_href );
+      $logger->debug("NEW SPECIES added: $nname");
+      return 1;
+    }
+  }
+   else {
+    return 0;
+  }
+}
+
 1;
 
 __END__
@@ -216,6 +271,18 @@ The module logs with Log4perl (easy mode).
     $rdb->add_run('SRR000000');
 
   NB: the run will not be added if it is not already in the database. It will also not be added if it fails to retrieve the corresponding sample and experiment ids.
+
+=item add_species()
+
+  Function       : add a species line to the species table.
+  Arg[1]         : production name
+  Arg[2]         : taxon name
+  Arg[3]         : strain name
+  Returntype     : Integer: 0 = not added, 1 = added
+  Usage:
+
+    # Those are equivalent
+    $rdb->add_species('anopheles_stephensiI', 30069, 'Indian');
 
 =back
 

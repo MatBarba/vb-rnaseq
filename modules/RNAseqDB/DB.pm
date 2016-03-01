@@ -13,6 +13,7 @@ use base 'RNAseqDB::Schema';
 
 sub add_run {
   my ($self, $run_acc) = @_;
+  return 0 if not defined $run_acc or $run_acc =~ /^\s*$/;
   
   # Try to get the run id if it exists
   my $run_req = $self->resultset('Run')->search({
@@ -30,9 +31,18 @@ sub add_run {
   my $run_adaptor = get_adaptor('Run');
   my ($run) = @{ $run_adaptor->get_by_accession($run_acc) };
   
+  if (not defined $run) {
+    $logger->warn("Run impossible to get: " . $run_acc);
+    return 0;
+  }
+  
   # Retrieve the experiment and sample ids to create a run
-  my $experiment_id = $self->_get_experiment_id($run->experiment());
   my $sample_id = $self->_get_sample_id($run->sample());
+  if (not defined $sample_id) {
+    $logger->warn("Can't insert the run $run_acc: no sample_id returned");
+    return 0;
+  }
+  my $experiment_id = $self->_get_experiment_id($run->experiment());
   
   if (    defined $experiment_id
       and defined $sample_id) {
@@ -139,21 +149,95 @@ sub _get_sample_id {
   }
   # Last case: we have to add this sample
   else {
+    
+    # All is ok? Insert!
     my $attribs_aref = $sample->attributes();
+    $attribs_aref = [$attribs_aref] if ref($attribs_aref) eq 'HASH';
     my @strain_attrib = grep {
       lc($_->{TAG}) eq 'strain' and $_->{VALUE} ne 'missing'
     } @$attribs_aref;
     my $strain = join(',', map { $_->{VALUE} } @strain_attrib);
+    my $taxon_id = $sample->taxon()->taxon_id();
+    
+    # Wait, we still have to filter out wrong taxa...
+    if (not $self->_is_ok_sample_taxon( $taxon_id, $strain )) {
+      return;
+    }
+    
     $logger->info("ADDING sample " . $sample->accession() . "");
     my $insertion = $self->resultset('Sample')->create({
         sample_sra_acc    => $sample->accession(),
         title             => $sample->title(),
         description       => $sample->description(),
-        taxon_id          => $sample->taxon()->taxon_id(),
+        taxon_id          => $taxon_id,
         strain            => $strain
       });
     return $insertion->id();
   }
+}
+
+sub _is_ok_sample_taxon {
+  my ($self, $taxon_id, $strain) = @_;
+  return if not defined $taxon_id;
+  
+  my $name = $self->_get_prod_name($taxon_id, $strain);
+  
+  return defined $name;
+}
+
+sub _get_prod_name {
+  my ($self, $taxon_id, $strain) = @_;
+  $strain ||= '';
+  
+  my $names = $self->_get_production_names();
+  
+  # First try, with the couple taxon_id and strain
+  my $key = $taxon_id . '__' . $strain;
+  
+  if (defined $names->{ $key }) {
+    return $names->{ $key };
+  }
+  # Second try, with only the taxon_id
+  elsif (defined $names->{ $taxon_id }) {
+    $logger->info("Selecting taxon with only taxid: $taxon_id ($names->{ $taxon_id })");
+    return $names->{ $taxon_id };
+  }
+  else {
+    $logger->info("Rejected taxon with taxid: $taxon_id");
+    return;
+  }
+}
+
+sub _get_production_names {
+  my $self = shift;
+  
+  if (not defined $self->{production_names}) {
+   $self->_load_production_names(); 
+  }
+  return $self->{production_names};
+}
+
+sub _load_production_names {
+  my ($self) = @_;
+  
+  my $species_req = $self->resultset('Species')->search({
+      status  => 'ACTIVE',
+    });
+  my @lines = $species_req->all;
+  
+  my %names = ();
+  for my $line (@lines) {
+    my $strain = $line->strain;
+    $strain ||= '';
+    my $taxon_id = $line->taxon_id;
+    $taxon_id ||= '';
+    $logger->warn("Taxon without taxon_id: " . $line->production_name) if not defined $taxon_id;
+    my $key = $taxon_id . '__' . $strain;
+    $names{ $key } = $line->production_name;
+    $names{ $taxon_id } = $line->production_name;
+  }
+  
+  $self->{production_names} = \%names;
 }
 
 sub add_species {
@@ -282,16 +366,25 @@ The module logs with Log4perl (easy mode).
 
 =item add_species()
 
-  Function       : add a species line to the species table.
-  Arg[1]         : production name
-  Arg[2]         : taxon name
-  Arg[3]         : strain name
-  Returntype     : Integer: 0 = not added, 1 = added
-  Usage:
+  function       : add a species line to the species table.
+  arg[1]         : production name
+  arg[2]         : taxon name
+  arg[3]         : strain name
+  returntype     : integer: 0 = not added, 1 = added
+  usage:
 
-    # Those are equivalent
-    $rdb->add_species('anopheles_stephensiI', 30069, 'Indian');
+    # those are equivalent
+    $rdb->add_species('anopheles_stephensii', 30069, 'indian');
 
+=item get_prod_name()
+
+  function       : extract the production name for a taxon_id + strain couple.
+  returntype     : String, production name
+  usage:
+
+    # those are equivalent
+    my $name = $rdb->get_prod_name(30069, 'Indian');
+    
 =back
 
 

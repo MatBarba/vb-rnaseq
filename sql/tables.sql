@@ -131,6 +131,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 @description             Description of the SRA sample.
 @taxon_id                NCBI taxon id.
 @strain                  Name of the strain.
+@species_id              Species table primary id (foreign key), to match the correct production_name.
 @metasum                 Checksum of @title.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
@@ -144,6 +145,7 @@ CREATE TABLE sample (
   description               TEXT,
   taxon_id                  INT(10),
   strain                    TEXT,
+  species_id                INT(10),
   metasum                   CHAR(32),
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',

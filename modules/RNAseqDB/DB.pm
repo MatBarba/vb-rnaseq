@@ -168,10 +168,15 @@ sub _get_sample_id {
     my $strain = join(',', map { $_->{VALUE} } @strain_attrib);
     my $taxon_id = $sample->taxon()->taxon_id();
     
-    # Wait, we still have to filter out wrong taxa...
-    if (not $self->_is_ok_sample_taxon( $taxon_id, $strain )) {
+    # Get the correct species_id
+    my $species_id = $self->_get_species_id($taxon_id, $strain);
+    
+    # No species id? Failed to add
+    if (not defined $species_id) {
+      $logger->info("Skip sample because the species ($taxon_id, $strain) could not be found in the species table");
       return;
     }
+    
     
     $logger->info("ADDING sample " . $sample->accession() . "");
     my $insertion = $self->resultset('Sample')->create({
@@ -179,62 +184,69 @@ sub _get_sample_id {
         title             => $sample->title(),
         description       => $sample->description(),
         taxon_id          => $taxon_id,
-        strain            => $strain
+        strain            => $strain,
+        species_id        => $species_id,
       });
     return $insertion->id();
   }
 }
 
-sub _is_ok_sample_taxon {
-  my ($self, $taxon_id, $strain) = @_;
-  return if not defined $taxon_id;
-  
-  my $name = $self->_get_prod_name($taxon_id, $strain);
-  
-  return defined $name;
-}
-
-sub _get_prod_name {
+sub _get_species_id {
   my ($self, $taxon_id, $strain) = @_;
   $strain ||= '';
   
-  my $names = $self->_get_production_names();
+  my $species_href = $self->_get_species_ids();
+  return if not defined $species_href;
+  my $sp_taxons = $species_href->{ $taxon_id };
   
   # First try, with the couple taxon_id and strain
-  my $key = $taxon_id . '__' . $strain;
+  if (    defined $sp_taxons
+      and defined $sp_taxons->{ $strain }) {
+    return $sp_taxons->{ $strain };
+  }
   
-  if (defined $names->{ $key }) {
-    return $names->{ $key };
-  }
-  # Second try, with only the taxon_id
-  elsif (defined $names->{ $taxon_id }) {
-    $logger->info("Selecting taxon with only taxid: $taxon_id ($names->{ $taxon_id })");
-    return $names->{ $taxon_id };
-  }
+  # Second try, match with only the taxon_id only if no strain is given
   else {
-    $logger->info("Rejected taxon with taxid: $taxon_id");
-    return;
+    if ($strain eq '' and defined $sp_taxons) {
+      my @species_id_list = values %$sp_taxons;
+      my %species_ids = map { $_ => 1 } @species_id_list;
+      
+      # Found only 1 possible species_id for this taxon_id?
+      if (scalar(keys %species_ids) == 1) {
+        $logger->info("Matched species: $taxon_id, $strain => $species_id_list[0]");
+        return $species_id_list[0];
+      }
+    }
+    else {
+      $logger->info("Rejected species, strain is not found in the species table: $taxon_id, $strain");
+      return;
+    }
   }
 }
 
-sub _get_production_names {
+sub _get_species_ids {
   my $self = shift;
   
-  if (not defined $self->{production_names}) {
-   $self->_load_production_names(); 
+  if (not defined $self->{species_ids}) {
+   $self->_load_species(); 
   }
-  return $self->{production_names};
+  return $self->{species_ids};
 }
 
-sub _load_production_names {
+sub _load_species {
   my ($self) = @_;
   
   my $species_req = $self->resultset('Species')->search({
       status  => 'ACTIVE',
     });
   my @lines = $species_req->all;
+  if (@lines == 0) {
+    $logger->warn("WARNING: the species table appears to be empty");
+    return;
+  }
   
-  my %names = ();
+  my %species_id = ();
+  
   for my $line (@lines) {
     my $strain = $line->strain;
     $strain ||= '';
@@ -242,11 +254,10 @@ sub _load_production_names {
     $taxon_id ||= '';
     $logger->warn("Taxon without taxon_id: " . $line->production_name) if not defined $taxon_id;
     my $key = $taxon_id . '__' . $strain;
-    $names{ $key } = $line->production_name;
-    $names{ $taxon_id } = $line->production_name;
+    $species_id{ $taxon_id }{ $strain } = $line->species_id;
   }
   
-  $self->{production_names} = \%names;
+  $self->{species_ids} = \%species_id;
 }
 
 sub add_species {

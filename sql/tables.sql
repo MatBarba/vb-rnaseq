@@ -91,7 +91,7 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 @sample_id               Sample table primary key (Foreign key).
 @run_sra_acc             SRA run accession (e.g. SRR000000).
 @title                   Title of the SRA run.
-@submitter               Submitter id of the SRA run.
+@submitter               Submitter name of the SRA run.
 @metasum                 Checksum of @title + @submitter.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.

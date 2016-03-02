@@ -43,6 +43,7 @@ sub add_run {
     return 0;
   }
   my $experiment_id = $self->_get_experiment_id($run->experiment());
+  my $submitter = $self->_get_run_submitter($run);
   
   if (    defined $experiment_id
       and defined $sample_id) {
@@ -52,6 +53,7 @@ sub add_run {
         experiment_id   => $experiment_id,
         sample_id       => $sample_id,
         title           => $run->title(),
+        submitter       => $submitter,
       });
   } else {
     $logger->warn("An error occured: can't insert the run " . $run_acc);
@@ -59,6 +61,13 @@ sub add_run {
   }
   
   return 1;
+}
+
+sub _get_run_submitter {
+  my ($self, $run) = @_;
+  
+  my $identifiers = $run->identifiers()->{SUBMITTER_ID};
+  return $identifiers->{namespace};
 }
 
 sub _get_experiment_id {

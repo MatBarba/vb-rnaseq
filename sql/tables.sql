@@ -176,7 +176,7 @@ CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
 
 CREATE TABLE species (
   species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  production_name           VARCHAR(64) NOT NULL UNIQUE,
+  production_name           VARCHAR(64) NOT NULL,
   taxon_id                  INT(10),
   strain                    VARCHAR(32),
   metasum                   CHAR(32),

@@ -177,7 +177,6 @@ sub _get_sample_id {
       return;
     }
     
-    
     $logger->info("ADDING sample " . $sample->accession() . "");
     my $insertion = $self->resultset('Sample')->create({
         sample_sra_acc    => $sample->accession(),
@@ -199,28 +198,62 @@ sub _get_species_id {
   return if not defined $species_href;
   my $sp_taxons = $species_href->{ $taxon_id };
   
-  # First try, with the couple taxon_id and strain
-  if (    defined $sp_taxons
-      and defined $sp_taxons->{ $strain }) {
-    return $sp_taxons->{ $strain };
-  }
-  
-  # Second try, match with only the taxon_id only if no strain is given
-  else {
-    if ($strain eq '' and defined $sp_taxons) {
-      my @species_id_list = values %$sp_taxons;
+  if (defined $sp_taxons) {
+    # First try, with the couple taxon_id and strain
+    if(defined $sp_taxons->{ $strain }) {
+      return $sp_taxons->{ $strain };
+    }
+
+    # Second try: try to find the species.strain name in the sample.strain name
+    my @sp_strains = keys %$sp_taxons;
+    my @found_sp_strains = ();
+    for my $sp_strain (@sp_strains) {
+      next if $sp_strain eq '';
+      # Can we find the strain name?
+      if ($strain =~ /$sp_strain/) {
+        push @found_sp_strains, $sp_strain;
+      }
+    }
+
+    # Found 1 match?
+    my $sp_match = scalar @found_sp_strains;
+    if ($sp_match == 1) {
+      my $sp_strain = $found_sp_strains[0];
+      $logger->info("WARNING: Automatically matched the strain $strain to $sp_strain ($sp_taxons->{ $sp_strain })");
+      return $sp_taxons->{ $sp_strain };
+    }
+    elsif ($sp_match > 1) {
+      $logger->warn("WARNING: Several species match the strain name: $taxon_id, $strain");
+      return;
+    }
+    else {
+      # Last try, match with only the taxon_id
+      my @species_id_list = map { $sp_taxons->{$_} } sort keys %$sp_taxons;
       my %species_ids = map { $_ => 1 } @species_id_list;
-      
+
       # Found only 1 possible species_id for this taxon_id?
-      if (scalar(keys %species_ids) == 1) {
+      my $sp_ids_match = scalar(keys %species_ids);
+      
+      if ($sp_ids_match == 1) {
         $logger->info("Matched species: $taxon_id, $strain => $species_id_list[0]");
         return $species_id_list[0];
       }
+      # Several possibilities?
+      elsif ($sp_ids_match > 1) {
+        my $sp_list = join(', ', @species_id_list);
+        $logger->warn("WARNING: Several species match the taxon_id: $taxon_id, $strain ($sp_list). Using $species_id_list[0] (please check!)");
+        return $species_id_list[0];
+        return;
+      }
+      else {
+        $logger->info("Rejected species, strain is not found in the species table: $taxon_id, $strain");
+        return;
+      }
     }
-    else {
-      $logger->info("Rejected species, strain is not found in the species table: $taxon_id, $strain");
-      return;
-    }
+  }
+  else {
+    $logger->warn( "WARNING: Taxon_id is not defined in the species table: $taxon_id ($strain)" );
+    return;
   }
 }
 
@@ -289,18 +322,20 @@ sub add_species {
           or (defined $ctax and not defined $ntax)
           or ($ctax != $ntax)
       ) {
-        $logger->warn("WARNING: Trying to add an existing name $cname with a different taxon_id: $ntax / $ctax");
+        $logger->warn("WARNING: Adding an existing name $cname with a different taxon_id: $ntax / $ctax (is it an alias?)");
       }
       elsif ( (defined $nstrain and not defined $cstrain)
           or  (defined $cstrain and not defined $nstrain)
           or  (defined $cstrain and defined $nstrain and $cstrain ne $nstrain)
       ) {
-        $logger->warn("WARNING: Trying to add an existing name $cname with a different strain: $nstrain / $cstrain");
+        $logger->warn("WARNING: Adding an existing name $cname with a different strain: $nstrain / $cstrain (is it an alias?)");
       }
       else {
         $logger->debug("Species $cname already in the database");
+        return 0;
       }
-      return 0;
+      $self->resultset('Species')->create( $species_href );
+      return 1;
       
     # Ok? Add it
     } else {

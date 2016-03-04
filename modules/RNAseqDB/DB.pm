@@ -162,10 +162,20 @@ sub _get_sample_id {
     # All is ok? Insert!
     my $attribs_aref = $sample->attributes();
     $attribs_aref = [$attribs_aref] if ref($attribs_aref) eq 'HASH';
+    
+    # Get strain
     my @strain_attrib = grep {
       lc($_->{TAG}) eq 'strain' and $_->{VALUE} ne 'missing'
     } @$attribs_aref;
     my $strain = join(',', map { $_->{VALUE} } @strain_attrib);
+    
+    # Get biosample accession
+    my $identifiers_aref = $sample->identifiers()->{EXTERNAL_ID};
+    $identifiers_aref = [$identifiers_aref] if not ref($identifiers_aref) eq 'ARRAY';
+    my $biosample_href = first { $_->{namespace} eq 'BioSample' } @$identifiers_aref;
+    my $biosample_acc = $biosample_href->{content};
+    
+    # Get taxon_id
     my $taxon_id = $sample->taxon()->taxon_id();
     
     # Get the correct species_id
@@ -185,6 +195,7 @@ sub _get_sample_id {
         taxon_id          => $taxon_id,
         strain            => $strain,
         species_id        => $species_id,
+        biosample_acc     => $biosample_acc,
       });
     return $insertion->id();
   }

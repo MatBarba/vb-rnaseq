@@ -25,20 +25,22 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
+my @sras = ();
+
 # Add a single SRA accession from the command-line
-my $runs_added = 0;
 if ($opt{sra_acc}) {
-  my $added = $db->add_sra( $opt{sra_acc} );
-  $runs_added += $added;
+  push @sras, $opt{sra_acc};
+}
+# Or add a list from a file (more efficient)
+if ($opt{file}) {
+  push @sras = get_sras_from_file( $opt{file} );
 }
 
-# Or add a list from a file (more efficient)
-else {
-  my @sras = get_sras_from_file( $opt{file} );
-  for my $sra_acc (@sras) {
-    my $added = $db->add_sra( $sra_acc );
-    $runs_added += $added;
-  }
+# Add all runs for those SRA accessions
+my $runs_added = 0;
+for my $sra_acc (@sras) {
+  my $added = $db->add_sra( $sra_acc );
+  $runs_added += $added;
 }
 
 $logger->info("$runs_added new runs added");

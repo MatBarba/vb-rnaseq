@@ -12,29 +12,42 @@ use Readonly;
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 use base 'RNAseqDB::Schema';
 
+# Patterns to discriminate between the different SRA elements
 my Readonly $SRP_REGEX = qr{[SED]RP\d+};
 my Readonly $SRX_REGEX = qr{[SED]RX\d+};
 my Readonly $SRR_REGEX = qr{[SED]RR\d+};
 my Readonly $SRS_REGEX = qr{[SED]RS\d+};
 
+
+# add_sra     Add all runs related to the given SRA accession to the DB
+# Input       string = SRA accession
+# Output      int    = number of runs added
 sub add_sra {
   my ($self, $sra_acc) = @_;
   
   if ($sra_acc =~ $SRP_REGEX) {
-    $self->add_study( $sra_acc );
+    return $self->_add_runs_from($sra_acc, 'study');
   }
   elsif ($sra_acc =~ $SRX_REGEX) {
-    $self->add_experiment( $sra_acc );
+    return $self->_add_runs_from($sra_acc, 'experiment');
   }
   elsif ($sra_acc =~ $SRR_REGEX) {
-    $self->add_run( $sra_acc );
+    # Special case: all other cases are wrappers around this
+    return $self->_add_runs($sra_acc);
   }
   elsif ($sra_acc =~ $SRS_REGEX) {
-    $self->add_sample( $sra_acc );
+    return $self->_add_runs_from($sra_acc, 'sample');
+  }
+  else {
+    $logger->warn("WARNING; Invalid SRA accession: $sra_acc");
+    return 0;
   }
 }
 
-sub add_runs_from() {
+# add_runs_from   generic function to add runs from an SRA item
+# Input[1]        string = SRA accession
+# Input[2]        string = RNAseqDB table for this SRA item
+sub _add_runs_from() {
   my ($self, $acc, $table) = @_;
   
   return 0 if not defined $acc or $acc =~ /^\s*$/;
@@ -71,22 +84,10 @@ sub add_runs_from() {
   return $total;
 }
 
-sub add_study {
-  my ($self, $study_acc) = @_;
-  return $self->add_runs_from($study_acc, 'study');
-}
-
-sub add_experiment {
-  my ($self, $experiment_acc) = @_;
-  return $self->add_runs_from($experiment_acc, 'experiment');
-}
-
-sub add_sample {
-  my ($self, $sample_acc) = @_;
-  return $self->add_runs_from($sample_acc, 'sample');
-}
-
-sub add_run {
+# add_run       Import this run
+# Input         SRA run accession
+# Output        Number of runs newly inserted in the DB (0 if none)
+sub _add_run {
   my ($self, $run_acc) = @_;
   return 0 if not defined $run_acc or $run_acc =~ /^\s*$/;
   
@@ -461,8 +462,11 @@ This document describes RNAseqDB::DB version 0.0.1
       $password
     );
     
-    # Add a run to the database
-    $rdb->add_run('SRR000000');
+    # Prepare the species table
+    $rdb->add_species('aedes_aegypti', 7159, 'Liverpool');
+    
+    # Add a study
+    $rdb->add_sra('SRP009679');
 
 
 =head1 DESCRIPTION
@@ -492,18 +496,20 @@ The module logs with Log4perl (easy mode).
       $password
     );
 
+=item add_sra()
 
-=item add_run()
-
-  Function       : add an SRA run to the RNAseq DB, as well as any corresponding sample, experiment, and study.
-  Arg[1]         : String:  an SRA run accession
-  Returntype     : Integer: 0 = run not added, 1 = run added
+  Function       : Add all runs from a given SRA study/experiment/sample or run accession.
+  Arg[1]         : String: an SRA study/experiment/sample/run accession
+  Returntype     : Integer: number of runs newly added.
   Usage:
 
-    # Those are equivalent
-    $rdb->add_run('SRR000000');
+    $rdb->add_sra('SRP000000');
+    $rdb->add_sra('SRX000000');
+    $rdb->add_sra('SRR000000');
+    $rdb->add_sra('SRS000000');
 
-  NB: the run will not be added if it is not already in the database. It will also not be added if it fails to retrieve the corresponding sample and experiment ids.
+  NB1: The corresponding species must be present in the species table (see add_species()), otherwise it will be rejected.
+  NB2: the runs will not be added if they are already in the database. They will also not be added if they fail to retrieve the corresponding sample and experiment ids.
 
 =item add_species()
 
@@ -515,16 +521,7 @@ The module logs with Log4perl (easy mode).
   usage:
 
     # those are equivalent
-    $rdb->add_species('anopheles_stephensii', 30069, 'indian');
-
-=item get_prod_name()
-
-  function       : extract the production name for a taxon_id + strain couple.
-  returntype     : String, production name
-  usage:
-
-    # those are equivalent
-    my $name = $rdb->get_prod_name(30069, 'Indian');
+    $rdb->add_species('anopheles_stephensiI', 30069, 'indian');
     
 =back
 
@@ -536,9 +533,9 @@ RNAseqDB::DB requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-* Bio::EnsEMBL::ENA (eg-ena)
-* Log::Log4perl
-* DBIx::Class
+ * Bio::EnsEMBL::ENA (eg-ena)
+ * Log::Log4perl
+ * DBIx::Class
 
 
 =head1 BUGS AND LIMITATIONS

@@ -9,8 +9,10 @@ BEGIN : {
 ok defined(my $rdb = RNAseqDB::DB->connect()), "Constructor";
 isa_ok($rdb, "RNAseqDB::DB", "RNAseqDB::DB constructor");
 
-my @methods = (
-  add_run,
+my @methods = qw(
+  connect
+  add_sra
+  add_species
 );
 can_ok($rdb, @methods);
 

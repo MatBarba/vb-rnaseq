@@ -7,9 +7,84 @@ use List::Util qw( first );
 use Log::Log4perl qw( :easy );
 my $logger = get_logger();
 use Data::Dumper;
+use Readonly;
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 use base 'RNAseqDB::Schema';
+
+my Readonly $SRP_REGEX = qr{[SED]RP\d+};
+my Readonly $SRX_REGEX = qr{[SED]RX\d+};
+my Readonly $SRR_REGEX = qr{[SED]RR\d+};
+my Readonly $SRS_REGEX = qr{[SED]RS\d+};
+
+sub add_sra {
+  my ($self, $sra_acc) = @_;
+  
+  if ($sra_acc =~ $SRP_REGEX) {
+    $self->add_study( $sra_acc );
+  }
+  elsif ($sra_acc =~ $SRX_REGEX) {
+    $self->add_experiment( $sra_acc );
+  }
+  elsif ($sra_acc =~ $SRR_REGEX) {
+    $self->add_run( $sra_acc );
+  }
+  elsif ($sra_acc =~ $SRS_REGEX) {
+    $self->add_sample( $sra_acc );
+  }
+}
+
+sub add_runs_from() {
+  my ($self, $acc, $table) = @_;
+  
+  return 0 if not defined $acc or $acc =~ /^\s*$/;
+  
+  # Try to get the id if it exists
+  my $table_class = ucfirst $table;
+  my $key = $table . '_sra_acc';
+  my $req = $self->resultset( $table_class )->search({
+      $key => $acc,
+  });
+
+  my @rows = $req->all;
+  my $num = scalar @rows;
+  if ($num == 1) {
+    $logger->debug("$table " . $acc . " has 1 id already.");
+    return 0;
+  }
+ 
+  # Retrieve data from ENA
+  my $adaptor = get_adaptor( $table );
+  my ($sra) = @{ $adaptor->get_by_accession($acc) };
+  
+  if (not defined $sra) {
+    $logger->warn("$table impossible to get: " . $acc);
+    return 0;
+  }
+  
+  # Add each one individually
+  my $total = 0;
+  for my $run (@{ $sra->runs() }) {
+    $self->add_run( $run->accession() );
+    $total++;
+  }
+  return $total;
+}
+
+sub add_study {
+  my ($self, $study_acc) = @_;
+  return $self->add_runs_from($study_acc, 'study');
+}
+
+sub add_experiment {
+  my ($self, $experiment_acc) = @_;
+  return $self->add_runs_from($experiment_acc, 'experiment');
+}
+
+sub add_sample {
+  my ($self, $sample_acc) = @_;
+  return $self->add_runs_from($sample_acc, 'sample');
+}
 
 sub add_run {
   my ($self, $run_acc) = @_;

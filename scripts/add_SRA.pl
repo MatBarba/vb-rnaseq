@@ -25,17 +25,18 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-# Add a single run from the command-line
+# Add a single SRA accession from the command-line
 my $runs_added = 0;
-if ($opt{run}) {
-  my $added = $db->add_run( $opt{run} );
+if ($opt{sra_acc}) {
+  my $added = $db->add_sra( $opt{sra_acc} );
   $runs_added += $added;
 }
+
 # Or add a list from a file (more efficient)
 else {
-  my @runs = get_runs_from_file($opt{file});
-  for my $run_acc (@runs) {
-    my $added = $db->add_run( $run_acc );
+  my @sras = get_sras_from_file( $opt{file} );
+  for my $sra_acc (@sras) {
+    my $added = $db->add_sra( $sra_acc );
     $runs_added += $added;
   }
 }
@@ -44,17 +45,17 @@ $logger->info("$runs_added new runs added");
 
 ###############################################################################
 # UTILITY SUBS
-sub get_runs_from_file {
+sub get_sras_from_file {
   my $file = shift;
   
-  my @run_accs;
-  open my $RUNS_FH, '<', $file;
-  while( my $line = readline $RUNS_FH ) {
+  my @sra_accs;
+  open my $SRAS_FH, '<', $file;
+  while( my $line = readline $SRAS_FH ) {
     chomp $line;
-    push @run_accs, $line;
+    push @sra_accs, $line;
   }
-  close $RUNS_FH;
-  return @run_accs;
+  close $SRAS_FH;
+  return @sra_accs;
 }
 
 ###############################################################################
@@ -67,7 +68,7 @@ sub usage {
     $help = "[ $error ]\n";
   }
   $help .= <<'EOF';
-    This script adds an SRA run to the RNAseqDB.
+    This script adds SRA runs to the RNAseqDB from a single SRA accession or from a list.
 
     Database connection:
     --host    <str>   : host name
@@ -77,9 +78,9 @@ sub usage {
     --db <str>        : database name
     
     Input:
-    --run <str>       : SRA run accession (e.g. SRR000000)
+    --sra_acc <str>   : SRA accession (e.g. SRP000000 for a study)
     or
-    --file <path>     : path to a file with a list of SRA run accessions
+    --file <path>     : path to a file with a list of SRA accessions
     
     Other:
     --help            : show this help message
@@ -99,7 +100,7 @@ sub opt_check {
     "user=s",
     "password=s",
     "db=s",
-    "run=s",
+    "sra_acc=s",
     "file=s",
     "help",
     "verbose",
@@ -111,7 +112,7 @@ sub opt_check {
   usage("Need --port") if not $opt{port};
   usage("Need --user") if not $opt{user};
   usage("Need --db") if not $opt{db};
-  usage("Need --run or --file") if not ($opt{run} xor $opt{file});
+  usage("Need --run or --file") if not ($opt{sra_acc} xor $opt{file});
   $opt{password} ||= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

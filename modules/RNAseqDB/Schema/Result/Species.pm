@@ -115,18 +115,6 @@ __PACKAGE__->set_primary_key("species_id");
 
 =head1 UNIQUE CONSTRAINTS
 
-=head2 C<production_name>
-
-=over 4
-
-=item * L</production_name>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("production_name", ["production_name"]);
-
 =head2 C<taxon_id>
 
 =over 4
@@ -142,8 +130,8 @@ __PACKAGE__->add_unique_constraint("production_name", ["production_name"]);
 __PACKAGE__->add_unique_constraint("taxon_id", ["taxon_id", "strain"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XKbEg6wnNHtUIPfZ4O8f+A
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-04 11:32:50
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z1TlLefeGKLrzea3GLZJ1Q
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -131,6 +131,8 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 @description             Description of the SRA sample.
 @taxon_id                NCBI taxon id.
 @strain                  Name of the strain.
+@biosample_acc           Biosample accession.
+@biosample_group_acc     Biosample group.
 @species_id              Species table primary id (foreign key), to match the correct production_name.
 @metasum                 Checksum of @title.
 @date                    Entry timestamp.
@@ -145,13 +147,17 @@ CREATE TABLE sample (
   description               TEXT,
   taxon_id                  INT(10),
   strain                    TEXT,
+  biosample_acc             VARCHAR(15) UNIQUE,
+  biosample_group_acc       VARCHAR(15),
   species_id                INT(10),
   metasum                   CHAR(32),
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY sample_id_idx              (sample_id),
-  KEY sample_sra_acc_idx         (sample_sra_acc)
+  KEY sample_sra_acc_idx         (sample_sra_acc),
+  KEY biosample_acc_idx          (biosample_acc),
+  KEY biosample_group_acc_idx    (biosample_group_acc)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample

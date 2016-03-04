@@ -56,6 +56,18 @@ __PACKAGE__->table("sample");
   data_type: 'text'
   is_nullable: 1
 
+=head2 biosample_acc
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 15
+
+=head2 biosample_group_acc
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 15
+
 =head2 species_id
 
   data_type: 'integer'
@@ -101,6 +113,10 @@ __PACKAGE__->add_columns(
   { data_type => "integer", is_nullable => 1 },
   "strain",
   { data_type => "text", is_nullable => 1 },
+  "biosample_acc",
+  { data_type => "varchar", is_nullable => 1, size => 15 },
+  "biosample_group_acc",
+  { data_type => "varchar", is_nullable => 1, size => 15 },
   "species_id",
   { data_type => "integer", is_nullable => 1 },
   "metasum",
@@ -135,6 +151,18 @@ __PACKAGE__->set_primary_key("sample_id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<biosample_acc>
+
+=over 4
+
+=item * L</biosample_acc>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("biosample_acc", ["biosample_acc"]);
+
 =head2 C<sample_sra_acc>
 
 =over 4
@@ -148,8 +176,8 @@ __PACKAGE__->set_primary_key("sample_id");
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-02 13:02:14
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:huX1t2nmeYi2zx/KWr3RJA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-04 11:32:50
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WUAIYZC5IDuRr6SMN4maRw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

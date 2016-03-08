@@ -27,9 +27,10 @@ my $db = RNAseqDB::DB->connect(
 
 # Add a single species from the command-line
 my $species_added = 0;
-if ($opt{species} and $opt{taxon_id}) {
+if ($opt{production_name} and $opt{taxon_id}) {
   my $species = {
-    production_name => $opt{species},
+    production_name => $opt{production_name},
+    binomial_name   => $opt{binomial_name},
     taxon_id        => $opt{taxon_id},
     strain          => $opt{strain},
   };
@@ -57,11 +58,12 @@ sub get_species_from_file {
   open my $SPECIES_FH, '<', $file;
   while( my $line = readline $SPECIES_FH ) {
     chomp $line;
-    my @elts = split /\s+/, $line;
+    my @elts = split /\t/, $line;
     my %species = (
-      production_name => $elts[0],
-      taxon_id        => $elts[1],
-      strain          => $elts[2] ? $elts[2] : '',
+      binomial_name   => $elts[0],
+      production_name => $elts[1],
+      taxon_id        => $elts[2],
+      strain          => $elts[3] ? $elts[3] : '',
     );
     push @species_list, \%species;
   }
@@ -89,9 +91,10 @@ sub usage {
     --db <str>        : database name
     
     Input:
-    --species  <str>  : Production name
-    --taxon_id <str>  : NCBI taxonomic id
-    --strain   <str>  : Strain name (optional)
+    --production_name <str> : Production name
+    --binomial_name <str>   : Binomial name
+    --taxon_id <str>        : NCBI taxonomic id
+    --strain <str>          : Strain name (optional)
     or
     --file <path>     : path to a file with a list of SRA run accessions
     
@@ -113,7 +116,8 @@ sub opt_check {
     "user=s",
     "password=s",
     "db=s",
-    "species=s",
+    "production_name=s",
+    "binomial_name=s",
     "taxon_id=s",
     "strain=s",
     "file=s",
@@ -127,7 +131,7 @@ sub opt_check {
   usage("Need --port") if not $opt{port};
   usage("Need --user") if not $opt{user};
   usage("Need --db") if not $opt{db};
-  usage("Need --species and --taxon_id, or --file") if not (($opt{species} and $opt{taxon_id}) xor $opt{file});
+  usage("Need --species and --taxon_id, or --file") if not (($opt{production_name} and $opt{taxon_id}) xor $opt{file});
   $opt{password} ||= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

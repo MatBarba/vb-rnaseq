@@ -255,7 +255,7 @@ sub _get_sample_id {
     my $taxon_id = $sample->taxon()->taxon_id();
     
     # Get the correct species_id
-    my $species_id = $self->_get_species_id($taxon_id, $strain);
+    my $species_id = $self->_get_strain_id($taxon_id, $strain);
     
     # No species id? Failed to add
     if (not defined $species_id) {
@@ -277,7 +277,7 @@ sub _get_sample_id {
   }
 }
 
-sub _get_species_id {
+sub _get_strain_id {
   my ($self, $taxon_id, $strain) = @_;
   $strain ||= '';
   
@@ -344,7 +344,7 @@ sub _get_species_id {
   }
 }
 
-sub _get_species_ids {
+sub _get_strain_ids {
   my $self = shift;
   
   if (not defined $self->{species_ids}) {
@@ -380,19 +380,58 @@ sub _load_species {
   $self->{species_ids} = \%species_id;
 }
 
+sub _get_species_id {
+  my ($self, $species_href) = @_;
+  my $taxid = $species_href->{taxon_id};
+  my $name = $species_href->{binomial_name};
+  delete $species_href->{taxon_id};
+  delete $species_href->{binomial_name};
+  
+  # Try to get the species id if it exists
+  my $species_req = $self->resultset('Species')->search({
+      taxon_id => $taxid,
+  });
+
+  my @species_rows = $species_req->all;
+  my $num_species = scalar @species_rows;
+  if ($num_species == 1) {
+    $logger->debug("Species $taxid has 1 id already.");
+    return $species_rows[0]->species_id;
+  }
+  # Error: there should not be more than one row per species
+  elsif ($num_species > 1) {
+    $logger->warn("Several species found with taxid $taxid");
+    return;
+  }
+  # Last case: we have to add this species
+  else {
+    my $insertion = $self->resultset('Species')->create({
+        taxon_id        => $taxid,
+        binomial_name   => $name,
+      });
+    $logger->info("NEW SPECIES added: $taxid, $name");
+    return $insertion->id();
+  }
+  return;
+}
+
 sub add_species {
   my ($self, $species_href) = @_;
   
   my $nname   = $species_href->{production_name};
-  my $ntax    = $species_href->{taxon_id};
   my $nstrain = $species_href->{strain};
   $nstrain ||= '';
   
-  if (    defined $nname
-      and defined $ntax
-  ) {
+  my $species_id = $self->_get_species_id( $species_href );
+  if (not defined $species_id) {
+    $logger->warn("WARNING: Couldn't get the species id for $nname, $nstrain");
+    return 0;
+  }
+  $species_href->{species_id} = $species_id;
+  
+  if (defined $nname) {
     # Check that the taxon doesn't already exists
-    my $currents = $self->resultset('Species')->search({
+    my $currents = $self->resultset('Strain')->search({
         production_name => $nname
       });
     
@@ -400,38 +439,19 @@ sub add_species {
     
     # Already exists? Check that it is the same
     if (defined $current_sp) {
-      my $cname   = $current_sp->production_name;
-      my $ctax    = $current_sp->taxon_id;
-      my $cstrain = $current_sp->strain;
-      $cstrain ||= '';
-      
-      if (   (defined $ntax and not defined $ctax)
-          or (defined $ctax and not defined $ntax)
-          or ($ctax != $ntax)
-      ) {
-        $logger->warn("WARNING: Adding an existing name $cname with a different taxon_id: $ntax / $ctax (is it an alias?)");
-      }
-      elsif ( (defined $nstrain and not defined $cstrain)
-          or  (defined $cstrain and not defined $nstrain)
-          or  (defined $cstrain and defined $nstrain and $cstrain ne $nstrain)
-      ) {
-        $logger->warn("WARNING: Adding an existing name $cname with a different strain: $nstrain / $cstrain (is it an alias?)");
-      }
-      else {
-        $logger->debug("Species $cname already in the database");
-        return 0;
-      }
-      $self->resultset('Species')->create( $species_href );
-      return 1;
+      $logger->debug("Strain with name $nname already in the database");
+      return 0;
+    }
       
     # Ok? Add it
-    } else {
-      $self->resultset('Species')->create( $species_href );
-      $logger->debug("NEW SPECIES added: $nname");
+    else {
+      $self->resultset('Strain')->create( $species_href );
+      $logger->debug("NEW STRAIN added: $nname, $nstrain");
       return 1;
     }
   }
    else {
+     $logger->warn("WARNING: no production_name given");
     return 0;
   }
 }

@@ -133,7 +133,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 @strain                  Name of the strain.
 @biosample_acc           Biosample accession.
 @biosample_group_acc     Biosample group.
-@species_id              Species table primary id (foreign key), to match the correct production_name.
+@strain_id               Strain table primary id (foreign key), to match the correct production_name.
 @metasum                 Checksum of @title.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
@@ -149,7 +149,7 @@ CREATE TABLE sample (
   strain                    TEXT,
   biosample_acc             VARCHAR(15) UNIQUE,
   biosample_group_acc       VARCHAR(15),
-  species_id                INT(10),
+  strain_id                 INT(10),
   metasum                   CHAR(32),
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
@@ -168,13 +168,12 @@ CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
 /**
 
 @species table
-@desc A list of all existing (allowed) species, with the corresponding production names.
+@desc A list of all existing species.
 
 @species_id              Species id (primary key, internal identifier).
-@production_name         Production name for this species (species + strain).
 @taxon_id                NCBI species id.
-@strain                  Name of the strain.
-@metasum                 Checksum of @species_name + @taxon + @strain.
+@binomial_name           Species binomial name.
+@metasum                 Checksum of @binomial_name + @taxon.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
 
@@ -182,22 +181,51 @@ CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
 
 CREATE TABLE species (
   species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  taxon_id                  INT(10) UNIQUE,
+  binomial_name             VARCHAR(128),
+  metasum                   CHAR(32),
+  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  
+  KEY species_id_idx              (species_id)
+) ENGINE=MyISAM;
+
+CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
+CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
+
+/**
+
+@strain table
+@desc A list of all existing (allowed) strains.
+
+@strain_id               Strain id (primary key, internal identifier).
+@species_id              Species table primary key (foreign key).
+@production_name         Production name for this strain (species + strain).
+@strain                  Name of the strain.
+@metasum                 Checksum of @production_name + @strain.
+@date                    Entry timestamp.
+@status                  Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE strain (
+  strain_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  species_id                INT(10),
   production_name           VARCHAR(64) NOT NULL,
-  taxon_id                  INT(10),
   strain                    VARCHAR(32),
   metasum                   CHAR(32),
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  KEY species_id_idx              (species_id),
-  UNIQUE KEY                      (taxon_id, strain)
+  KEY strain_id_idx              (strain_id)
 ) ENGINE=MyISAM;
 
-CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.taxon_id, NEW.strain) );
-CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.taxon_id, NEW.strain) );
-
+CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
+CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
 
 /**
 

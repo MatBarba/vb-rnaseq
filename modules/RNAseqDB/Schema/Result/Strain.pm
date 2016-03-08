@@ -1,12 +1,12 @@
 use utf8;
-package RNAseqDB::Schema::Result::Sample;
+package RNAseqDB::Schema::Result::Strain;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-RNAseqDB::Schema::Result::Sample
+RNAseqDB::Schema::Result::Strain
 
 =cut
 
@@ -15,63 +15,37 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<sample>
+=head1 TABLE: C<strain>
 
 =cut
 
-__PACKAGE__->table("sample");
+__PACKAGE__->table("strain");
 
 =head1 ACCESSORS
 
-=head2 sample_id
+=head2 strain_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 sample_sra_acc
-
-  data_type: 'char'
-  is_nullable: 0
-  size: 12
-
-=head2 title
-
-  data_type: 'text'
-  is_nullable: 1
-
-=head2 description
-
-  data_type: 'text'
-  is_nullable: 1
-
-=head2 taxon_id
+=head2 species_id
 
   data_type: 'integer'
   is_nullable: 1
+
+=head2 production_name
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 64
 
 =head2 strain
 
-  data_type: 'text'
-  is_nullable: 1
-
-=head2 biosample_acc
-
   data_type: 'varchar'
   is_nullable: 1
-  size: 15
-
-=head2 biosample_group_acc
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 15
-
-=head2 strain_id
-
-  data_type: 'integer'
-  is_nullable: 1
+  size: 32
 
 =head2 metasum
 
@@ -96,29 +70,19 @@ __PACKAGE__->table("sample");
 =cut
 
 __PACKAGE__->add_columns(
-  "sample_id",
+  "strain_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "sample_sra_acc",
-  { data_type => "char", is_nullable => 0, size => 12 },
-  "title",
-  { data_type => "text", is_nullable => 1 },
-  "description",
-  { data_type => "text", is_nullable => 1 },
-  "taxon_id",
+  "species_id",
   { data_type => "integer", is_nullable => 1 },
+  "production_name",
+  { data_type => "varchar", is_nullable => 0, size => 64 },
   "strain",
-  { data_type => "text", is_nullable => 1 },
-  "biosample_acc",
-  { data_type => "varchar", is_nullable => 1, size => 15 },
-  "biosample_group_acc",
-  { data_type => "varchar", is_nullable => 1, size => 15 },
-  "strain_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "varchar", is_nullable => 1, size => 32 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -141,43 +105,17 @@ __PACKAGE__->add_columns(
 
 =over 4
 
-=item * L</sample_id>
+=item * L</strain_id>
 
 =back
 
 =cut
 
-__PACKAGE__->set_primary_key("sample_id");
-
-=head1 UNIQUE CONSTRAINTS
-
-=head2 C<biosample_acc>
-
-=over 4
-
-=item * L</biosample_acc>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("biosample_acc", ["biosample_acc"]);
-
-=head2 C<sample_sra_acc>
-
-=over 4
-
-=item * L</sample_sra_acc>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
+__PACKAGE__->set_primary_key("strain_id");
 
 
 # Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-08 15:44:37
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YRFUmzdcb0Nn1HbZcG/OPg
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:U2DBMYLzziXEwJqvEL22TQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

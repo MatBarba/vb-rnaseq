@@ -6,6 +6,9 @@ HOST_COMMAND=$1
 # The name of the RNAseq database to get the schema from
 DB_NAME=$2
 
+if [ -z "$HOST_COMMAND" ]; then echo "Host command needed as argument 1"; exit; fi
+if [ -z "$DB_NAME" ]; then echo "Database name needed ar argument 2"; exit; fi
+
 # Get database credentials, and store them in $DB_HOST, etc.
 eval $($HOST_COMMAND details env_DB_)
 

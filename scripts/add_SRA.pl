@@ -33,7 +33,7 @@ if ($opt{sra_acc}) {
 }
 # Or add a list from a file (more efficient)
 if ($opt{file}) {
-  push @sras = get_sras_from_file( $opt{file} );
+  push @sras, get_sras_from_file( $opt{file} );
 }
 
 # Add all runs for those SRA accessions

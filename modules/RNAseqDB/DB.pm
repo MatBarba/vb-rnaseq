@@ -534,14 +534,24 @@ The module logs with Log4perl (easy mode).
 =item add_species()
 
   function       : add a species line to the species table.
-  arg[1]         : production name
-  arg[2]         : taxon name
-  arg[3]         : strain name
+  arg            : hash ref with the following keys:
+  
+    production_name
+    binomial_name
+    taxon_id
+    strain
+  
   returntype     : integer: 0 = not added, 1 = added
   usage:
 
     # those are equivalent
-    $rdb->add_species('anopheles_stephensiI', 30069, 'indian');
+    my $species_href = {
+      production_name => 'anopheles_stephensiI',
+      binomial_name   => 'Anopheles stephensi',
+      taxon_id        => 30069,
+      strain          => 'Indian',
+    }
+    $rdb->add_species( $species_href );
     
 =back
 

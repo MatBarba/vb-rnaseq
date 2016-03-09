@@ -78,7 +78,7 @@ sub _add_runs_from() {
   # Add each one individually
   my $total = 0;
   for my $run (@{ $sra->runs() }) {
-    $self->add_run( $run->accession() );
+    $self->_add_run( $run->accession() );
     $total++;
   }
   return $total;
@@ -255,10 +255,10 @@ sub _get_sample_id {
     my $taxon_id = $sample->taxon()->taxon_id();
     
     # Get the correct species_id
-    my $species_id = $self->_get_strain_id($taxon_id, $strain);
+    my $strain_id = $self->_get_strain_id($taxon_id, $strain);
     
     # No species id? Failed to add
-    if (not defined $species_id) {
+    if (not defined $strain_id) {
       $logger->info("Skip sample because the species ($taxon_id, $strain) could not be found in the species table");
       return;
     }
@@ -270,7 +270,7 @@ sub _get_sample_id {
         description       => $sample->description(),
         taxon_id          => $taxon_id,
         strain            => $strain,
-        species_id        => $species_id,
+        strain_id         => $strain_id,
         biosample_acc     => $biosample_acc,
       });
     return $insertion->id();
@@ -281,7 +281,7 @@ sub _get_strain_id {
   my ($self, $taxon_id, $strain) = @_;
   $strain ||= '';
   
-  my $species_href = $self->_get_species_ids();
+  my $species_href = $self->_get_strain_ids();
   return if not defined $species_href;
   my $sp_taxons = $species_href->{ $taxon_id };
   
@@ -347,25 +347,25 @@ sub _get_strain_id {
 sub _get_strain_ids {
   my $self = shift;
   
-  if (not defined $self->{species_ids}) {
+  if (not defined $self->{strain_ids}) {
    $self->_load_species(); 
   }
-  return $self->{species_ids};
+  return $self->{strain_ids};
 }
 
 sub _load_species {
   my ($self) = @_;
   
-  my $species_req = $self->resultset('Species')->search({
+  my $species_req = $self->resultset('Taxonomy')->search({
       status  => 'ACTIVE',
     });
   my @lines = $species_req->all;
   if (@lines == 0) {
-    $logger->warn("WARNING: the species table appears to be empty");
+    $logger->warn("WARNING: the taxonomy tables appear to be empty");
     return;
   }
   
-  my %species_id = ();
+  my %strain_ids = ();
   
   for my $line (@lines) {
     my $strain = $line->strain;
@@ -374,10 +374,10 @@ sub _load_species {
     $taxon_id ||= '';
     $logger->warn("Taxon without taxon_id: " . $line->production_name) if not defined $taxon_id;
     my $key = $taxon_id . '__' . $strain;
-    $species_id{ $taxon_id }{ $strain } = $line->species_id;
+    $strain_ids{ $taxon_id }{ $strain } = $line->strain_id;
   }
   
-  $self->{species_ids} = \%species_id;
+  $self->{strain_ids} = \%strain_ids;
 }
 
 sub _get_species_id {

@@ -227,6 +227,18 @@ CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
 CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
 
+    
+CREATE VIEW taxonomy AS
+  SELECT binomial_name,
+         taxon_id,
+         production_name,
+        strain,
+        strain_id,
+        strain.status AS status
+  FROM strain LEFT JOIN species
+    USING(species_id)
+;
+
 /**
 
 PIPELINE TABLES

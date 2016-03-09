@@ -33,7 +33,13 @@ __PACKAGE__->table("sample");
 =head2 sample_sra_acc
 
   data_type: 'char'
-  is_nullable: 0
+  is_nullable: 1
+  size: 12
+
+=head2 sample_private_acc
+
+  data_type: 'char'
+  is_nullable: 1
   size: 12
 
 =head2 title
@@ -104,7 +110,9 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "sample_sra_acc",
-  { data_type => "char", is_nullable => 0, size => 12 },
+  { data_type => "char", is_nullable => 1, size => 12 },
+  "sample_private_acc",
+  { data_type => "char", is_nullable => 1, size => 12 },
   "title",
   { data_type => "text", is_nullable => 1 },
   "description",
@@ -163,6 +171,18 @@ __PACKAGE__->set_primary_key("sample_id");
 
 __PACKAGE__->add_unique_constraint("biosample_acc", ["biosample_acc"]);
 
+=head2 C<sample_private_acc>
+
+=over 4
+
+=item * L</sample_private_acc>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("sample_private_acc", ["sample_private_acc"]);
+
 =head2 C<sample_sra_acc>
 
 =over 4
@@ -176,8 +196,8 @@ __PACKAGE__->add_unique_constraint("biosample_acc", ["biosample_acc"]);
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-08 15:44:37
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YRFUmzdcb0Nn1HbZcG/OPg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-09 15:31:23
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oIOqL07jhV49Gg/NdIfcuQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

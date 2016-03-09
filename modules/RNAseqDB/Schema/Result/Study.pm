@@ -33,7 +33,13 @@ __PACKAGE__->table("study");
 =head2 study_sra_acc
 
   data_type: 'char'
-  is_nullable: 0
+  is_nullable: 1
+  size: 12
+
+=head2 study_private_acc
+
+  data_type: 'char'
+  is_nullable: 1
   size: 12
 
 =head2 title
@@ -77,7 +83,9 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "study_sra_acc",
-  { data_type => "char", is_nullable => 0, size => 12 },
+  { data_type => "char", is_nullable => 1, size => 12 },
+  "study_private_acc",
+  { data_type => "char", is_nullable => 1, size => 12 },
   "title",
   { data_type => "text", is_nullable => 1 },
   "abstract",
@@ -114,6 +122,18 @@ __PACKAGE__->set_primary_key("study_id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<study_private_acc>
+
+=over 4
+
+=item * L</study_private_acc>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("study_private_acc", ["study_private_acc"]);
+
 =head2 C<study_sra_acc>
 
 =over 4
@@ -127,8 +147,8 @@ __PACKAGE__->set_primary_key("study_id");
 __PACKAGE__->add_unique_constraint("study_sra_acc", ["study_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xdD6f7Xxp35GNBkLGdMLhA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-09 15:31:23
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0lWqUyciw7evvSgYHWcC2g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

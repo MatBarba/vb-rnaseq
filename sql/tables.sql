@@ -21,6 +21,7 @@ SRA tracking tables
 
 @study_id           SRA study id (primary key, internal identifier).
 @study_sra_acc      SRA study accession (e.g. SRP000000).
+@study_private_acc  Private study accession (e.g. VBSRP000000), for data without SRA accessions.
 @title              Title of the SRA study.
 @abstract           Abstract of the SRA study.
 @metasum            Checksum of @title + @abstract.
@@ -30,13 +31,14 @@ SRA tracking tables
 */
 
 CREATE TABLE study (
-  study_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  study_sra_acc     CHAR(12) NOT NULL UNIQUE,
-  title             TEXT,
-  abstract          TEXT,
-  metasum           CHAR(32),
-  date              TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status            ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  study_id           INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  study_sra_acc      CHAR(12) UNIQUE,
+  study_private_acc  CHAR(12) UNIQUE,
+  title              TEXT,
+  abstract           TEXT,
+  metasum            CHAR(32),
+  date               TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status             ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY study_id_idx        (study_id),
   KEY study_sra_acc_idx   (study_sra_acc)
@@ -55,6 +57,7 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 @experiment_id           SRA experiment id (primary key, internal identifier).
 @study_id                Study table primary id (foreign key).
 @experiment_sra_acc      SRA experiment accession (e.g. SRX000000).
+@experiment_private_acc  Private experiment accession (e.g. VBSRX000000), for data without SRA accessions.
 @title                   Title of the SRA experiment.
 @metasum                 Checksum of @title.
 @date                    Entry timestamp.
@@ -65,7 +68,8 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 CREATE TABLE experiment (
   experiment_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   study_id               INT(10) NOT NULL,
-  experiment_sra_acc     CHAR(12) NOT NULL UNIQUE,
+  experiment_sra_acc     CHAR(12) UNIQUE,
+  experiment_private_acc CHAR(12) UNIQUE,
   title                  TEXT,
   metasum                CHAR(32),
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -90,6 +94,7 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 @experiment_id           Experiment table primary key (Foreign key).
 @sample_id               Sample table primary key (Foreign key).
 @run_sra_acc             SRA run accession (e.g. SRR000000).
+@run_private_acc         Private run accession (e.g. VBSRR000000), for data without SRA accessions.
 @title                   Title of the SRA run.
 @submitter               Submitter name of the SRA run.
 @metasum                 Checksum of @title + @submitter.
@@ -102,7 +107,8 @@ CREATE TABLE run (
   run_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   experiment_id          INT(10) NOT NULL,
   sample_id              INT(10) NOT NULL,
-  run_sra_acc            CHAR(12) NOT NULL UNIQUE,
+  run_sra_acc            CHAR(12) UNIQUE,
+  run_private_acc        CHAR(12) UNIQUE,
   title                  TEXT,
   submitter              TEXT,
   metasum                CHAR(32),
@@ -127,6 +133,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 
 @sample_id               SRA sample id (primary key, internal identifier).
 @sample_sra_acc          SRA sample accession (e.g. SRS000000).
+@sample_private_acc      Private sample accession (e.g. VBSRS000000), for data without SRA accessions.
 @title                   Title of the SRA sample.
 @description             Description of the SRA sample.
 @taxon_id                NCBI taxon id.
@@ -142,7 +149,8 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 
 CREATE TABLE sample (
   sample_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  sample_sra_acc            CHAR(12) NOT NULL UNIQUE,
+  sample_sra_acc            CHAR(12) UNIQUE,
+  sample_private_acc        CHAR(12) UNIQUE,
   title                     TEXT,
   description               TEXT,
   taxon_id                  INT(10),

@@ -8,6 +8,7 @@ use Log::Log4perl qw( :easy );
 my $logger = get_logger();
 use Data::Dumper;
 use Readonly;
+use Try::Tiny;
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 use base 'RNAseqDB::Schema';
@@ -33,7 +34,7 @@ sub add_sra {
   }
   elsif ($sra_acc =~ $SRR_REGEX) {
     # Special case: all other cases are wrappers around this
-    return $self->_add_runs($sra_acc);
+    return $self->_add_run($sra_acc);
   }
   elsif ($sra_acc =~ $SRS_REGEX) {
     return $self->_add_runs_from($sra_acc, 'sample');
@@ -68,7 +69,15 @@ sub _add_runs_from() {
  
   # Retrieve data from ENA
   my $adaptor = get_adaptor( $table );
-  my ($sra) = @{ $adaptor->get_by_accession($acc) };
+  
+  my $sra;
+  try {
+    ($sra) = @{ $adaptor->get_by_accession($acc) };
+  }
+  catch {
+    $logger->warn("WARNING: Could not retrieve SRA data for $acc");
+    return 0;
+  };
   
   if (not defined $sra) {
     $logger->warn("$table impossible to get: " . $acc);
@@ -105,7 +114,15 @@ sub _add_run {
   
   # Retrieve run data from ENA
   my $run_adaptor = get_adaptor('Run');
-  my ($run) = @{ $run_adaptor->get_by_accession($run_acc) };
+  
+  my $run;
+  try {
+    ($run) = @{ $run_adaptor->get_by_accession($run_acc) };
+  }
+  catch {
+    $logger->warn("WARNING: Could not retrieve SRA data for $run_acc");
+    return 0;
+  };
   
   if (not defined $run) {
     $logger->warn("Run impossible to get: " . $run_acc);

@@ -17,11 +17,16 @@ use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 use base 'RNAseqDB::Schema';
 
 # Patterns to discriminate between the different SRA elements
-my Readonly $SRP_REGEX = qr{[SED]RP\d+};
-my Readonly $SRX_REGEX = qr{[SED]RX\d+};
-my Readonly $SRR_REGEX = qr{[SED]RR\d+};
-my Readonly $SRS_REGEX = qr{[SED]RS\d+};
+my Readonly $STUDY_REGEX      = qr{[SED]RP\d+};
+my Readonly $EXPERIMENT_REGEX = qr{[SED]RX\d+};
+my Readonly $RUN_REGEX        = qr{[SED]RR\d+};
+my Readonly $SAMPLE_REGEX     = qr{[SED]RS\d+};
 
+my Readonly $PRIVATE_PREFIX    = 'VBSR';
+my Readonly $STUDY_PREFIX      = $PRIVATE_PREFIX . 'S';
+my Readonly $EXPERIMENT_PREFIX = $PRIVATE_PREFIX . 'X';
+my Readonly $RUN_PREFIX        = $PRIVATE_PREFIX . 'R';
+my Readonly $SAMPLE_PREFIX     = $PRIVATE_PREFIX . 'S';
 
 # add_sra     Add all runs related to the given SRA accession to the DB
 # Input       string = SRA accession
@@ -29,17 +34,17 @@ my Readonly $SRS_REGEX = qr{[SED]RS\d+};
 sub add_sra {
   my ($self, $sra_acc) = @_;
   
-  if ($sra_acc =~ $SRP_REGEX) {
+  if ($sra_acc =~ $STUDY_REGEX) {
     return $self->_add_runs_from($sra_acc, 'study');
   }
-  elsif ($sra_acc =~ $SRX_REGEX) {
+  elsif ($sra_acc =~ $EXPERIMENT_REGEX) {
     return $self->_add_runs_from($sra_acc, 'experiment');
   }
-  elsif ($sra_acc =~ $SRR_REGEX) {
+  elsif ($sra_acc =~ $RUN_REGEX) {
     # Special case: all other cases are wrappers around this
     return $self->_add_run($sra_acc);
   }
-  elsif ($sra_acc =~ $SRS_REGEX) {
+  elsif ($sra_acc =~ $SAMPLE_REGEX) {
     return $self->_add_runs_from($sra_acc, 'sample');
   }
   else {
@@ -317,7 +322,7 @@ sub add_private_study {
   
   # Create an accession for this study from its id
   if (not defined $study->{study_private_acc}) {
-    $study->{ study_private_acc } = sprintf("VBSRP%d", $study_id);
+    $study->{ study_private_acc } = sprintf("%s%d", $STUDY_PREFIX, $study_id);
     
     my $update_study = $self->resultset('Study')->search({
         study_id => $study_id,
@@ -351,7 +356,7 @@ sub add_private_study {
     
     # Create an accession for this sample from its id
     if (not defined $sample->{sample_private_acc}) {
-      $sample->{ sample_private_acc } = sprintf("VBSRS%d", $sample_id);
+      $sample->{ sample_private_acc } = sprintf("%s%d", $SAMPLE_PREFIX, $sample_id);
 
       my $update_sample = $self->resultset('Sample')->search({
           sample_id => $sample_id,
@@ -375,7 +380,7 @@ sub add_private_study {
     
     # Create an accession for this experiment from its id
     if (not defined $experiment->{experiment_private_acc}) {
-      $experiment->{ experiment_private_acc } = sprintf("VBSRS%d", $experiment_id);
+      $experiment->{ experiment_private_acc } = sprintf("%s%d", $EXPERIMENT_PREFIX, $experiment_id);
 
       my $update_experiment = $self->resultset('Experiment')->search({
           experiment_id => $experiment_id,
@@ -397,7 +402,7 @@ sub add_private_study {
 
       # Create an accession for this run from its id
       if (not defined $run->{run_private_acc}) {
-        $run->{ run_private_acc } = sprintf("VBSRS%d", $run_id);
+        $run->{ run_private_acc } = sprintf("%s%d", $RUN_PREFIX, $run_id);
 
         my $update_run = $self->resultset('Run')->search({
             run_id => $run_id,

@@ -14,12 +14,14 @@ use MockRNAseqDB qw( create_mock_db drop_mock_db );
 
 # Get a mock DB (RNAseqBD::DB), create with the proper schema
 my $db = create_mock_db();
+my $DONT_DROP = 0;
 
 # Preparation: add necessary species
 $db->add_species({
-    production_name => 'phlebotomus_papatasi',
-    binomial_name   => 'Phlebotomus papatasi',
+    production_name => 'species_xxx',
+    binomial_name   => 'Species xxx',
     taxon_id        => 29031,
+    strain          => 'A',
 });
 
 # Check tables are empty
@@ -29,24 +31,24 @@ check_tables_numbers($db, [0, 0, 0, 0]);
 my $rnaseq_study_json_path = dirname($0) . '/private1.json';
 my $rnaseq_study = {
   info => {
-    title           => 'Phlebotomus papatasi RNAseq study',
-    abstract        => 'Phlebotomus papatasi RNAseq study abstract text',
+    title           => 'Species xxx RNAseq study',
+    abstract        => 'Species xxx RNAseq study abstract text',
   },
-  production_name => 'phlebotomus_papatasi',
+  production_name => 'species_xxx',
 
   experiments =>
   [
     {
       info => {
-        title         => 'Phlebotomus papatasi RNAseq experiment',
+        title         => 'Species xxx RNAseq experiment',
       },
 
       runs => 
       [
         {
           info  => {
-            title         => 'Phlebotomus papatasi RNAseq run',
-            submitter     => 'Phlebotomus papatasi submitter',
+            title         => 'Species xxx RNAseq run',
+            submitter     => 'Species xxx submitter',
           },
           files         => ['Ppap1_1.fastq', 'Ppap1_2.fastq'],
           sample_name   => 'sample1',
@@ -60,8 +62,8 @@ my $rnaseq_study = {
     {
       sample_name   => 'sample1',
       info => {
-        title         => 'Phlebotomus papatasi RNAseq sample 1',
-        description   => 'Phlebotomus papatasi RNAseq sample 1 description text',
+        title         => 'Species xxx RNAseq sample 1',
+        description   => 'Species xxx RNAseq sample 1 description text',
       },
     },
   ],
@@ -103,7 +105,7 @@ sub check_tables_numbers {
 
 # Delete temp database
 END {
-  drop_mock_db($db);
+  drop_mock_db($db) if not $DONT_DROP;
   done_testing();
 }
 

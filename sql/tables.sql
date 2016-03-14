@@ -157,7 +157,7 @@ CREATE TABLE sample (
   strain                    TEXT,
   biosample_acc             VARCHAR(15) UNIQUE,
   biosample_group_acc       VARCHAR(15),
-  strain_id                 INT(10),
+  strain_id                 INT(10) NOT NULL,
   metasum                   CHAR(32),
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',

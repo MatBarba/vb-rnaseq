@@ -329,6 +329,20 @@ sub add_private_study {
   my %samples_ids = ();
   for my $sample_href (@$samples_aref) {
     my $sample = $sample_href->{info};
+    # Make sure we don't insert sample without an id
+    my $tax_request = $self->resultset('Taxonomy')->search({
+        production_name => $study_href->{production_name},
+      });
+    my @taxons = $tax_request->all;
+    my $num_tax = scalar @taxons;
+    if ($num_tax != 1) {
+      $logger->warn("WARNING: not just one taxon found ($num_tax)");
+      return 0;
+    }
+    my $taxon = shift @taxons;
+    $sample->{taxon_id}  = $taxon->get_column('taxon_id');
+    $sample->{strain}    = $taxon->get_column('strain');
+    $sample->{strain_id} = $taxon->get_column('strain_id');
     
     # Insert the sample
     my $insert_sample = $self->resultset('Sample')->create( $sample );

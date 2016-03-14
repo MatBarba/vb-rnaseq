@@ -77,7 +77,7 @@ __PACKAGE__->table("sample");
 =head2 strain_id
 
   data_type: 'integer'
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 metasum
 
@@ -126,7 +126,7 @@ __PACKAGE__->add_columns(
   "biosample_group_acc",
   { data_type => "varchar", is_nullable => 1, size => 15 },
   "strain_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", is_nullable => 0 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -196,8 +196,8 @@ __PACKAGE__->add_unique_constraint("sample_private_acc", ["sample_private_acc"])
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-09 15:31:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oIOqL07jhV49Gg/NdIfcuQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 13:27:59
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tQL8TTJjvjqP1umTttZ9Fw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

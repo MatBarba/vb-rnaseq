@@ -1,0 +1,40 @@
+{
+  "info": {
+    "title": "Species xxx RNAseq study",
+    "abstract": "Species xxx RNAseq study abstract text"
+  },
+  "production_name": "species_x",
+
+  "experiments":
+    [
+    {
+      "info": {
+        "title": "Species xxx RNAseq experiment"
+      },
+
+      "runs": 
+        [
+        {
+          "info": {
+            "title": "Species xxx RNAseq run",
+            "submitter": "Species xxx submitter"
+          },
+          "files": ["Spx_1.fastq", "Spx_2.fastq"],
+          "sample_name": "sample1"
+        }
+        ]
+    }
+    ],
+
+  "samples": 
+    [
+    {
+      "sample_name": "sample1",
+      "info": {
+        "title": "Species xxx RNAseq sample 1",
+        "description": "Species xxx RNAseq sample 1 description text"
+      }
+    }
+    ]
+}
+

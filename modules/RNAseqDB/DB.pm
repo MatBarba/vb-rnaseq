@@ -4,7 +4,10 @@ package RNAseqDB::DB;
 use strict;
 use warnings;
 use List::Util qw( first );
+use JSON;
+use Perl6::Slurp;
 use Log::Log4perl qw( :easy );
+
 my $logger = get_logger();
 use Data::Dumper;
 use Readonly;
@@ -64,7 +67,11 @@ sub _add_runs_from() {
   my $num = scalar @rows;
   if ($num == 1) {
     $logger->debug("$table " . $acc . " has 1 id already.");
-    return 0;
+    
+    # Stop if trying to insert a run
+    if ($table eq 'run') {
+      return 0;
+    }
   }
  
   # Retrieve data from ENA
@@ -87,8 +94,8 @@ sub _add_runs_from() {
   # Add each one individually
   my $total = 0;
   for my $run (@{ $sra->runs() }) {
-    $self->_add_run( $run->accession() );
-    $total++;
+    my $num_inserted = $self->_add_run( $run->accession() );
+    $total += $num_inserted;
   }
   return $total;
 }
@@ -293,6 +300,107 @@ sub _get_sample_id {
     return $insertion->id();
   }
 }
+
+#######################################################################################################################
+# Private studies
+sub add_private_study {
+  my ($self, $study_href) = @_;
+  
+  my $num = 0;
+  
+  # First, get the study
+  my $study = $study_href->{info};
+  
+  # Insert the study
+  my $insert_study = $self->resultset('Study')->create( $study );
+  my $study_id = $insert_study->id;
+  
+  # Create an accession for this study from its id
+  if (not defined $study->{study_private_acc}) {
+    $study->{ study_private_acc } = sprintf("VBSRP%d", $study_id);
+    
+    my $update_study = $self->resultset('Study')->search({
+        study_id => $study_id,
+      })->update( $study );
+  }
+  
+  # Next, insert the samples
+  my $samples_aref = $study_href->{samples};
+  my %samples_ids = ();
+  for my $sample_href (@$samples_aref) {
+    my $sample = $sample_href->{info};
+    
+    # Insert the sample
+    my $insert_sample = $self->resultset('Sample')->create( $sample );
+    my $sample_id = $insert_sample->id;
+    
+    # Create an accession for this sample from its id
+    if (not defined $sample->{sample_private_acc}) {
+      $sample->{ sample_private_acc } = sprintf("VBSRS%d", $sample_id);
+
+      my $update_sample = $self->resultset('Sample')->search({
+          sample_id => $sample_id,
+        })->update( $sample );
+    }
+    
+    # Keep the match sample id = sample_name (to link the runs)
+    $samples_ids{ $sample_href->{sample_name} } = $sample_id;
+  }
+  
+  # Next, insert the experiments (and runs)
+  my $experiments_aref = $study_href->{experiments};
+  for my $experiment_href (@$experiments_aref) {
+    my $experiment = $experiment_href->{info};
+    
+    # Insert the experiment
+    my $insert_experiment = $self->resultset('Experiment')->create( $experiment );
+    my $experiment_id = $insert_experiment->id;
+    
+    # Create an accession for this experiment from its id
+    if (not defined $experiment->{experiment_private_acc}) {
+      $experiment->{ experiment_private_acc } = sprintf("VBSRS%d", $experiment_id);
+
+      my $update_experiment = $self->resultset('Experiment')->search({
+          experiment_id => $experiment_id,
+        })->update( $experiment );
+    }
+    
+    # Finally, add all the corresponding runs
+    my $runs_aref = $experiment_href->{runs};
+    my %runs_ids = ();
+    for my $run_href (@$runs_aref) {
+      my $run = $run_href->{info};
+      $run->{sample_id} = $samples_ids{ $run_href->{sample_name} };
+
+      # Insert the run
+      my $insert_run = $self->resultset('Run')->create( $run );
+      my $run_id = $insert_run->id;
+
+      # Create an accession for this run from its id
+      if (not defined $run->{run_private_acc}) {
+        $run->{ run_private_acc } = sprintf("VBSRS%d", $run_id);
+
+        my $update_run = $self->resultset('Run')->search({
+            run_id => $run_id,
+          })->update( $run );
+      }
+      $num++;
+    }
+  }
+  return $num;
+}
+
+sub add_private_study_from_json {
+  my ($self, $json_path) = @_;
+  return 0 if not -s $json_path;
+  
+  my $json = slurp $json_path;
+  my $rnaseq_study = decode_json($json);
+  
+  return $self->add_private_study($rnaseq_study);
+}
+#######################################################################################################################
+# Taxonomy
 
 sub _get_strain_id {
   my ($self, $taxon_id, $strain) = @_;
@@ -548,6 +656,65 @@ The module logs with Log4perl (easy mode).
   NB1: The corresponding species must be present in the species table (see add_species()), otherwise it will be rejected.
   NB2: the runs will not be added if they are already in the database. They will also not be added if they fail to retrieve the corresponding sample and experiment ids.
 
+=item add_private_study()
+=item add_private_study_from_json()
+
+  Function       : Add a private study (no SRA) described in a structured data format. In the *_from_json version, the data is imported from a json file: this is the preferred way to insert new data without SRA.
+  Arg[1]         : Ref: structured data (or JSON) representing the study, experiment, samples and runs.
+  Returntype     : Integer: number of runs newly added.
+  Usage:
+
+    $rdb->add_private_study_from_json('private_study1.json');
+
+  The data structure must be as such (json):
+  
+  {
+    "info": {
+      "title": "Species xxx RNAseq study",
+      "abstract": "Species xxx RNAseq study abstract text"
+    },
+    "production_name": "species_x",
+
+    "experiments":
+      [
+      {
+        "info": {
+          "title": "Species xxx RNAseq experiment"
+        },
+
+        "runs": 
+          [
+          {
+            "info": {
+              "title": "Species xxx RNAseq run",
+              "submitter": "Species xxx submitter"
+            },
+            "files": ["Spx_1.fastq", "Spx_2.fastq"],
+            "sample_name": "sample1"
+          }
+          ]
+      }
+      ],
+
+    "samples": 
+      [
+      {
+        "sample_name": "sample1",
+        "info": {
+          "title": "Species xxx RNAseq sample 1",
+          "description": "Species xxx RNAseq sample 1 description text"
+        }
+      }
+      ]
+  }
+  
+  * Remember to link the runs and samples with the same sample_name (this field is only used as a link)
+  * There can be several experiments, runs and sample, but they all belong to 1 study
+  * The info to be inserted in every table are in the "info" data
+  * Samples need the "production_name" to link correctly to the right species
+  * Runs can have 1 or 2 files, to be used by the RNA-seq alignment pipeline
+  
+  
 =item add_species()
 
   function       : add a species line to the species table.

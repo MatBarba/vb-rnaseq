@@ -146,9 +146,21 @@ __PACKAGE__->add_unique_constraint("experiment_private_acc", ["experiment_privat
 
 __PACKAGE__->add_unique_constraint("experiment_sra_acc", ["experiment_sra_acc"]);
 
+=head2 C<metasum>
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-09 15:31:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:H/eI6/3juR1bE6IT8iTF3Q
+=over 4
+
+=item * L</metasum>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OCk68YyxezddX9RKL/fu3w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

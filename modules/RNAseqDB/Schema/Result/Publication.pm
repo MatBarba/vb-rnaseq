@@ -135,6 +135,18 @@ __PACKAGE__->set_primary_key("publication_id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<metasum>
+
+=over 4
+
+=item * L</metasum>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
+
 =head2 C<pubmed_id>
 
 =over 4
@@ -148,8 +160,8 @@ __PACKAGE__->set_primary_key("publication_id");
 __PACKAGE__->add_unique_constraint("pubmed_id", ["pubmed_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:L1JAwA0Lyd/AbanVW3944Q
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PMAqsXSWYozs+1he6oWWlA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

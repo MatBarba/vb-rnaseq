@@ -113,6 +113,18 @@ __PACKAGE__->set_primary_key("drupal_node_id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<metasum>
+
+=over 4
+
+=item * L</metasum>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
+
 =head2 C<study_id>
 
 =over 4
@@ -126,8 +138,8 @@ __PACKAGE__->set_primary_key("drupal_node_id");
 __PACKAGE__->add_unique_constraint("study_id", ["study_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6DQOB4zcgXpO8HbYUQuWBg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QlavgUnq0ka4vgUAcKOHQA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

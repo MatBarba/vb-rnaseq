@@ -107,6 +107,18 @@ __PACKAGE__->set_primary_key("species_id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<metasum>
+
+=over 4
+
+=item * L</metasum>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
+
 =head2 C<taxon_id>
 
 =over 4
@@ -120,8 +132,8 @@ __PACKAGE__->set_primary_key("species_id");
 __PACKAGE__->add_unique_constraint("taxon_id", ["taxon_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-08 16:53:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:be0f3igFF87/Wlk4Rn/sHQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zk0G+9jTMOyR0niwigfY5A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -24,7 +24,7 @@ SRA tracking tables
 @study_private_acc  Private study accession (e.g. VBSRP000000), for data without SRA accessions.
 @title              Title of the SRA study.
 @abstract           Abstract of the SRA study.
-@metasum            Checksum of @title + @abstract.
+@metasum            Checksum of @study_sra_acc + @study_private_acc + @title + @abstract.
 @date               Entry timestamp.
 @status             Active (True) or retired (False) row.
 
@@ -36,7 +36,7 @@ CREATE TABLE study (
   study_private_acc  CHAR(12) UNIQUE,
   title              TEXT,
   abstract           TEXT,
-  metasum            CHAR(32),
+  metasum            CHAR(32) UNIQUE,
   date               TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status             ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -45,9 +45,9 @@ CREATE TABLE study (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER study_md5_upd_tr BEFORE UPDATE ON study
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.abstract) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.study_sra_acc, NEW.study_private_acc, NEW.title, NEW.abstract) );
 CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.abstract) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.study_sra_acc, NEW.study_private_acc, NEW.title, NEW.abstract) );
 
 /**
 
@@ -59,7 +59,7 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 @experiment_sra_acc      SRA experiment accession (e.g. SRX000000).
 @experiment_private_acc  Private experiment accession (e.g. VBSRX000000), for data without SRA accessions.
 @title                   Title of the SRA experiment.
-@metasum                 Checksum of @title.
+@metasum                 Checksum of @experiment_sra_acc + @experiment_private_acc + @title.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
 
@@ -71,7 +71,7 @@ CREATE TABLE experiment (
   experiment_sra_acc     CHAR(12) UNIQUE,
   experiment_private_acc CHAR(12) UNIQUE,
   title                  TEXT,
-  metasum                CHAR(32),
+  metasum                CHAR(32) UNIQUE,
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -81,9 +81,9 @@ CREATE TABLE experiment (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER experiment_md5_upd_tr BEFORE UPDATE ON experiment
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.experiment_private_acc, NEW.experiment_sra_acc, NEW.title) );
 CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.experiment_private_acc, NEW.experiment_sra_acc, NEW.title) );
 
 /**
 
@@ -97,7 +97,7 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 @run_private_acc         Private run accession (e.g. VBSRR000000), for data without SRA accessions.
 @title                   Title of the SRA run.
 @submitter               Submitter name of the SRA run.
-@metasum                 Checksum of @title + @submitter.
+@metasum                 Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
 
@@ -111,7 +111,7 @@ CREATE TABLE run (
   run_private_acc        CHAR(12) UNIQUE,
   title                  TEXT,
   submitter              TEXT,
-  metasum                CHAR(32),
+  metasum                CHAR(32) UNIQUE,
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -122,9 +122,9 @@ CREATE TABLE run (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.submitter) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
 CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.submitter) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
 
 /**
 
@@ -141,7 +141,7 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 @biosample_acc           Biosample accession.
 @biosample_group_acc     Biosample group.
 @strain_id               Strain table primary id (foreign key), to match the correct production_name.
-@metasum                 Checksum of @title.
+@metasum                 Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
 
@@ -158,7 +158,7 @@ CREATE TABLE sample (
   biosample_acc             VARCHAR(15) UNIQUE,
   biosample_group_acc       VARCHAR(15),
   strain_id                 INT(10) NOT NULL,
-  metasum                   CHAR(32),
+  metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -169,9 +169,9 @@ CREATE TABLE sample (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc) );
 CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description, NEW.taxon_id, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc) );
 
 /**
 
@@ -191,7 +191,7 @@ CREATE TABLE species (
   species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   taxon_id                  INT(10) UNIQUE,
   binomial_name             VARCHAR(128),
-  metasum                   CHAR(32),
+  metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -223,7 +223,7 @@ CREATE TABLE strain (
   species_id                INT(10),
   production_name           VARCHAR(64) NOT NULL,
   strain                    VARCHAR(32),
-  metasum                   CHAR(32),
+  metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -273,7 +273,7 @@ CREATE TABLE file (
   path                  TEXT NOT NULL,
   type                  ENUM('fastq', 'bam', 'bai', 'bed', 'bigwig'),
   md5                   CHAR(32),
-  metasum               CHAR(32),
+  metasum               CHAR(32) UNIQUE,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -303,7 +303,7 @@ CREATE TABLE analysis (
   analysis_id           INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   name                  VARCHAR(32) UNIQUE,
   description           TEXT,
-  metasum               CHAR(32),
+  metasum               CHAR(32) UNIQUE,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -335,7 +335,7 @@ CREATE TABLE analysis_param (
   analysis_id           INT(10),
   program               TEXT,
   parameters            TEXT,
-  metasum               CHAR(32),
+  metasum               CHAR(32) UNIQUE,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -370,7 +370,7 @@ CREATE TABLE analysis_file (
   file_io                     ENUM('INPUT', 'OUTPUT'),
   scope                       ENUM('run', 'sample'),
   scope_id                    INT(10),
-  metasum                     CHAR(32),
+  metasum                     CHAR(32) UNIQUE,
   
   KEY analysis_file_id_idx                      (analysis_file_id),
   KEY analysis_file_analysis_parameter_id_idx   (analysis_parameter_id),
@@ -405,7 +405,7 @@ CREATE TABLE track (
   sample_id             INT(10) NOT NULL,
   title                 TEXT,
   description           TEXT,
-  metasum               CHAR(32),
+  metasum               CHAR(32) UNIQUE,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -451,7 +451,7 @@ CREATE TABLE publication (
   title                 TEXT,
   abstract              TEXT,
   year                  INT(4),
-  metasum               CHAR(32),
+  metasum               CHAR(32) UNIQUE,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -511,7 +511,7 @@ CREATE TABLE drupal_node (
   study_id              INT(10) UNIQUE,
   autogen_txt           TEXT,
   manual_txt            TEXT,
-  metasum               CHAR(32),
+  metasum               CHAR(32) UNIQUE,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   

@@ -136,6 +136,18 @@ __PACKAGE__->set_primary_key("run_id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<metasum>
+
+=over 4
+
+=item * L</metasum>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
+
 =head2 C<run_private_acc>
 
 =over 4
@@ -161,8 +173,8 @@ __PACKAGE__->add_unique_constraint("run_private_acc", ["run_private_acc"]);
 __PACKAGE__->add_unique_constraint("run_sra_acc", ["run_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-09 15:31:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pXxoxs5COVN7G9OswfTGpw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RSbPtqneQif6h37EyKQReQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

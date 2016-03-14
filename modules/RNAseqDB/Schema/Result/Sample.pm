@@ -171,6 +171,18 @@ __PACKAGE__->set_primary_key("sample_id");
 
 __PACKAGE__->add_unique_constraint("biosample_acc", ["biosample_acc"]);
 
+=head2 C<metasum>
+
+=over 4
+
+=item * L</metasum>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
+
 =head2 C<sample_private_acc>
 
 =over 4
@@ -196,8 +208,8 @@ __PACKAGE__->add_unique_constraint("sample_private_acc", ["sample_private_acc"])
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 13:27:59
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tQL8TTJjvjqP1umTttZ9Fw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Q+ThJIZtoVP55ezK+w0hFQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

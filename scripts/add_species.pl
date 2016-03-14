@@ -57,6 +57,7 @@ sub get_species_from_file {
   my @species_list;
   open my $SPECIES_FH, '<', $file;
   while( my $line = readline $SPECIES_FH ) {
+    next if $line =~ /^\s*$/;
     chomp $line;
     my @elts = split /\t/, $line;
     my %species = (

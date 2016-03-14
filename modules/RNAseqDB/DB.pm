@@ -322,6 +322,7 @@ sub add_private_study {
     my $update_study = $self->resultset('Study')->search({
         study_id => $study_id,
       })->update( $study );
+      $logger->info("CREATED study $study->{ study_private_acc }");
   }
   
   # Next, insert the samples
@@ -355,6 +356,7 @@ sub add_private_study {
       my $update_sample = $self->resultset('Sample')->search({
           sample_id => $sample_id,
         })->update( $sample );
+      $logger->info("CREATED sample $sample->{ sample_private_acc }");
     }
     
     # Keep the match sample id = sample_name (to link the runs)
@@ -365,6 +367,7 @@ sub add_private_study {
   my $experiments_aref = $study_href->{experiments};
   for my $experiment_href (@$experiments_aref) {
     my $experiment = $experiment_href->{info};
+    $experiment->{study_id}  = $study_id;
     
     # Insert the experiment
     my $insert_experiment = $self->resultset('Experiment')->create( $experiment );
@@ -377,6 +380,7 @@ sub add_private_study {
       my $update_experiment = $self->resultset('Experiment')->search({
           experiment_id => $experiment_id,
         })->update( $experiment );
+      $logger->info("CREATED experiment $experiment->{ experiment_private_acc }");
     }
     
     # Finally, add all the corresponding runs
@@ -385,6 +389,7 @@ sub add_private_study {
     for my $run_href (@$runs_aref) {
       my $run = $run_href->{info};
       $run->{sample_id} = $samples_ids{ $run_href->{sample_name} };
+      $run->{experiment_id}  = $experiment_id;
 
       # Insert the run
       my $insert_run = $self->resultset('Run')->create( $run );
@@ -397,6 +402,7 @@ sub add_private_study {
         my $update_run = $self->resultset('Run')->search({
             run_id => $run_id,
           })->update( $run );
+        $logger->info("CREATED study $study->{ study_private_acc }");
       }
       $num++;
     }
@@ -525,6 +531,11 @@ sub _get_species_id {
   my $name = $species_href->{binomial_name};
   delete $species_href->{taxon_id};
   delete $species_href->{binomial_name};
+  
+  if (not defined $taxid) {
+    $logger->warn("WARNING: new species has no taxon_id");
+    return;
+  }
   
   # Try to get the species id if it exists
   my $species_req = $self->resultset('Species')->search({

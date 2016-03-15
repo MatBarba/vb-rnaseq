@@ -14,12 +14,17 @@ use MockRNAseqDB qw( create_mock_db drop_mock_db );
 
 # Get a mock DB (RNAseqBD::DB), create with the proper schema
 my $db = create_mock_db();
+my $DONT_DROP = 0;
 
 # Preparation: add necessary species
 $db->add_species({
     production_name => 'culex_quinquefasciatus',
     binomial_name   => 'Culex quinquefasciatus',
     taxon_id        => 7176,
+  });
+$db->add_species({
+    production_name => 'aedes_aegypti',
+    taxon_id        => 7159,
   });
 
 # Check tables are empty
@@ -29,61 +34,56 @@ check_tables_numbers($db, [0, 0, 0, 0]);
 {
   my $acc = 'SRR1271738';
   my $num = $db->add_sra($acc);
-  ok( $num == 0, "Don't insert 1 SRA $acc (species not allowed)" );
-check_tables_numbers($db, [0, 0, 0, 0]);
+  ok( $num == 0, "Don't insert 1 SRA run $acc (species not allowed)" );
+  check_tables_numbers($db, [0, 0, 0, 0]);
 }
 
 # Add 1 run
 {
   my $acc = 'SRR1271734';
   my $num = $db->add_sra($acc);
-  ok( $num == 1, "Insert 1 SRA $acc" );
-  check_number_in_table($db, 'study', 1);
-  check_number_in_table($db, 'experiment', 1);
-  check_number_in_table($db, 'run', 1);
-  check_number_in_table($db, 'sample', 1);
+  ok( $num == 1, "Insert 1 SRA run $acc" );
+  check_tables_numbers($db, [1,1,1,1]);
 }
 
 # Add 1 experiment (same study)
 {
   my $acc = 'SRX533493';
   my $num = $db->add_sra($acc);
-  ok( $num == 1, "Insert 1 SRA $acc" );
-  check_number_in_table($db, 'study', 1);
-  check_number_in_table($db, 'experiment', 2);
-  check_number_in_table($db, 'run', 2);
-  check_number_in_table($db, 'sample', 2);
+  ok( $num == 1, "Insert 1 SRA experiment $acc" );
+  check_tables_numbers($db, [1,2,2,2]);
 }
 
 # Add 1 sample (same study)
 {
   my $acc = 'SRS602296';
   my $num = $db->add_sra($acc);
-  ok( $num == 1, "Insert 1 SRA $acc" );
-  check_number_in_table($db, 'study', 1);
-  check_number_in_table($db, 'experiment', 3);
-  check_number_in_table($db, 'run', 3);
-  check_number_in_table($db, 'sample', 3);
+  ok( $num == 1, "Insert 1 SRA sample $acc" );
+  check_tables_numbers($db, [1,3,3,3]);
 }
 
 # Add 1 study (same, whole study, there should 2 runs left to add, so 5 in total)
 {
   my $acc = 'SRP041691';
   my $num = $db->add_sra($acc);
-  ok( $num == 2, "Insert 1 SRA $acc ($num runs inserted)" );
-  check_number_in_table($db, 'study', 1);
-  check_number_in_table($db, 'experiment', 5);
-  check_number_in_table($db, 'run', 5);
-  check_number_in_table($db, 'sample', 5);
+  ok( $num == 2, "Insert 1 SRA study $acc ($num runs inserted)" );
+  check_tables_numbers($db, [1,5,5,5]);
+}
+
+# Add 1 study with a pubmed
+{
+  my $acc = 'SRP003874';
+  my $num = $db->add_sra($acc);
+  ok( $num == 4, "Insert 1 SRA study with a pubmed $acc ($num runs inserted)" );
+  check_tables_numbers($db, [2,9,9,9,1]);
 }
 
 sub check_number_in_table {
   my ($db, $table, $expected_number) = @_;
+  return if not defined $expected_number;
   $table = ucfirst $table;
   
-  my $req = $db->resultset( $table )->search({
-        status  => 'ACTIVE',
-  });
+  my $req = $db->resultset( $table );
   my @lines = $req->all;
   ok( scalar @lines == $expected_number, sprintf("Right number of lines in %s (%d / %d)", $table, scalar @lines, $expected_number) );
 }
@@ -95,11 +95,12 @@ sub check_tables_numbers {
   check_number_in_table($db, 'experiment', $nums->[1]);
   check_number_in_table($db, 'run', $nums->[2]);
   check_number_in_table($db, 'sample', $nums->[3]);
+  check_number_in_table($db, 'StudyPublication', $nums->[4]);
 }
 
 # Delete temp database
 END {
-  drop_mock_db($db);
+  drop_mock_db($db) if not $DONT_DROP;
   done_testing();
 }
 

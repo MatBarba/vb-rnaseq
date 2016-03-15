@@ -50,6 +50,7 @@ sub _get_species_id {
         taxon_id        => $taxid,
         binomial_name   => $name,
       });
+    $name ||= '';
     $logger->info("NEW SPECIES added: $taxid, $name");
     return $insertion->id();
   }

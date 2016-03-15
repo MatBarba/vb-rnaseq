@@ -237,10 +237,16 @@ sub _get_study_id {
         title           => $study->title(),
         abstract        => $study->abstract(),
       });
-    return $insertion->id();
+    my $study_id = $insertion->id();
+    my @pubmed_links = grep { $_->{XREF_LINK}->{DB} eq 'pubmed' } @{ $study->links() };
+    foreach my $pubmed_link (@pubmed_links) {
+      my $pubmed_id = $pubmed_link->{XREF_LINK}->{ID};
+      $self->_add_study_publication($study_id, $pubmed_id);
+    }
+    
+    return $study_id;
   }
 }
-
 
 sub _get_sample_id {
   my ($self, $sample) = @_;

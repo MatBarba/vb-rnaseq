@@ -326,6 +326,10 @@ sub add_private_study {
   my $insert_study = $self->resultset('Study')->create( $study );
   my $study_id = $insert_study->id;
   
+  # Insert the pbmed
+  my $pubmed_id = $study_href->{pubmed_id};
+  $self->_add_study_publication($study_id, $pubmed_id) if defined $pubmed_id;
+  
   # Create an accession for this study from its id
   if (not defined $study->{study_private_acc}) {
     $study->{ study_private_acc } = sprintf("%s%d", $STUDY_PREFIX, $study_id);

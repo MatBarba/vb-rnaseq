@@ -4,6 +4,7 @@
     "abstract": "Species xxx RNAseq study abstract text"
   },
   "production_name": "species_xxx",
+  "pubmed_id": 21276245,
 
   "experiments":
     [

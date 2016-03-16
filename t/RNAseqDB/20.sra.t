@@ -75,7 +75,7 @@ check_tables_numbers($db, [0, 0, 0, 0]);
   my $acc = 'SRP003874';
   my $num = $db->add_sra($acc);
   ok( $num == 4, "Insert 1 SRA study with a pubmed $acc ($num runs inserted)" );
-  check_tables_numbers($db, [2,9,9,9,1]);
+  check_tables_numbers($db, [2,9,9,9,1,1]);
 }
 
 sub check_number_in_table {
@@ -91,11 +91,12 @@ sub check_number_in_table {
 sub check_tables_numbers {
   my $db = shift;
   my $nums = shift;
-  check_number_in_table($db, 'study', $nums->[0]);
-  check_number_in_table($db, 'experiment', $nums->[1]);
-  check_number_in_table($db, 'run', $nums->[2]);
-  check_number_in_table($db, 'sample', $nums->[3]);
-  check_number_in_table($db, 'StudyPublication', $nums->[4]);
+  check_number_in_table($db, 'Study', $nums->[0]);
+  check_number_in_table($db, 'Experiment', $nums->[1]);
+  check_number_in_table($db, 'Run', $nums->[2]);
+  check_number_in_table($db, 'Sample', $nums->[3]);
+  check_number_in_table($db, 'Publication', $nums->[4]);
+  check_number_in_table($db, 'StudyPublication', $nums->[5]);
 }
 
 # Delete temp database

@@ -35,6 +35,7 @@ my $rnaseq_study = {
     abstract        => 'Species xxx RNAseq study abstract text',
   },
   production_name => 'species_xxx',
+  pubmed_id       => 21276245,
 
   experiments =>
   [
@@ -73,23 +74,23 @@ my $rnaseq_study = {
 {
   my $num = $db->add_private_study($rnaseq_study);
   ok( $num == 1, "Insert 1 SRA run from a private study (no SRA) - $num" );
-  check_tables_numbers($db, [1, 1, 1, 1]);
+  check_tables_numbers($db, [1,1,1,1,1,1]);
 }
 
 # Same, but from a json file
 {
   my $num = $db->add_private_study_from_json($rnaseq_study_json_path);
   ok( $num == 1, "Insert 1 SRA run from a private study from a json file (no SRA) - $num" );
-  check_tables_numbers($db, [2, 2, 2, 2]);
+  # NB: share the same pubmed as the previous one, so only add a link
+  check_tables_numbers($db, [2,2,2,2,1,2]);
 }
 
 sub check_number_in_table {
   my ($db, $table, $expected_number) = @_;
+  return if not defined $expected_number;
   $table = ucfirst $table;
   
-  my $req = $db->resultset( $table )->search({
-        status  => 'ACTIVE',
-  });
+  my $req = $db->resultset( $table );
   my @lines = $req->all;
   ok( scalar @lines == $expected_number, sprintf("Right number of lines in %s (%d / %d)", $table, scalar @lines, $expected_number ));
 }
@@ -101,6 +102,8 @@ sub check_tables_numbers {
   check_number_in_table($db, 'experiment', $nums->[1]);
   check_number_in_table($db, 'run', $nums->[2]);
   check_number_in_table($db, 'sample', $nums->[3]);
+  check_number_in_table($db, 'Publication', $nums->[4]);
+  check_number_in_table($db, 'StudyPublication', $nums->[5]);
 }
 
 # Delete temp database

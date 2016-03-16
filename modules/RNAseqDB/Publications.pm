@@ -10,6 +10,8 @@ my $logger = get_logger();
 use Data::Dumper;
 use Readonly;
 use Try::Tiny;
+use LWP::Simple qw( get );
+use JSON;
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 
@@ -82,8 +84,38 @@ sub _get_publication_id {
 
 sub _get_pubmed_data {
   my ($pubmed_id) = @_;
+  return () if not defined $pubmed_id;
   
   my %data = (pubmed_id => $pubmed_id);
+  
+  my $REST_URL = 'http://www.ebi.ac.uk/europepmc/webservices/rest/search?resulttype=core&format=json&query=ext_id:';
+  my $url = $REST_URL . $pubmed_id;
+  $logger->debug( "Get data from $url" );
+  my $pub_content = get $url;
+  
+  if (not defined $pub_content) {
+    $logger->warn("WARNING: can't fetch publication data from Europe PMC ($pubmed_id)");
+    return ();
+  }
+  
+  my $pub_data = decode_json($pub_content);
+  my $res_list = $pub_data->{resultList}->{result};
+  my $num_res = scalar @$res_list;
+  
+  if ($num_res == 0) {
+    $logger->warn("WARNING: no publication found with id=$pubmed_id");
+    return ();
+  } elsif ($num_res > 1) {
+    $logger->warn("WARNING: several publications found with id=$pubmed_id");
+    return ();
+  }
+  
+  my $pub = shift @$res_list;
+  $data{doi}      = $pub->{doi};
+  $data{year}     = $pub->{journalInfo}->{yearOfPublication};
+  $data{title}    = $pub->{title};
+  $data{abstract} = $pub->{abstractText};
+  $data{authors}  = join(', ', map { $_->{fullName} } @{ $pub->{authorList}->{author} });
   
   return \%data;
 }

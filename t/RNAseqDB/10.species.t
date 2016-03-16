@@ -73,3 +73,5 @@ END {
   done_testing();
 }
 
+__END__
+

@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 use Test::More;
-#use Test::More tests => 3;
 
 BEGIN : {
     use RNAseqDB::DB;

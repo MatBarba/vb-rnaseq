@@ -53,6 +53,7 @@ sub get_sras_from_file {
   my @sra_accs;
   open my $SRAS_FH, '<', $file;
   while( my $line = readline $SRAS_FH ) {
+    next if $line =~ /^\s*$/;
     chomp $line;
     push @sra_accs, $line;
   }

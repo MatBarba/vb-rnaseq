@@ -38,7 +38,7 @@ sub get_new_sra_tracks {
     my $production_name = $track->sample->strain->production_name;
     my $taxon_id        = $track->sample->strain->species->taxon_id;
     $new_track{$production_name}{taxon_id} = $taxon_id;
-    push @{ $new_track{$production_name}{sample_sra_acc} }, $track->sample->sample_sra_acc;
+    push @{ $new_track{$production_name}{sra_ids} }, $track->sample->sample_sra_acc;
   }
   return \%new_track;
 }

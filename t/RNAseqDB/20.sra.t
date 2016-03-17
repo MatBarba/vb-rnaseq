@@ -95,6 +95,7 @@ sub check_tables_numbers {
   check_number_in_table($db, 'Experiment', $nums->[1]);
   check_number_in_table($db, 'Run', $nums->[2]);
   check_number_in_table($db, 'Sample', $nums->[3]);
+  check_number_in_table($db, 'Track', $nums->[3]);
   check_number_in_table($db, 'Publication', $nums->[4]);
   check_number_in_table($db, 'StudyPublication', $nums->[5]);
 }

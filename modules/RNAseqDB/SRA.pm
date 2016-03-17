@@ -308,8 +308,33 @@ sub _get_sample_id {
         strain_id         => $strain_id,
         biosample_acc     => $biosample_acc,
       });
-    return $insertion->id();
+    my $sample_id = $insertion->id();
+    $self->_add_track($sample_id);
+    return $sample_id;
   }
+}
+
+sub _add_track {
+  my ($self, $sample_id) = @_;
+  
+  # Does the track already exists?
+  my $track_req = $self->resultset('Track')->search({
+      sample_id => $sample_id,
+  });
+
+  my @res_tracks = $track_req->all;
+  my $num_tracks = scalar @res_tracks;
+  if ($num_tracks > 1) {
+    $logger->warn("WARNING: Track already exists for sample $sample_id");
+    return;
+  }
+  
+  # Insert a new track
+  $logger->info("ADDING track for $sample_id");
+  my $insertion = $self->resultset('Track')->create({
+      sample_id         => $sample_id,
+    });
+  return;
 }
 
 #######################################################################################################################

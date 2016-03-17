@@ -33,7 +33,7 @@ __PACKAGE__->table("track");
 =head2 file_id
 
   data_type: 'integer'
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 sample_id
 
@@ -81,7 +81,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "file_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", is_nullable => 1 },
   "sample_id",
   { data_type => "integer", is_nullable => 0 },
   "title",
@@ -145,9 +145,12 @@ __PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mc/UqPYeHvzx4E034CdmhQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-16 16:57:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aa4xotsgs4iJjVmkHluH7w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->has_one( sample => 'RNAseqDB::Schema::Result::Sample', 'sample_id');
+
+
 1;

@@ -17,9 +17,10 @@ use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 
 use Moose;
 extends 'RNAseqDB::Schema';
+with  'RNAseqDB::Species';
 with  'RNAseqDB::Publications';
 with  'RNAseqDB::SRA';
-with  'RNAseqDB::Species';
+with  'RNAseqDB::Tracks';
 
 1;
 

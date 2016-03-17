@@ -133,4 +133,6 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->has_many( sample => 'RNAseqDB::Schema::Result::Sample', 'sample_id');
+__PACKAGE__->belongs_to( species => 'RNAseqDB::Schema::Result::Species', 'species_id');
 1;

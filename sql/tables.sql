@@ -401,7 +401,7 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 
 CREATE TABLE track (
   track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  file_id               INT(10) NOT NULL UNIQUE,
+  file_id               INT(10) UNIQUE,
   sample_id             INT(10) NOT NULL,
   title                 TEXT,
   description           TEXT,
@@ -415,9 +415,9 @@ CREATE TABLE track (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_id, NEW.title, NEW.description) );
 CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_id, NEW.title, NEW.description) );
 
 /**
 

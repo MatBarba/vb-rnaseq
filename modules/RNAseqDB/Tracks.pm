@@ -15,21 +15,21 @@ use Readonly;
 #use Try::Tiny;
 
 sub get_new_sra_tracks {
-  my ($self) = @_;
+  my ($self, $species) = @_;
   
   my $track_req = $self->resultset('Track')->search({
       file_id => undef,
       'sample.sample_sra_acc' => { '!=', undef },
   },
   {
-    prefetch    => { sample => { strain => 'species' } },
+    prefetch    => { sample => [ { strain => 'species' } ] },
   });
   
-# $track_req->result_class('DBIx::Class::ResultClass::HashRefInflator');
+#$track_req->result_class('DBIx::Class::ResultClass::HashRefInflator');
   my @res_tracks = $track_req->all;
-  my $num_tracks = scalar @res_tracks;
-  if ($num_tracks == 0) {
-    return {};
+  
+  if (defined $species) {
+    @res_tracks = grep { $_->sample->strain->production_name eq $species } @res_tracks;
   }
   
   my %new_track = ();

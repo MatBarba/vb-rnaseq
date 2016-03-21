@@ -26,13 +26,63 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-my $data = $db->get_new_sra_tracks();
+my $data = $db->get_new_sra_tracks( $opt{species} );
 open my $OUT, '>', $opt{output};
 if ($opt{format} eq 'json') {
   print $OUT encode_json($data) . "\n";
 }
+elsif ($opt{format} eq 'pipeline') {
+  my $command_line = tracks_for_pipeline($data, \%opt);
+  print $OUT $command_line if defined $command_line;
+}
 else {
   warn "Unsupported format: $opt{format}\n";
+}
+
+sub tracks_for_pipeline {
+  my ($data, $opt) =  @_;
+  
+  my  @params = ();
+  
+  # Common values of the command-line
+  
+  my @main_line = ();
+  push @main_line, 'init_pipeline.pl';
+  push @main_line, 'Bio::EnsEMBL::EGPipeline::PipeConfig::ShortReadAlignment_conf';
+  push @main_line, '$(mysql-hive-ensrw details script)';
+  #####################################################################################################
+  push @main_line, "-registry $opt->{registry}";
+  push @main_line, "-pipeline_dir $opt{pipeline_dir}";
+#  push @main_line, "-json_summary $opt{pipeline_dir}/summary.json";
+  #####################################################################################################
+  push @main_line, '-aligner star';
+  push @main_line, '-bigwig 1';
+  push @params, join(" \\\n\t", @main_line);
+  
+  my $n = 0;
+  foreach my $species (sort keys %$data) {
+    my @species_line = ();
+    
+    # Species production_name
+    push @species_line, "-species $species";
+    
+    # Species taxon_id
+    my $taxon_id = $data->{$species}->{taxon_id};
+    push @species_line, "-taxids $species=$taxon_id";
+    push @params, join(' ', @species_line);
+    
+    # Species sras
+    my $sra_ids = $data->{$species}->{sra_ids};
+    push @params, "\t-sra_species $species=" . join(",", @$sra_ids);
+    $n += scalar @$sra_ids;
+  }
+  
+  if ($n > 0) {
+    return join " \\\n", @params;
+  } else {
+    $logger->warn("WARNING: no new tracks found");
+    return;
+  }
 }
 
 ###############################################################################
@@ -54,11 +104,17 @@ sub usage {
     --password <str>  : password
     --db <str>        : database name
     
+    Pipeline config:
+    --registry <path>     : Path a registry file for the pipeline
+    --pipeline_dir <path> : Path to a directory where the pipeline will store its work files
+    
     Output:
     --output <path>   : path to the output file
-    --format <str>    : output format: json (default), ...
+    --format <str>    : output format: json (default), pipeline.
     
     Other:
+    --species <str>   : only outputs tracks for a given species (production_name)
+    
     --help            : show this help message
     --verbose         : show detailed progress
     --debug           : show even more information (for debugging purposes)
@@ -76,6 +132,9 @@ sub opt_check {
     "user=s",
     "password=s",
     "db=s",
+    "registry=s",
+    "pipeline_dir=s",
+    "species=s",
     "output=s",
     "format=s",
     "help",
@@ -91,6 +150,10 @@ sub opt_check {
   usage("Need --output") if not $opt{output};
   $opt{format} ||= 'json';
   $opt{password} ||= '';
+  if ($opt{format} eq 'pipeline') {
+    usage("Need --registry") if not $opt{registry};
+    usage("Need --pipeline_dir") if not $opt{pipeline_dir};
+  }
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

@@ -59,8 +59,8 @@ sub check_expected_track {
   if (defined $nums->[1]) {
     my $num_tracks = 0;
     for my $sp (keys %$tracks) {
-      my $sras_aref = $tracks->{ $sp }->{sample_sra_acc};
-      $num_tracks += scalar @$sras_aref;
+      my $sras_aref = $tracks->{ $sp }->{sra_ids};
+      $num_tracks += (defined $sras_aref ? scalar @$sras_aref : 0);
     }
     cmp_ok( $num_tracks, '==', $nums->[1], "Got $nums->[1] tracks");
   }

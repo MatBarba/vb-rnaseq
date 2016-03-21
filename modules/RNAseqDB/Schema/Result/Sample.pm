@@ -79,6 +79,11 @@ __PACKAGE__->table("sample");
   data_type: 'integer'
   is_nullable: 0
 
+=head2 label
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 metasum
 
   data_type: 'char'
@@ -127,6 +132,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 15 },
   "strain_id",
   { data_type => "integer", is_nullable => 0 },
+  "label",
+  { data_type => "text", is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -208,8 +215,8 @@ __PACKAGE__->add_unique_constraint("sample_private_acc", ["sample_private_acc"])
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Q+ThJIZtoVP55ezK+w0hFQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-21 11:39:02
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xZqRhsR233teEtKWdUaNlQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

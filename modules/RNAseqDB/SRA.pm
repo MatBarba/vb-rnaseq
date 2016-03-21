@@ -280,6 +280,10 @@ sub _get_sample_id {
     } @$attribs_aref;
     my $strain = join(',', map { $_->{VALUE} } @strain_attrib);
     
+    # Get sample label
+    my @label_attrib = grep { lc($_->{TAG}) eq 'label' } @$attribs_aref;
+    my $label = join(',', map { $_->{VALUE} } @label_attrib);
+    
     # Get biosample accession
     my $identifiers_aref = $sample->identifiers()->{EXTERNAL_ID};
     $identifiers_aref = [$identifiers_aref] if not ref($identifiers_aref) eq 'ARRAY';
@@ -307,6 +311,7 @@ sub _get_sample_id {
         strain            => $strain,
         strain_id         => $strain_id,
         biosample_acc     => $biosample_acc,
+        label             => $label,
       });
     my $sample_id = $insertion->id();
     $self->_add_track($sample_id);

@@ -141,7 +141,8 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 @biosample_acc           Biosample accession.
 @biosample_group_acc     Biosample group.
 @strain_id               Strain table primary id (foreign key), to match the correct production_name.
-@metasum                 Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc.
+@label                   Label for the sample, useful to find replicates.
+@metasum                 Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc + @label.
 @date                    Entry timestamp.
 @status                  Active (True) or retired (False) row.
 
@@ -158,6 +159,7 @@ CREATE TABLE sample (
   biosample_acc             VARCHAR(15) UNIQUE,
   biosample_group_acc       VARCHAR(15),
   strain_id                 INT(10) NOT NULL,
+  label                     TEXT,
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
@@ -169,9 +171,9 @@ CREATE TABLE sample (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc, NEW.label) );
 CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc, NEW.label) );
 
 /**
 

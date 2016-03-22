@@ -1,0 +1,1481 @@
+
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="all" href="rnaseqdb_doc.css" />
+
+<title>Schema Documentation</title>
+<meta name="order" content="2" />
+
+<style type="text/css">
+  /* Icons */
+  img.sql_schema_icon { width:12px;height:12px;position:relative;top:2px; }
+
+  /* Tables list - with header */
+  div.sql_schema_table_group           { background-color:#F4F4F4;border-left:1px dotted #BBB;border-right:1px dotted #BBB;border-bottom:1px dotted #BBB;margin-bottom:15px;float:left;margin-right:20px;min-width:200px; }
+  div.sql_schema_table_group_header    { background-color:#FFF;padding:2px 5px;border-top:2px solid #000;border-bottom:1px solid #000; }
+  div.sql_schema_table_group_bullet    { box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:middle; }
+  div.sql_schema_table_group_header h2 { margin-left:8px;display:inline;color:#000;vertical-align:middle; }
+  ul.sql_schema_table_list             { padding:0px 4px 0px 22px;margin-bottom:2px; }
+  ul.sql_schema_table_list li          { margin-right:0px; }
+
+  /* Tables list - no header */
+  div.sql_schema_table_list_nh       { background-color:#F4F4F4;border-radius:5px;margin-bottom:20px;float:left; }
+  div.sql_schema_table_list_sub_nh   { padding:5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px; }
+  div.sql_schema_table_list_nh h3    { display:inline;color:#FFF; }
+  div.sql_schema_table_list_nh table { padding:0px 2px; }
+  ul.sql_schema_table_list_nh        { padding-left:20px; }
+  div.sql_schema_table_name_nh       {padding:0px;margin-left:0px;display:inline; }
+
+  /* Group header */
+  div.sql_schema_group_header    { background-color:#F4F4F4;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid #000;border-bottom:1px solid #000; }
+  div.sql_schema_group_bullet    { box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:top; }
+  div.sql_schema_group_header h2 { display:inline;color:#000;padding-top:0px;margin-left:6px; }
+  p.sql_schema_group_header_desc { width:800px; }
+
+  /* SQL table header */
+  div.sql_schema_table                  { max-width:90%;border-left:1px dotted #BBB;border-right:1px dotted #BBB;border-bottom:1px dotted #BBB; }
+  div.sql_schema_table_header           { background-color:#F4F4F4;border-bottom:1px solid #BBB;margin-top:60px;padding:4px;border-top:1px solid #000; }
+  div.sql_schema_table_header_left      { float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px; }
+  div.sql_schema_table_header_left span { display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;box-shadow:1px 1px 2px #888;vertical-align:middle; }
+  div.sql_schema_table_header_right     { float:right;text-align:right;padding:2px 1px;margin-right:8px; }
+  div.sql_schema_table_content          { padding:10px; }
+  span.sql_schema_table_separator       { margin-right:8px;border-right:1px solid #000; }
+
+  /* SQL table description */
+  p.sql_schema_table_desc { padding:5px 0px;margin-bottom:0px; }
+
+  /* SQL table columns */
+  table.sql_schema_table_column          { border:1px solid #667aa6;border-spacing:2px; }
+  table.sql_schema_table_column th       { background-color:#667aa6;color:#FFF;padding:2px; }
+  table.sql_schema_table_column th.val   { min-width:80px; }
+  table.sql_schema_table_column th.desc  { min-width:250px; }
+  table.sql_schema_table_column th.index { min-width:100px; }
+  ul.sql_schema_table_column_type        { margin-bottom:0px; }
+
+  /* SQL table examples */
+  div.sql_schema_table_examples          { margin:10px 0px 15px; }
+  p.sql_schema_table_example_header      { font-weight:bold;margin-bottom:10px; }
+  div.sql_schema_table_example_content   { margin-left:10px; }
+  div.sql_schema_table_example_query     { float:left;border:1px solid #555;padding:2px 4px;margin-right:15px;overflow:auto;max-width:90%;background-color:#FAFAFA; }
+  div.sql_schema_table_example_query pre { margin-bottom:0px;color:#333; }
+  div.sql_schema_table_example_button    { float:left; }
+  table.sql_schema_table_example_result  { width:90%;margin-top:20px;border-spacing:2px; }
+  div.sql_schema_table_example_error     { padding:5px;margin:10px;width:500px;font-weight:bold;border:2px solid red;color:red; }
+  span.sql_schema_sql_highlight          { color:#00F; }
+
+  /* SQL table extra info */
+  table.sql_schema_extra         { margin-top:20px;border:1px solid #BBB; }
+  table.sql_schema_extra a       { text-decoration:none; }
+  td.sql_schema_extra_left       { padding: 4px 25px 0px 2px }
+  td.sql_schema_extra_left ul    { margin-bottom:0px; }
+  td.sql_schema_extra_right      { padding-top:4px; }
+  td.sql_schema_extra_right p    { margin-bottom:0px; }
+  td.sql_schema_extra_right span { margin-right:10px;font-weight:bold; }
+  td.sql_schema_extra_right ul   { margin-top:1em; } 
+  td.sql_schema_extra_separator  { margin:0px;padding:0px;width:1px;border-right:1px dotted #BBB; }
+  .sql_schema_species_name       { font-style:italic; }
+
+  /* Legend */
+  .sql_schema_legend { width:25px;height:15px; }
+
+  /* Links */
+  a.sql_schema_link { text-decoration:none; }
+  a.sql_schema_show_hide { cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:8px;vertical-align:middle;box-shadow:1px 1px 2px #888; }
+  .sql_schema_legend { width:25px;height:15px;}
+</style>  
+  
+<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script language="Javascript" type="text/javascript">
+  var img_plus   = '<img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/>';
+  var img_minus  = '<img src="/i/16/minus-button.png" class="sql_schema_icon" alt="hide"/>';
+
+  // Function to show/hide the columns table
+  function show_hide (param, a_text) {
+  
+    // Schema tables
+    if (a_text === 'columns') {
+      div_id   = '#div_'+param;
+      alink_id = '#a_'+param;
+    }  
+    // Species list
+    else if (a_text === 'species') {
+      div_id   = '#sp_'+param;
+      alink_id = '#s_'+param;
+    }
+    // Example tables
+    else {
+      div_id   = '#ex_'+param;
+      alink_id = '#e_'+param;
+    }
+    
+    if ($(div_id).is(':visible')) {
+      $(alink_id).html(img_plus+' Show '+a_text);
+    }
+    else if ($(div_id).is(':hidden')) {
+      $(alink_id).html(img_minus+' Hide '+a_text);
+    }
+    $(div_id).slideToggle( 300 );
+  }
+  
+  // Function to show/hide all the tables
+  function show_hide_all (link_text) {
+    expand_div = '#expand';
+    div_prefix = 'div_';
+    $("div[id^='"+div_prefix+"']").each(function() {
+      param = $(this).attr('id').substring(div_prefix.length);
+      div_id   = '#'+$(this).attr('id');
+      alink_id = '#a_'+param;
+      
+      if ($(alink_id)) {
+        if ($(expand_div).val()==0) {
+          $(alink_id).html(img_minus+' Hide '+link_text);
+        }
+        else {
+          $(alink_id).html(img_plus+' Show '+link_text);
+        }
+      }
+      $(div_id).slideToggle( 500 );
+    });
+    if ($(expand_div).val()==0) {
+      $(expand_div).val(1);
+    }
+    else {
+      $(expand_div).val(0);
+    }
+  }
+</script>
+</head>
+<body>
+
+<h1>RNAseq DB Schema Documentation</h1>
+
+<p>
+This document describes the tables that make up the RNAseqDB schema. Tables are grouped into categories, and the purpose of each table is explained.
+</p>
+
+
+
+<h3 id="top">List of the tables:</h3>
+<div>
+
+  <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:#C70C09">
+      <div class="sql_schema_table_group_bullet" style="background-color:#C70C09"></div>
+      <h2>SRA tables</h2>
+    </div>
+      <ul class="sql_schema_table_list">
+        <li><a href="#study" class="sql_schema_link" style="font-weight:bold">study</a></li>
+        <li><a href="#experiment" class="sql_schema_link" style="font-weight:bold">experiment</a></li>
+        <li><a href="#run" class="sql_schema_link" style="font-weight:bold">run</a></li>
+        <li><a href="#sample" class="sql_schema_link" style="font-weight:bold">sample</a></li>
+
+      </ul>
+    </div>
+
+  <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:#CC75FF">
+      <div class="sql_schema_table_group_bullet" style="background-color:#CC75FF"></div>
+      <h2>Taxonomy tables</h2>
+    </div>
+      <ul class="sql_schema_table_list">
+        <li><a href="#strain" class="sql_schema_link" style="font-weight:bold">strain</a></li>
+        <li><a href="#species" class="sql_schema_link" style="font-weight:bold">species</a></li>
+
+      </ul>
+    </div>
+
+  <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:#FF7504">
+      <div class="sql_schema_table_group_bullet" style="background-color:#FF7504"></div>
+      <h2>RNAseq Pipeline tables</h2>
+    </div>
+      <ul class="sql_schema_table_list">
+        <li><a href="#file" class="sql_schema_link" style="font-weight:bold">file</a></li>
+        <li><a href="#analysis" class="sql_schema_link" style="font-weight:bold">analysis</a></li>
+        <li><a href="#analysis_param" class="sql_schema_link" style="font-weight:bold">analysis_param</a></li>
+        <li><a href="#analysis_file" class="sql_schema_link" style="font-weight:bold">analysis_file</a></li>
+
+      </ul>
+    </div>
+
+  <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:#3355FF">
+      <div class="sql_schema_table_group_bullet" style="background-color:#3355FF"></div>
+      <h2>Tracks tables</h2>
+    </div>
+      <ul class="sql_schema_table_list">
+        <li><a href="#track" class="sql_schema_link" style="font-weight:bold">track</a></li>
+
+      </ul>
+    </div>
+  <div style="clear:both"></div>
+</div>
+
+<div>
+  <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:#55FF33">
+      <div class="sql_schema_table_group_bullet" style="background-color:#55FF33"></div>
+      <h2>Misc tables</h2>
+    </div>
+      <ul class="sql_schema_table_list">
+        <li><a href="#publication" class="sql_schema_link" style="font-weight:bold">publication</a></li>
+        <li><a href="#study_publication" class="sql_schema_link" style="font-weight:bold">study_publication</a></li>
+        <li><a href="#drupal_node" class="sql_schema_link" style="font-weight:bold">drupal_node</a></li>
+
+      </ul>
+    </div>
+
+  <div style="clear:both" />
+</div>
+  <input type="button" onclick="show_hide_all('columns')" class="fbutton" value="Show/hide all"/>
+  <input type="hidden" id="expand" value="0" />
+  
+
+<div class="sql_schema_group_header" style="border-color:#C70C09">
+  <div id="1" class="sql_schema_group_bullet" style="background-color:#C70C09"></div>
+  <h2 id="1">SRA tables</h2>
+</div>
+<div class="sql_schema_table">
+  <div id="study"class="sql_schema_table_header" style="border-top-color:#C70C09">
+    <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>study</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_study" class="help-header sql_schema_show_hide" onclick="show_hide('study','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data defining SRA studies.</p>
+
+  <div id="div_study" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>study_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">SRA study id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>study_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>study_sra_acc</b></td>
+        <td class="bg2">CHAR(12)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">SRA study accession (e.g. SRP000000).</td>
+        <td class="bg2">key: <i>study_sra_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>study_private_acc</b></td>
+        <td class="bg1">CHAR(12)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Private study accession (e.g. VBSRP000000), for data without SRA accessions.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>title</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Title of the SRA study.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>abstract</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Abstract of the SRA study.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @study_sra_acc + @study_private_acc + @title + @abstract.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="experiment"class="sql_schema_table_header" style="border-top-color:#C70C09">
+    <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>experiment</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_experiment" class="help-header sql_schema_show_hide" onclick="show_hide('experiment','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data defining SRA experiments.</p>
+
+  <div id="div_experiment" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>experiment_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">SRA experiment id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>experiment_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>study_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Study primary id (foreign key).</td>
+        <td class="bg2">key: <i>experiment_study_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>experiment_sra_acc</b></td>
+        <td class="bg1">CHAR(12)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">SRA experiment accession (e.g. SRX000000).</td>
+        <td class="bg1">key: <i>experiment_sra_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>experiment_private_acc</b></td>
+        <td class="bg2">CHAR(12)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Private experiment accession (e.g. VBSRX000000), for data without SRA accessions.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>title</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Title of the SRA experiment.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @experiment_sra_acc + @experiment_private_acc + @title.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="run"class="sql_schema_table_header" style="border-top-color:#C70C09">
+    <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>run</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_run" class="help-header sql_schema_show_hide" onclick="show_hide('run','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data defining SRA runs.</p>
+
+  <div id="div_run" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>run_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">SRA run id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>run_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>experiment_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Experiment primary key (Foreign key).</td>
+        <td class="bg2">key: <i>run_experiment_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>sample_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Sample primary key (Foreign key).</td>
+        <td class="bg1">key: <i>run_sample_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>run_sra_acc</b></td>
+        <td class="bg2">CHAR(12)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">SRA run accession (e.g. SRR000000).</td>
+        <td class="bg2">key: <i>run_sra_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>run_private_acc</b></td>
+        <td class="bg1">CHAR(12)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Private run accession (e.g. VBSRR000000), for data without SRA accessions.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>title</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Title of the SRA run.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>submitter</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Submitter name of the SRA run.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="sample"class="sql_schema_table_header" style="border-top-color:#C70C09">
+    <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>sample</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_sample" class="help-header sql_schema_show_hide" onclick="show_hide('sample','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data defining SRA samples.</p>
+
+  <div id="div_sample" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>sample_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">SRA sample id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>sample_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>sample_sra_acc</b></td>
+        <td class="bg2">CHAR(12)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">SRA sample accession (e.g. SRS000000).</td>
+        <td class="bg2">key: <i>sample_sra_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>sample_private_acc</b></td>
+        <td class="bg1">CHAR(12)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Private sample accession (e.g. VBSRS000000), for data without SRA accessions.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>title</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Title of the SRA sample.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>description</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Description of the SRA sample.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>taxon_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">NCBI taxon id.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>strain</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Name of the strain.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>biosample_acc</b></td>
+        <td class="bg2">VARCHAR(15)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Biosample accession.</td>
+        <td class="bg2">key: <i>biosample_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>biosample_group_acc</b></td>
+        <td class="bg1">VARCHAR(15)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Biosample group.</td>
+        <td class="bg1">key: <i>biosample_group_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>strain_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Strain primary id (foreign key), to match the correct production_name.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>label</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Label for the sample, useful to find replicates.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc + @label.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div>
+
+<div class="sql_schema_group_header" style="border-color:#CC75FF">
+  <div id="2" class="sql_schema_group_bullet" style="background-color:#CC75FF"></div>
+  <h2 id="2">Taxonomy tables</h2>
+</div>
+<div class="sql_schema_table">
+  <div id="strain"class="sql_schema_table_header" style="border-top-color:#CC75FF">
+    <div class="sql_schema_table_header_left"><span style="background-color:#CC75FF"></span>strain</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_strain" class="help-header sql_schema_show_hide" onclick="show_hide('strain','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">A list of all existing (allowed) strains.</p>
+
+  <div id="div_strain" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>strain_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Strain id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>strain_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>species_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Species primary key (foreign key).</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>production_name</b></td>
+        <td class="bg1">VARCHAR(64)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Production name for this strain (species + strain).</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>strain</b></td>
+        <td class="bg2">VARCHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Name of the strain.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @production_name + @strain.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="species"class="sql_schema_table_header" style="border-top-color:#CC75FF">
+    <div class="sql_schema_table_header_left"><span style="background-color:#CC75FF"></span>species</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_species" class="help-header sql_schema_show_hide" onclick="show_hide('species','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">A list of all existing species.</p>
+
+  <div id="div_species" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>species_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Species id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>species_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>taxon_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">NCBI species id.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>binomial_name</b></td>
+        <td class="bg1">VARCHAR(128)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Species binomial name.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @binomial_name + @taxon.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div>
+
+<div class="sql_schema_group_header" style="border-color:#FF7504">
+  <div id="3" class="sql_schema_group_bullet" style="background-color:#FF7504"></div>
+  <h2 id="3">RNAseq Pipeline tables</h2>
+</div>
+<div class="sql_schema_table">
+  <div id="file"class="sql_schema_table_header" style="border-top-color:#FF7504">
+    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>file</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_file" class="help-header sql_schema_show_hide" onclick="show_hide('file','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where all metadata about the files are stored.</p>
+
+  <div id="div_file" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>file_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">File id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>file_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>path</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Path of the file.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>type</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>fastq</li>  <li> bam</li>  <li> bai</li>  <li> bed</li>  <li> bigwig</li></ul></td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">File type (fastq, bam...).</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>md5</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">md5 checksum of the file.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @path + @type + @md5.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="analysis"class="sql_schema_table_header" style="border-top-color:#FF7504">
+    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_analysis" class="help-header sql_schema_show_hide" onclick="show_hide('analysis','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where all the analysis to create tracks are described.</p>
+
+  <div id="div_analysis" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>analysis_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Analysis id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>analysis_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>name</b></td>
+        <td class="bg2">VARCHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Name of the analysis.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>description</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Description of the analysis.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @name + @description.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="analysis_param"class="sql_schema_table_header" style="border-top-color:#FF7504">
+    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis_param</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_analysis_param" class="help-header sql_schema_show_hide" onclick="show_hide('analysis_param','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the analysis parameters used to process every files are stored.</p>
+
+  <div id="div_analysis_param" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>analysis_param_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Analysis parameters id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>analysis_param_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>analysis_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Analysis primary id (foreigh key).</td>
+        <td class="bg2">key: <i>analysis_param_analysis_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>program</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Name of the Program used.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>parameters</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Complete command line parameters used.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @program + @parameters.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="analysis_file"class="sql_schema_table_header" style="border-top-color:#FF7504">
+    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis_file</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_analysis_file" class="help-header sql_schema_show_hide" onclick="show_hide('analysis_file','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Linker between the tables file and analysis_parameter. Also links to the relevant runs and samples.</p>
+
+  <div id="div_analysis_file" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>analysis_file_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Analysis-file linker id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>analysis_file_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>analysis_parameter_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Analysis_parameter primary id (foreigh key).</td>
+        <td class="bg2">key: <i>analysis_file_analysis_parameter_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>file_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">File primary id (foreign key).</td>
+        <td class="bg1">key: <i>analysis_file_file_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>file_io</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>INPUT</li>  <li> OUTPUT</li></ul></td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">If the file is an input or an output.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>scope</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>run</li>  <li> sample</li></ul></td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Does the file represents a run, or a sample (merged)?</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>scope_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Run or Sample primary id (foreign key).</td>
+        <td class="bg2">key: <i>analysis_file_scope_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @analysis_parameter_id + @file_id + @file_io + @scope + @scope_id</td>
+        <td class="bg1"></td>
+      </tr>
+    </table>
+  </div>
+</div></div>
+
+<div class="sql_schema_group_header" style="border-color:#3355FF">
+  <div id="4" class="sql_schema_group_bullet" style="background-color:#3355FF"></div>
+  <h2 id="4">Tracks tables</h2>
+</div>
+<div class="sql_schema_table">
+  <div id="track"class="sql_schema_table_header" style="border-top-color:#3355FF">
+    <div class="sql_schema_table_header_left"><span style="background-color:#3355FF"></span>track</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_track" class="help-header sql_schema_show_hide" onclick="show_hide('track','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the tracks are stored, with a link to the corresponding file and sample.</p>
+
+  <div id="div_track" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>track_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Track id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>track_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>file_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">File primary id (foreigh key).</td>
+        <td class="bg2">key: <i>track_file_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>sample_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Sample primary key (foreign key).</td>
+        <td class="bg1">key: <i>track_sample_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>title</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Title of the track in E! genome browser.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>description</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Description of the track in E! genome browser.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @title + @description.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div>
+
+<div class="sql_schema_group_header" style="border-color:#55FF33">
+  <div id="5" class="sql_schema_group_bullet" style="background-color:#55FF33"></div>
+  <h2 id="5">Misc tables</h2>
+</div>
+<div class="sql_schema_table">
+  <div id="publication"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>publication</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_publication" class="help-header sql_schema_show_hide" onclick="show_hide('publication','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the publication infos are stored.</p>
+
+  <div id="div_publication" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>publication_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Publication id (primary key, internal identifier) PRIMARY KEY.</td>
+        <td class="bg1">key: <i>publication_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>pubmed_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Pubmed id.</td>
+        <td class="bg2">key: <i>pubmed_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>doi</b></td>
+        <td class="bg1">VARCHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Digital object identifier.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>authors</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">List of authors.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>title</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Title of the publication.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>abstract</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Abstract of the publication.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>year</b></td>
+        <td class="bg1">INT(4)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Year of publication.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @pubmed_id + @doi + @authors + @title + @abstract + @year.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="study_publication"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>study_publication</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_study_publication" class="help-header sql_schema_show_hide" onclick="show_hide('study_publication','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Linker between studies and publications.</p>
+
+  <div id="div_study_publication" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>study_pub_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Study-Publication link id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>study_pub_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>study_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Study primary id (foreign key).</td>
+        <td class="bg2">key: <i>study_pub_study_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>publication_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Publication primary id (foreign key).</td>
+        <td class="bg1">key: <i>study_pub_publication_id_idx</i></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="drupal_node"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>drupal_node</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_drupal_node" class="help-header sql_schema_show_hide" onclick="show_hide('drupal_node','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data that will be displayed in drupal nodes.</p>
+
+  <div id="div_drupal_node" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>drupal_node_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Publication id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>drupal_node_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>study_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Study primary id (foreign key).</td>
+        <td class="bg2">key: <i>study_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>autogen_txt</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Programmatically generated text.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>manual_txt</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Manually curated text.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @autogen_txt + @manual_txt.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
+      </tr>
+    </table>
+  </div>
+</div></div>
+
+    </div>
+  </div>
+</body>
+</html>

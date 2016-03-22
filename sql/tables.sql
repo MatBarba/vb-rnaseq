@@ -2,9 +2,8 @@
 
 
 /**
-@header Vectorbase RNAseq tracks Tables
-@colour  #000
-
+@header SRA tables
+@colour  #C70C09
 */
 
 
@@ -16,17 +15,17 @@ SRA tracking tables
 
 /**
 
-@study table
-@desc The study table contains data defining SRA studies.
+@table study
+@desc Contains data defining SRA studies.
 
-@study_id           SRA study id (primary key, internal identifier).
-@study_sra_acc      SRA study accession (e.g. SRP000000).
-@study_private_acc  Private study accession (e.g. VBSRP000000), for data without SRA accessions.
-@title              Title of the SRA study.
-@abstract           Abstract of the SRA study.
-@metasum            Checksum of @study_sra_acc + @study_private_acc + @title + @abstract.
-@date               Entry timestamp.
-@status             Active (True) or retired (False) row.
+@column study_id           SRA study id (primary key, internal identifier).
+@column study_sra_acc      SRA study accession (e.g. SRP000000).
+@column study_private_acc  Private study accession (e.g. VBSRP000000), for data without SRA accessions.
+@column title              Title of the SRA study.
+@column abstract           Abstract of the SRA study.
+@column metasum            Checksum of @study_sra_acc + @study_private_acc + @title + @abstract.
+@column date               Entry timestamp.
+@column status             Active (True) or retired (False) row.
 
 */
 
@@ -51,17 +50,17 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 
 /**
 
-@experiment table
-@desc The experiment table contains data defining SRA experiments.
+@table experiment
+@desc Contains data defining SRA experiments.
 
-@experiment_id           SRA experiment id (primary key, internal identifier).
-@study_id                Study table primary id (foreign key).
-@experiment_sra_acc      SRA experiment accession (e.g. SRX000000).
-@experiment_private_acc  Private experiment accession (e.g. VBSRX000000), for data without SRA accessions.
-@title                   Title of the SRA experiment.
-@metasum                 Checksum of @experiment_sra_acc + @experiment_private_acc + @title.
-@date                    Entry timestamp.
-@status                  Active (True) or retired (False) row.
+@column experiment_id           SRA experiment id (primary key, internal identifier).
+@column study_id                Study primary id (foreign key).
+@column experiment_sra_acc      SRA experiment accession (e.g. SRX000000).
+@column experiment_private_acc  Private experiment accession (e.g. VBSRX000000), for data without SRA accessions.
+@column title                   Title of the SRA experiment.
+@column metasum                 Checksum of @experiment_sra_acc + @experiment_private_acc + @title.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
 
 */
 
@@ -87,19 +86,19 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 
 /**
 
-@run table
-@desc The run table contains data defining SRA runs.
+@table run
+@desc Contains data defining SRA runs.
 
-@run_id                  SRA run id (primary key, internal identifier).
-@experiment_id           Experiment table primary key (Foreign key).
-@sample_id               Sample table primary key (Foreign key).
-@run_sra_acc             SRA run accession (e.g. SRR000000).
-@run_private_acc         Private run accession (e.g. VBSRR000000), for data without SRA accessions.
-@title                   Title of the SRA run.
-@submitter               Submitter name of the SRA run.
-@metasum                 Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.
-@date                    Entry timestamp.
-@status                  Active (True) or retired (False) row.
+@column run_id                  SRA run id (primary key, internal identifier).
+@column experiment_id           Experiment primary key (Foreign key).
+@column sample_id               Sample primary key (Foreign key).
+@column run_sra_acc             SRA run accession (e.g. SRR000000).
+@column run_private_acc         Private run accession (e.g. VBSRR000000), for data without SRA accessions.
+@column title                   Title of the SRA run.
+@column submitter               Submitter name of the SRA run.
+@column metasum                 Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
 
 */
 
@@ -128,23 +127,23 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 
 /**
 
-@sample table
-@desc The sample table contains data defining SRA samples.
+@table sample
+@desc Contains data defining SRA samples.
 
-@sample_id               SRA sample id (primary key, internal identifier).
-@sample_sra_acc          SRA sample accession (e.g. SRS000000).
-@sample_private_acc      Private sample accession (e.g. VBSRS000000), for data without SRA accessions.
-@title                   Title of the SRA sample.
-@description             Description of the SRA sample.
-@taxon_id                NCBI taxon id.
-@strain                  Name of the strain.
-@biosample_acc           Biosample accession.
-@biosample_group_acc     Biosample group.
-@strain_id               Strain table primary id (foreign key), to match the correct production_name.
-@label                   Label for the sample, useful to find replicates.
-@metasum                 Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc + @label.
-@date                    Entry timestamp.
-@status                  Active (True) or retired (False) row.
+@column sample_id               SRA sample id (primary key, internal identifier).
+@column sample_sra_acc          SRA sample accession (e.g. SRS000000).
+@column sample_private_acc      Private sample accession (e.g. VBSRS000000), for data without SRA accessions.
+@column title                   Title of the SRA sample.
+@column description             Description of the SRA sample.
+@column taxon_id                NCBI taxon id.
+@column strain                  Name of the strain.
+@column biosample_acc           Biosample accession.
+@column biosample_group_acc     Biosample group.
+@column strain_id               Strain primary id (foreign key), to match the correct production_name.
+@column label                   Label for the sample, useful to find replicates.
+@column metasum                 Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc + @label.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
 
 */
 
@@ -175,17 +174,23 @@ CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
 CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc, NEW.label) );
 
+
+/**
+@header Taxonomy tables
+@colour #CC75FF
+*/
+
 /**
 
-@species table
+@table species
 @desc A list of all existing species.
 
-@species_id              Species id (primary key, internal identifier).
-@taxon_id                NCBI species id.
-@binomial_name           Species binomial name.
-@metasum                 Checksum of @binomial_name + @taxon.
-@date                    Entry timestamp.
-@status                  Active (True) or retired (False) row.
+@column species_id              Species id (primary key, internal identifier).
+@column taxon_id                NCBI species id.
+@column binomial_name           Species binomial name.
+@column metasum                 Checksum of @binomial_name + @taxon.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
 
 */
 
@@ -204,19 +209,18 @@ CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
 CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
-
+ 
 /**
-
-@strain table
+@table strain
 @desc A list of all existing (allowed) strains.
 
-@strain_id               Strain id (primary key, internal identifier).
-@species_id              Species table primary key (foreign key).
-@production_name         Production name for this strain (species + strain).
-@strain                  Name of the strain.
-@metasum                 Checksum of @production_name + @strain.
-@date                    Entry timestamp.
-@status                  Active (True) or retired (False) row.
+@column strain_id               Strain id (primary key, internal identifier).
+@column species_id        Species primary key (foreign key).
+@column production_name         Production name for this strain (species + strain).
+@column strain                  Name of the strain.
+@column metasum                 Checksum of @production_name + @strain.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
 
 */
 
@@ -254,19 +258,25 @@ CREATE VIEW taxonomy AS
 PIPELINE TABLES
 
 */
+/**
+@header RNAseq Pipeline tables
+@colour #FF7504
+*/
+/**
+
 
 /**
 
-@file table
-@desc The table where all metadata about the files are stored.
+@table file
+@desc Where all metadata about the files are stored.
 
-@file_id                File id (primary key, internal identifier).
-@path                   Path of the file.
-@type                   File type (fastq, bam...).
-@md5                    md5 checksum of the file.
-@metasum                Checksum of @path + @type + @md5.
-@date                   Entry timestamp.
-@status                 Active (True) or retired (False) row.
+@column file_id                File id (primary key, internal identifier).
+@column path                   Path of the file.
+@column type                   File type (fastq, bam...).
+@column md5                    md5 checksum of the file.
+@column metasum                Checksum of @path + @type + @md5.
+@column date                   Entry timestamp.
+@column status                 Active (True) or retired (False) row.
 
 */
 
@@ -289,15 +299,15 @@ CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
 
 /**
 
-@analysis table
-@desc The table where all the analysis to create tracks are described.
+@table analysis
+@desc Where all the analysis to create tracks are described.
 
-@analysis_id            Analysis id (primary key, internal identifier).
-@name                   Name of the analysis.
-@description            Description of the analysis.
-@metasum                Checksum of @name + @description.
-@date                   Entry timestamp.
-@status                 Active (True) or retired (False) row.
+@column analysis_id            Analysis id (primary key, internal identifier).
+@column name                   Name of the analysis.
+@column description            Description of the analysis.
+@column metasum                Checksum of @name + @description.
+@column date                   Entry timestamp.
+@column status                 Active (True) or retired (False) row.
 
 */
 
@@ -319,16 +329,16 @@ CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
 
 /**
 
-@analysis_param table
-@desc The table where the analysis parameters used to process every files are stored.
+@table analysis_param
+@desc Where the analysis parameters used to process every files are stored.
 
-@analysis_param_id      Analysis parameters id (primary key, internal identifier).
-@analysis_id            Analysis table primary id (foreigh key).
-@program                Name of the Program used.
-@parameters             Complete command line parameters used.
-@metasum                Checksum of @program + @parameters.
-@date                   Entry timestamp.
-@status                 Active (True) or retired (False) row.
+@column analysis_param_id      Analysis parameters id (primary key, internal identifier).
+@column analysis_id            Analysis primary id (foreigh key).
+@column program                Name of the Program used.
+@column parameters             Complete command line parameters used.
+@column metasum                Checksum of @program + @parameters.
+@column date                   Entry timestamp.
+@column status                 Active (True) or retired (False) row.
 
 */
 
@@ -352,16 +362,16 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 
 /**
 
-@analysis_file table
+@table analysis_file
 @desc Linker between the tables file and analysis_parameter. Also links to the relevant runs and samples.
 
-@analysis_file_id             Analysis-file linker id (primary key, internal identifier).
-@analysis_parameter_id        Analysis_parameter table primary id (foreigh key).
-@file_id                      File table primary id (foreign key).
-@file_io                      If the file is an input or an output.
-@scope                        Does the file represents a run, or a sample (merged)?
-@scope_id                     Run or Sample table primary id (foreign key).
-@metasum                      Checksum of @analysis_parameter_id + @file_id + @file_io + @scope + @scope_id
+@column analysis_file_id             Analysis-file linker id (primary key, internal identifier).
+@column analysis_parameter_id        Analysis_parameter primary id (foreigh key).
+@column file_id                      File primary id (foreign key).
+@column file_io                      If the file is an input or an output.
+@column scope                        Does the file represents a run, or a sample (merged)?
+@column scope_id                     Run or Sample primary id (foreign key).
+@column metasum                      Checksum of @analysis_parameter_id + @file_id + @file_io + @scope + @scope_id
 
 */
 
@@ -385,19 +395,23 @@ CREATE TRIGGER analysis_file_md5_upd_tr BEFORE UPDATE ON analysis_file
 CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.scope, NEW.scope_id) );
 
+
 /**
+@header Tracks tables
+@colour #3355FF
+*/
+/**
+@table track
+@desc Where the tracks are stored, with a link to the corresponding file and sample.
 
-@track table
-@desc The table where the tracks are stored, with a link to the corresponding file and sample.
-
-@track_id               Track id (primary key, internal identifier).
-@file_id                File table primary id (foreigh key).
-@sample_id              Sample table primary key (foreign key).
-@title                  Title of the track in E! genome browser.
-@description            Description of the track in E! genome browser.
-@metasum                Checksum of @title + @description.
-@date                   Entry timestamp.
-@status                 Active (True) or retired (False) row.
+@column track_id               Track id (primary key, internal identifier).
+@column file_id                File primary id (foreigh key).
+@column sample_id              Sample primary key (foreign key).
+@column title                  Title of the track in E! genome browser.
+@column description            Description of the track in E! genome browser.
+@column metasum                Checksum of @title + @description.
+@column date                   Entry timestamp.
+@column status                 Active (True) or retired (False) row.
 
 */
 
@@ -422,6 +436,12 @@ CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_id, NEW.title, NEW.description) );
 
 /**
+@header Misc tables
+@colour #55FF33
+*/
+/**
+
+/**
 
 PUBLICATIONS TABLES
 
@@ -429,19 +449,19 @@ PUBLICATIONS TABLES
 
 /**
 
-@publication table
-@desc The table where the publication infos are stored.
+@table publication
+@desc Where the publication infos are stored.
 
-@publication_id         Publication id (primary key, internal identifier) PRIMARY KEY.
-@pubmed_id              Pubmed id.
-@doi                    Digital object identifier.
-@authors                List of authors.
-@title                  Title of the publication.
-@abstract               Abstract of the publication.
-@year                   Year of publication.
-@metasum                Checksum of @pubmed_id + @doi + @authors + @title + @abstract + @year.
-@date                   Entry timestamp.
-@status                 Active (True) or retired (False) row.
+@column publication_id         Publication id (primary key, internal identifier) PRIMARY KEY.
+@column pubmed_id              Pubmed id.
+@column doi                    Digital object identifier.
+@column authors                List of authors.
+@column title                  Title of the publication.
+@column abstract               Abstract of the publication.
+@column year                   Year of publication.
+@column metasum                Checksum of @pubmed_id + @doi + @authors + @title + @abstract + @year.
+@column date                   Entry timestamp.
+@column status                 Active (True) or retired (False) row.
 
 */
 
@@ -468,12 +488,12 @@ CREATE TRIGGER publication_md5_ins_tr BEFORE INSERT ON publication
 
 /**
 
-@study_publication table
-@desc Linker table between studies and publications.
+@table study_publication
+@desc Linker between studies and publications.
 
-@study_pub_id          Study-Publication link id (primary key, internal identifier).
-@study_id              Study table primary id (foreign key).
-@publication_id        Publication table primary id (foreign key).
+@column study_pub_id          Study-Publication link id (primary key, internal identifier).
+@column study_id              Study primary id (foreign key).
+@column publication_id        Publication primary id (foreign key).
 
 */
 
@@ -495,16 +515,16 @@ DRUPAL TABLES
 
 /**
 
-@drupal_node table
+@table drupal_node
 @desc Contains data that will be displayed in drupal nodes.
 
-@drupal_node_id         Publication id (primary key, internal identifier).
-@study_id               Study table primary id (foreign key).
-@autogen_txt            Programmatically generated text.
-@manual_txt             Manually curated text.
-@metasum                Checksum of @autogen_txt + @manual_txt.
-@date                   Entry timestamp.
-@status                 Active (True) or retired (False) row.
+@column drupal_node_id         Publication id (primary key, internal identifier).
+@column study_id               Study primary id (foreign key).
+@column autogen_txt            Programmatically generated text.
+@column manual_txt             Manually curated text.
+@column metasum                Checksum of @autogen_txt + @manual_txt.
+@column date                   Entry timestamp.
+@column status                 Active (True) or retired (False) row.
 
 */
 

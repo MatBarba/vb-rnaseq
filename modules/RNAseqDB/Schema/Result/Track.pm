@@ -35,11 +35,6 @@ __PACKAGE__->table("track");
   data_type: 'integer'
   is_nullable: 1
 
-=head2 sample_id
-
-  data_type: 'integer'
-  is_nullable: 0
-
 =head2 title
 
   data_type: 'text'
@@ -82,8 +77,6 @@ __PACKAGE__->add_columns(
   },
   "file_id",
   { data_type => "integer", is_nullable => 1 },
-  "sample_id",
-  { data_type => "integer", is_nullable => 0 },
   "title",
   { data_type => "text", is_nullable => 1 },
   "description",
@@ -132,25 +125,13 @@ __PACKAGE__->set_primary_key("track_id");
 
 __PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
 
-=head2 C<metasum>
 
-=over 4
-
-=item * L</metasum>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-16 16:57:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aa4xotsgs4iJjVmkHluH7w
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-22 17:16:38
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aUNg38oOgJpK43PCcQoI7Q
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->has_one( sample => 'RNAseqDB::Schema::Result::Sample', 'sample_id');
-
+__PACKAGE__->has_one( sra_track => 'RNAseqDB::Schema::Result::SraTrack', 'track_id');
 
 1;
+

@@ -22,7 +22,7 @@ sub get_new_sra_tracks {
       'sample.sample_sra_acc' => { '!=', undef },
   },
   {
-    prefetch    => { sample => [ { strain => 'species' } ] },
+    prefetch    => { sra_track => { sample => { strain => 'species' } } },
   });
   
 #$track_req->result_class('DBIx::Class::ResultClass::HashRefInflator');
@@ -34,11 +34,12 @@ sub get_new_sra_tracks {
   
   my %new_track = ();
   for my $track (@res_tracks) {
-#    warn(Dumper $track);
-    my $production_name = $track->sample->strain->production_name;
-    my $taxon_id        = $track->sample->strain->species->taxon_id;
+    my $sample = $track->sra_track->sample;
+    my $strain = $sample->strain;
+    my $production_name = $strain->production_name;
+    my $taxon_id        = $strain->species->taxon_id;
     $new_track{$production_name}{taxon_id} = $taxon_id;
-    push @{ $new_track{$production_name}{sra_ids} }, $track->sample->sample_sra_acc;
+    push @{ $new_track{$production_name}{sra_ids} }, $sample->sample_sra_acc;
   }
   return \%new_track;
 }

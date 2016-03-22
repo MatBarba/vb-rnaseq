@@ -410,7 +410,6 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 
 @column track_id               Track id (primary key, internal identifier).
 @column file_id                File primary id (foreigh key).
-@column sample_id              Sample primary key (foreign key).
 @column title                  Title of the track in E! genome browser.
 @column description            Description of the track in E! genome browser.
 @column metasum                Checksum of @title + @description.
@@ -422,30 +421,27 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 CREATE TABLE track (
   track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   file_id               INT(10) UNIQUE,
-  sample_id             INT(10) NOT NULL,
   title                 TEXT,
   description           TEXT,
-  metasum               CHAR(32) UNIQUE,
+  metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY track_id_idx                     (track_id),
-  KEY track_file_id_idx                (file_id),
-  KEY track_sample_id_idx              (sample_id)
+  KEY track_file_id_idx                (file_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_id, NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
 CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_id, NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
 
 /**
 @table sra_track
-@desc Defines what constitutes a track, i.e. can be a merge of runs at the sample level, or a merge of samples as replicates.
+@desc Defines what constitutes a track, i.e. one or several samples.
 
 @column sra_track_id           Track id (primary key, internal identifier).
-@column sra_id                 One of the SRA table primary id (foreigh key).
-@column sra_table              The name of the SRA table linked with the sra_id.
+@column sample_id              SRA sample primary id (foreigh key).
 @column track_id               Track table primary id (foreign key).
 @column date                   Entry timestamp.
 
@@ -453,12 +449,12 @@ CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
 
 CREATE TABLE sra_track (
   sra_track_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  sra_id                INT(10),
-  sra_table             ENUM('sample', 'run', 'experiment', 'study'),
+  sample_id             INT(10),
   track_id              INT(10),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   KEY sra_track_id_idx                 (sra_track_id),
+  KEY sra_track_sample_id_idx          (sample_id),
   KEY sra_track_track_id_idx           (track_id)
 ) ENGINE=MyISAM;
 

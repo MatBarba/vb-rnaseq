@@ -221,7 +221,7 @@ __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 
-__PACKAGE__->has_one( track => 'RNAseqDB::Schema::Result::Track', 'sample_id');
-__PACKAGE__->belongs_to( strain => 'RNAseqDB::Schema::Result::Strain', 'strain_id');
+__PACKAGE__->has_many(   sra_tracks => 'RNAseqDB::Schema::Result::SraTrack', 'sample_id');
+__PACKAGE__->belongs_to( strain     => 'RNAseqDB::Schema::Result::Strain',   'strain_id');
 1;
 

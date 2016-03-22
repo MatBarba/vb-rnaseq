@@ -324,7 +324,10 @@ sub _add_track {
   
   # Does the track already exists?
   my $track_req = $self->resultset('Track')->search({
-      sample_id => $sample_id,
+      'sra_track.sample_id' => $sample_id,
+  },
+  {
+    prefetch    => 'sra_track',
   });
 
   my @res_tracks = $track_req->all;
@@ -334,11 +337,19 @@ sub _add_track {
     return;
   }
   
-  # Insert a new track
+  # Insert a new track and a link sra_track
+  # NB: the default is a merging at the sample level
   $logger->info("ADDING track for $sample_id");
-  my $insertion = $self->resultset('Track')->create({
-      sample_id         => $sample_id,
-    });
+  
+  # Add the track itself
+  my $track_insertion = $self->resultset('Track')->create({});
+  
+  # Add the link from the sample to the track
+  my $sra_track_insertion = $self->resultset('SraTrack')->create({
+      sample_id    => $sample_id,
+      track_id  => $track_insertion->id,
+  });
+  
   return;
 }
 

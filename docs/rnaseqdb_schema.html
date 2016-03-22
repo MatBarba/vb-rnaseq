@@ -1185,51 +1185,43 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>sample_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">-</td>
-        <td class="bg1">Sample primary key (foreign key).</td>
-        <td class="bg1">key: <i>track_sample_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>title</b></td>
-        <td class="bg2">TEXT</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Title of the track in E! genome browser.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>description</b></td>
+        <td class="bg1"><b>title</b></td>
         <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Description of the track in E! genome browser.</td>
+        <td class="bg1">Title of the track in E! genome browser.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>metasum</b></td>
-        <td class="bg2">CHAR(32)</td>
+        <td class="bg2"><b>description</b></td>
+        <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Checksum of @title + @description.</td>
+        <td class="bg2">Description of the track in E! genome browser.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>date</b></td>
-        <td class="bg1">TIMESTAMP</td>
-        <td class="bg1">CURRENT_TIMESTAMP</td>
-        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @title + @description.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>status</b></td>
-        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg2">'ACTIVE'</td>
-        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
         <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
       </tr>
     </table>
   </div>
@@ -1245,7 +1237,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Defines what constitutes a track, i.e. can be a merge of runs at the sample level, or a merge of samples as replicates.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Defines what constitutes a track, i.e. one or several samples.</p>
 
   <div id="div_sra_track" style="display:none">
     <table class="ss sql_schema_table_column">
@@ -1266,35 +1258,27 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>sra_id</b></td>
+        <td class="bg2"><b>sample_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">One of the SRA table primary id (foreigh key).</td>
-        <td class="bg2"></td>
+        <td class="bg2">SRA sample primary id (foreigh key).</td>
+        <td class="bg2">key: <i>sra_track_sample_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>sra_table</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>sample</li>  <li> run</li>  <li> experiment</li>  <li> study</li></ul></td>
+        <td class="bg1"><b>track_id</b></td>
+        <td class="bg1">INT(10)</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">The name of the SRA table linked with the sra_id.</td>
-        <td class="bg1"></td>
+        <td class="bg1">Track table primary id (foreign key).</td>
+        <td class="bg1">key: <i>sra_track_track_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>track_id</b></td>
-        <td class="bg2">INT(10)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Track table primary id (foreign key).</td>
-        <td class="bg2">key: <i>sra_track_track_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>date</b></td>
-        <td class="bg1">TIMESTAMP</td>
-        <td class="bg1">CURRENT_TIMESTAMP</td>
-        <td class="bg1">Entry timestamp.</td>
-        <td class="bg1"></td>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"></td>
       </tr>
     </table>
   </div>

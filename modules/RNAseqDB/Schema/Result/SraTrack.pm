@@ -30,15 +30,9 @@ __PACKAGE__->table("sra_track");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 sra_id
+=head2 sample_id
 
   data_type: 'integer'
-  is_nullable: 1
-
-=head2 sra_table
-
-  data_type: 'enum'
-  extra: {list => ["sample","run","experiment","study"]}
   is_nullable: 1
 
 =head2 track_id
@@ -63,14 +57,8 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "sra_id",
+  "sample_id",
   { data_type => "integer", is_nullable => 1 },
-  "sra_table",
-  {
-    data_type => "enum",
-    extra => { list => ["sample", "run", "experiment", "study"] },
-    is_nullable => 1,
-  },
   "track_id",
   { data_type => "integer", is_nullable => 1 },
   "date",
@@ -95,9 +83,12 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("sra_track_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-22 16:02:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dh1S7JtoAnzPjnb2+C1opQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-22 17:16:38
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Gz7YvMTEnL6ACxvc4NNUFw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->has_one( track  => 'RNAseqDB::Schema::Result::Track',  'track_id' );
+__PACKAGE__->has_one( sample => 'RNAseqDB::Schema::Result::Sample', 'sample_id');
 1;
+

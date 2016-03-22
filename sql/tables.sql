@@ -397,10 +397,14 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 
 
 /**
+
 @header Tracks tables
 @colour #3355FF
+
 */
+
 /**
+
 @table track
 @desc Where the tracks are stored, with a link to the corresponding file and sample.
 
@@ -434,6 +438,29 @@ CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_id, NEW.title, NEW.description) );
 CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_id, NEW.title, NEW.description) );
+
+/**
+@table sra_track
+@desc Defines what constitutes a track, i.e. can be a merge of runs at the sample level, or a merge of samples as replicates.
+
+@column sra_track_id           Track id (primary key, internal identifier).
+@column sra_id                 One of the SRA table primary id (foreigh key).
+@column sra_table              The name of the SRA table linked with the sra_id.
+@column track_id               Track table primary id (foreign key).
+@column date                   Entry timestamp.
+
+*/
+
+CREATE TABLE sra_track (
+  sra_track_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  sra_id                INT(10),
+  sra_table             ENUM('sample', 'run', 'experiment', 'study'),
+  track_id              INT(10),
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  KEY sra_track_id_idx                 (sra_track_id),
+  KEY sra_track_track_id_idx           (track_id)
+) ENGINE=MyISAM;
 
 /**
 @header Misc tables

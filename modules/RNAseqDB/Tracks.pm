@@ -14,6 +14,48 @@ use Data::Dumper;
 use Readonly;
 #use Try::Tiny;
 
+sub _add_track {
+  my ($self, $sample_id) = @_;
+  
+  # Does the track already exists?
+  my $track_req = $self->resultset('Track')->search({
+      'sra_tracks.sample_id' => $sample_id,
+  },
+  {
+    prefetch    => 'sra_tracks',
+  });
+
+  my @res_tracks = $track_req->all;
+  my $num_tracks = scalar @res_tracks;
+  if ($num_tracks > 0) {
+    $logger->warn("WARNING: Track already exists for sample $sample_id");
+    return;
+  }
+  
+  # Insert a new track and a link sra_track
+  # NB: the default is a merging at the sample level
+  $logger->info("ADDING track for $sample_id");
+  
+  # Add the track itself
+  my $track_insertion = $self->resultset('Track')->create({});
+  
+  # Add the link from the sample to the track
+  $self->_add_sra_track($sample_id, $track_insertion->id);
+  
+  return;
+}
+
+sub _add_sra_track {
+  my ($self, $sample_id, $track_id) = @_;
+  
+  my $sra_track_insertion = $self->resultset('SraTrack')->create({
+      sample_id    => $sample_id,
+      track_id  => $track_id,
+  });
+
+  return $sra_track_insertion;
+}
+
 sub get_new_sra_tracks {
   my ($self, $species) = @_;
   
@@ -45,8 +87,53 @@ sub get_new_sra_tracks {
     
     push @{ $new_track{$production_name}{tracks}{ $track_id } }, $sample->sample_sra_acc;
   }
-  #warn Dumper(\%new_track);
   return \%new_track;
+}
+
+sub merge_tracks_by_sra_ids {
+  my ($self, $sra_accs) = @_;
+  
+  # Merging means:
+  # - Creation of a new track
+  # - Inactivation of the constitutive, merged tracks (status=MERGED)
+  # - Creation of a new sra_track link between the samples and the track
+  
+  # Create a new track
+  my $merger_track = $self->resultset('Track')->create({});
+  
+  # Get the list of SRA samples from the list of SRA_ids
+  my $sample_ids = $self->_sra_to_sample_ids($sra_accs);
+  
+  # Get the list of tracks associated with them
+  my $old_track_ids = $self->_get_tracks_for_samples($sample_ids);
+  
+  # Then, create a link for each sample to the new merged track
+  my $merged_track_id = $merger_track->track_id;
+  map { $self->_add_sra_track($_, $merged_track_id) } @$sample_ids;
+  
+  # Finally, inactivate the old tracks
+  # Inactivate (status=merged)
+  my @old_tracks = map { { track_id => $_ } } @$old_track_ids;
+  my $old_tracks_update = $self->resultset('Track')->search(\@old_tracks)->update({
+    status => 'MERGED'
+  });
+
+  return;
+}
+
+sub _get_tracks_for_samples {
+  my ($self, $sample_ids) = @_;
+  
+  my @samples_conds = map { { 'sra_tracks.sample_id' => $_ } } @$sample_ids;
+  
+  my $tracks_req = $self->resultset('Track')->search(\@samples_conds,
+    {
+      prefetch  => 'sra_tracks',
+  });
+  
+  my @tracks = map { $_->track_id } $tracks_req->all;
+  
+  return \@tracks;
 }
 
 1;
@@ -91,6 +178,15 @@ This module is a role to interface the tracks part of the RNAseqDB::DB object.
   
   usage:
     my $new_tracks = $rdb->get_new_sra_tracks();
+    
+=item merge_tracks_by_sra_ids()
+
+  function       : merge several tracks in a single one
+  arg            : a ref array of a list of SRA accessions
+  
+  usage:
+    my $sras = [ 'SRS000001', 'SRS000002' ];
+    $rdb->merge_tracks_by_sra_ids($sras);
     
 =back
 

@@ -223,5 +223,6 @@ __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 __PACKAGE__->has_many(   sra_tracks => 'RNAseqDB::Schema::Result::SraTrack', 'sample_id');
 __PACKAGE__->belongs_to( strain     => 'RNAseqDB::Schema::Result::Strain',   'strain_id');
+__PACKAGE__->has_many(   runs       => 'RNAseqDB::Schema::Result::Run',      'sample_id');
 1;
 

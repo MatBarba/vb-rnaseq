@@ -7,6 +7,7 @@ use Test::Exception;
 use Data::Dumper;
 
 use Log::Log4perl qw( :easy );
+#Log::Log4perl->easy_init($WARN);
 #Log::Log4perl->easy_init($DEBUG);
 my $logger = get_logger();
 
@@ -36,8 +37,18 @@ $db->add_species({
 }
 
 {
-  # Add 2 studies
+  # Add 1 study
   $db->add_sra('SRP041691');
+  # Get the list of tracks to create
+  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (1 species expected)");
+  $logger->debug(Dumper $tracks);
+  
+  # Check sizes
+  check_expected_track($tracks, [1, 5]);
+}
+
+{
+  # Add another study
   $db->add_sra('SRP003874');
 
   # Get the list of tracks to create
@@ -46,6 +57,23 @@ $db->add_species({
   
   # Check sizes
   check_expected_track($tracks, [2, 9]);
+}
+
+{ 
+  # Merge tracks by samples
+  my @to_merge = qw( SRS602294 SRS602295 SRS602296 );
+  $db->merge_tracks_by_sra_ids(\@to_merge);
+  
+  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (3 samples merged)");
+  check_expected_track($tracks, [2, 7]);
+}
+{ 
+  # Merge tracks by study
+  my @to_merge = qw( SRP003874 );
+  $db->merge_tracks_by_sra_ids(\@to_merge);
+  
+  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (1 study = 4 samples merged)");
+  check_expected_track($tracks, [2, 4]);
 }
 
 sub check_expected_track {

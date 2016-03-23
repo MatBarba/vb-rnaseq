@@ -425,7 +425,7 @@ CREATE TABLE track (
   description           TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  status                ENUM('ACTIVE', 'RETIRED', 'MERGED') DEFAULT 'ACTIVE',
   
   KEY track_id_idx                     (track_id),
   KEY track_file_id_idx                (file_id)
@@ -553,7 +553,7 @@ DRUPAL TABLES
 
 CREATE TABLE drupal_node (
   drupal_node_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  experiment_id         INT(10) UNIQUE,
+  experiment_id         INT(10),
   autogen_txt           TEXT,
   manual_txt            TEXT,
   metasum               CHAR(32),

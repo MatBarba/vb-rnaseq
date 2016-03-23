@@ -164,4 +164,8 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->has_many(   runs         => 'RNAseqDB::Schema::Result::Run',        'experiment_id' );
+__PACKAGE__->belongs_to( study        => 'RNAseqDB::Schema::Result::Study',      'study_id'      );
+__PACKAGE__->has_one(    drupal_node  => 'RNAseqDB::Schema::Result::DrupalNode', 'experiment_id' );
 1;
+

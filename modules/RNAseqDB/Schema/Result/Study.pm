@@ -164,4 +164,7 @@ __PACKAGE__->add_unique_constraint("study_sra_acc", ["study_sra_acc"]);
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->has_many( experiments       => 'RNAseqDB::Schema::Result::Experiment',       'study_id' );
+__PACKAGE__->has_many( study_publication => 'RNAseqDB::Schema::Result::StudyPublication', 'study_id' );
 1;
+

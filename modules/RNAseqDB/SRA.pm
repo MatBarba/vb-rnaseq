@@ -319,38 +319,61 @@ sub _get_sample_id {
   }
 }
 
-sub _add_track {
-  my ($self, $sample_id) = @_;
-  
-  # Does the track already exists?
-  my $track_req = $self->resultset('Track')->search({
-      'sra_tracks.sample_id' => $sample_id,
-  },
-  {
-    prefetch    => 'sra_tracks',
-  });
+sub _sra_to_sample_ids {
+  my ($self, $sra_accs) = @_;
 
-  my @res_tracks = $track_req->all;
-  my $num_tracks = scalar @res_tracks;
-  if ($num_tracks > 0) {
-    $logger->warn("WARNING: Track already exists for sample $sample_id");
-    return;
+  my @sample_accs;
+  ACCESSION : for my $acc (@$sra_accs) {
+    my $samples_req;
+    if ($acc =~ $STUDY_REGEX) {
+      $samples_req = $self->resultset('Sample')->search({
+          'study.study_sra_acc' => $acc
+        },
+        {
+          prefetch => { runs => {experiment => 'study' } }
+        });
+    }
+    elsif ($acc =~ $EXPERIMENT_REGEX) {
+      $samples_req = $self->resultset('Sample')->search({
+          'experiment.experiment_sra_acc' => $acc
+        },
+        {
+          prefetch => { runs => 'experiment' }
+        });
+    }
+    elsif ($acc =~ $RUN_REGEX) {
+      $samples_req = $self->resultset('Sample')->search({
+          'runs.run_sra_acc' => $acc
+        },
+        {
+          prefetch => 'runs'
+        });
+    }
+    elsif ($acc =~ $SAMPLE_REGEX) {
+      $samples_req = $self->resultset('Sample')->search({
+          sample_sra_acc => $acc
+        });
+    } else {
+      $logger->warn("Can't recognize SRA accession $acc (to merge)");
+      next ACCESSION;
+    }
+    my @sample_res = $samples_req->all;
+    if (@sample_res > 0) {
+      push @sample_accs, map { $_->sample_id } @sample_res;
+    }
+    else {
+      $logger->warn("Can't find SRA accession $acc to merge");
+      next ACCESSION;
+    }
   }
   
-  # Insert a new track and a link sra_track
-  # NB: the default is a merging at the sample level
-  $logger->info("ADDING track for $sample_id");
+  if (scalar @sample_accs == 0) {
+    $logger->warn("Could not find any SRA accession to merge");
+    return;
+  }
+  $logger->debug("Samples FROM ".join(',', @$sra_accs).": " . join(',', @sample_accs));
   
-  # Add the track itself
-  my $track_insertion = $self->resultset('Track')->create({});
-  
-  # Add the link from the sample to the track
-  my $sra_track_insertion = $self->resultset('SraTrack')->create({
-      sample_id    => $sample_id,
-      track_id  => $track_insertion->id,
-  });
-  
-  return;
+  return \@sample_accs;
 }
 
 #######################################################################################################################

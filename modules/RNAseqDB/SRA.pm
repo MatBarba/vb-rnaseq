@@ -415,6 +415,9 @@ sub add_private_study {
       $logger->info("CREATED sample $sample->{ sample_private_acc }");
     }
     
+    # Also, add a track linked to it
+    $self->_add_track($sample_id);
+    
     # Keep the match sample id = sample_name (to link the runs)
     $samples_ids{ $sample_href->{sample_name} } = $sample_id;
   }

@@ -25,7 +25,7 @@ $db->add_species({
 });
 
 # Check tables are empty
-check_tables_numbers($db, [0, 0, 0, 0]);
+check_tables_numbers($db, [0,0,0,0,0,0,0 ]);
 
 # Define a mock private rnaseq data
 my $rnaseq_study_json_path = dirname($0) . '/private1.json';
@@ -74,7 +74,7 @@ my $rnaseq_study = {
 {
   my $num = $db->add_private_study($rnaseq_study);
   ok( $num == 1, "Insert 1 SRA run from a private study (no SRA) - $num" );
-  check_tables_numbers($db, [1,1,1,1,1,1]);
+  check_tables_numbers($db, [1,1,1,1,1,1,1]);
 }
 
 # Same, but from a json file
@@ -82,7 +82,7 @@ my $rnaseq_study = {
   my $num = $db->add_private_study_from_json($rnaseq_study_json_path);
   ok( $num == 1, "Insert 1 SRA run from a private study from a json file (no SRA) - $num" );
   # NB: share the same pubmed as the previous one, so only add a link
-  check_tables_numbers($db, [2,2,2,2,1,2]);
+  check_tables_numbers($db, [2,2,2,2,1,2,2]);
 }
 
 sub check_number_in_table {
@@ -104,6 +104,7 @@ sub check_tables_numbers {
   check_number_in_table($db, 'sample', $nums->[3]);
   check_number_in_table($db, 'Publication', $nums->[4]);
   check_number_in_table($db, 'StudyPublication', $nums->[5]);
+  check_number_in_table($db, 'track', $nums->[6]);
 }
 
 # Delete temp database

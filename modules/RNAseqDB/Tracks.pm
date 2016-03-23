@@ -52,46 +52,6 @@ sub get_new_sra_tracks {
 1;
 
 __END__
-sub add_species {
-  my ($self, $species_href) = @_;
-  
-  my $nname   = $species_href->{production_name};
-  my $nstrain = $species_href->{strain};
-  $nstrain ||= '';
-  
-  my $species_id = $self->_get_species_id( $species_href );
-  if (not defined $species_id) {
-    $logger->warn("WARNING: Couldn't get the species id for $nname, $nstrain");
-    return 0;
-  }
-  $species_href->{species_id} = $species_id;
-  
-  if (defined $nname) {
-    # Check that the taxon doesn't already exists
-    my $currents = $self->resultset('Strain')->search({
-        production_name => $nname
-      });
-    
-    my ($current_sp) = $currents->all;
-    
-    # Already exists? Check that it is the same
-    if (defined $current_sp) {
-      $logger->debug("Strain with name $nname already in the database");
-      return 0;
-    }
-      
-    # Ok? Add it
-    else {
-      $self->resultset('Strain')->create( $species_href );
-      $logger->debug("NEW STRAIN added: $nname, $nstrain");
-      return 1;
-    }
-  }
-   else {
-     $logger->warn("WARNING: no production_name given");
-    return 0;
-  }
-}
 
 
 =head1 NAME

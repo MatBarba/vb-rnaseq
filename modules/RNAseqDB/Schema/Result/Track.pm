@@ -131,7 +131,7 @@ __PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->has_one( sra_track => 'RNAseqDB::Schema::Result::SraTrack', 'track_id');
+__PACKAGE__->has_many( sra_tracks => 'RNAseqDB::Schema::Result::SraTrack', 'track_id');
 
 1;
 

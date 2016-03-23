@@ -17,16 +17,18 @@ use Readonly;
 sub get_new_sra_tracks {
   my ($self, $species) = @_;
   
-  my $track_req = $self->resultset('Track')->search({
-      file_id => undef,
+  my $track_req = $self->resultset('SraTrack')->search({
+      'track.file_id' => undef,
+      'track.status'  => 'ACTIVE',
       'sample.sample_sra_acc' => { '!=', undef },
-  },
-  {
-    prefetch    => { sra_track => { sample => { strain => 'species' } } },
+    },
+    {
+    prefetch    => ['track', { 'sample' => { 'strain' => 'species' } } ],
   });
-  
-#$track_req->result_class('DBIx::Class::ResultClass::HashRefInflator');
+
   my @res_tracks = $track_req->all;
+  
+  #$track_req->result_class('DBIx::Class::ResultClass::HashRefInflator');
   
   if (defined $species) {
     @res_tracks = grep { $_->sample->strain->production_name eq $species } @res_tracks;
@@ -34,13 +36,16 @@ sub get_new_sra_tracks {
   
   my %new_track = ();
   for my $track (@res_tracks) {
-    my $sample = $track->sra_track->sample;
+    my $track_id = $track->track_id;
+    my $sample = $track->sample;
     my $strain = $sample->strain;
     my $production_name = $strain->production_name;
     my $taxon_id        = $strain->species->taxon_id;
     $new_track{$production_name}{taxon_id} = $taxon_id;
-    push @{ $new_track{$production_name}{sra_ids} }, $sample->sample_sra_acc;
+    
+    push @{ $new_track{$production_name}{tracks}{ $track_id } }, $sample->sample_sra_acc;
   }
+  #warn Dumper(\%new_track);
   return \%new_track;
 }
 

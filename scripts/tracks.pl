@@ -8,6 +8,7 @@ use autodie;
 use English qw( -no_match_vars );
 use Getopt::Long qw(:config no_ignore_case);
 use JSON;
+use Data::Dumper;
 
 use RNAseqDB::DB;
 use Log::Log4perl qw( :easy );
@@ -41,6 +42,7 @@ else {
 
 sub tracks_for_pipeline {
   my ($data, $opt) =  @_;
+  warn Dumper($data);
   
   my  @params = ();
   
@@ -72,9 +74,19 @@ sub tracks_for_pipeline {
     push @params, join(' ', @species_line);
     
     # Species sras
-    my $sra_ids = $data->{$species}->{sra_ids};
-    push @params, "\t-sra_species $species=" . join(",", @$sra_ids);
-    $n += scalar @$sra_ids;
+    my @uniq_sras;
+    my $tracks_sra = $data->{$species}->{tracks};
+    foreach my $sra_id (values %$tracks_sra) {
+      if (scalar @$sra_id == 1) {
+        push @uniq_sras, @$sra_id;
+      $n += scalar @$sra_id;
+      } else {
+        $logger->debug('Merged tracks not yet implemented');
+      }
+    }
+    
+    # Add all the tracks with a unique sample id in one go
+    push @params, "\t-sra_species $species=" . join(",", @uniq_sras);
   }
   
   if ($n > 0) {

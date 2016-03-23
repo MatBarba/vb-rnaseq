@@ -324,15 +324,15 @@ sub _add_track {
   
   # Does the track already exists?
   my $track_req = $self->resultset('Track')->search({
-      'sra_track.sample_id' => $sample_id,
+      'sra_tracks.sample_id' => $sample_id,
   },
   {
-    prefetch    => 'sra_track',
+    prefetch    => 'sra_tracks',
   });
 
   my @res_tracks = $track_req->all;
   my $num_tracks = scalar @res_tracks;
-  if ($num_tracks > 1) {
+  if ($num_tracks > 0) {
     $logger->warn("WARNING: Track already exists for sample $sample_id");
     return;
   }

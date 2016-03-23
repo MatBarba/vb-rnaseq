@@ -30,7 +30,7 @@ __PACKAGE__->table("drupal_node");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 study_id
+=head2 experiment_id
 
   data_type: 'integer'
   is_nullable: 1
@@ -75,7 +75,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "study_id",
+  "experiment_id",
   { data_type => "integer", is_nullable => 1 },
   "autogen_txt",
   { data_type => "text", is_nullable => 1 },
@@ -113,33 +113,21 @@ __PACKAGE__->set_primary_key("drupal_node_id");
 
 =head1 UNIQUE CONSTRAINTS
 
-=head2 C<metasum>
+=head2 C<experiment_id>
 
 =over 4
 
-=item * L</metasum>
+=item * L</experiment_id>
 
 =back
 
 =cut
 
-__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
-
-=head2 C<study_id>
-
-=over 4
-
-=item * L</study_id>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("study_id", ["study_id"]);
+__PACKAGE__->add_unique_constraint("experiment_id", ["experiment_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QlavgUnq0ka4vgUAcKOHQA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-23 09:59:46
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:VerS5fAmBNdFRg9mObzA4A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

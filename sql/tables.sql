@@ -542,7 +542,7 @@ DRUPAL TABLES
 @desc Contains data that will be displayed in drupal nodes.
 
 @column drupal_node_id         Publication id (primary key, internal identifier).
-@column study_id               Study primary id (foreign key).
+@column experiment_id          Experiment primary id (foreign key).
 @column autogen_txt            Programmatically generated text.
 @column manual_txt             Manually curated text.
 @column metasum                Checksum of @autogen_txt + @manual_txt.
@@ -553,15 +553,15 @@ DRUPAL TABLES
 
 CREATE TABLE drupal_node (
   drupal_node_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  study_id              INT(10) UNIQUE,
+  experiment_id         INT(10) UNIQUE,
   autogen_txt           TEXT,
   manual_txt            TEXT,
-  metasum               CHAR(32) UNIQUE,
+  metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY drupal_node_id_idx        (drupal_node_id),
-  KEY study_id_idx              (study_id)
+  KEY experiment_id_idx         (experiment_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node

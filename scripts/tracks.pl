@@ -42,7 +42,6 @@ else {
 
 sub tracks_for_pipeline {
   my ($data, $opt) =  @_;
-  warn Dumper($data);
   
   my  @params = ();
   
@@ -71,22 +70,27 @@ sub tracks_for_pipeline {
     # Species taxon_id
     my $taxon_id = $data->{$species}->{taxon_id};
     push @species_line, "-taxids $species=$taxon_id";
-    push @params, join(' ', @species_line);
     
     # Species sras
     my @uniq_sras;
     my $tracks_sra = $data->{$species}->{tracks};
-    foreach my $sra_id (values %$tracks_sra) {
-      if (scalar @$sra_id == 1) {
-        push @uniq_sras, @$sra_id;
-      $n += scalar @$sra_id;
+    foreach my $track_id (keys %$tracks_sra) {
+      my $sra_ids = $tracks_sra->{ $track_id };
+      if (scalar @$sra_ids == 1) {
+        push @uniq_sras, @$sra_ids;
+        $n += scalar @$sra_ids;
       } else {
-        $logger->debug('Merged tracks not yet implemented');
+        $logger->warn("Merged tracks not yet implemented (for track $track_id)");
       }
     }
     
     # Add all the tracks with a unique sample id in one go
-    push @params, "\t-sra_species $species=" . join(",", @uniq_sras);
+    if (scalar @uniq_sras) {
+      push @params, join(' ', @species_line);
+      push @params, "\t-sra_species $species=" . join(",", @uniq_sras);
+    } else {
+        $logger->warn("No tracks to align for $species");
+    }
   }
   
   if ($n > 0) {

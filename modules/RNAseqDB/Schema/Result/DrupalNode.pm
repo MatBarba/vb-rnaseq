@@ -111,23 +111,9 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("drupal_node_id");
 
-=head1 UNIQUE CONSTRAINTS
 
-=head2 C<experiment_id>
-
-=over 4
-
-=item * L</experiment_id>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("experiment_id", ["experiment_id"]);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-23 09:59:46
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:VerS5fAmBNdFRg9mObzA4A
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-24 10:26:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:hxBbr6mTWOmi8UUM0E5Bqw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

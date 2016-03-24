@@ -62,7 +62,7 @@ __PACKAGE__->table("track");
 
   data_type: 'enum'
   default_value: 'ACTIVE'
-  extra: {list => ["ACTIVE","RETIRED"]}
+  extra: {list => ["ACTIVE","RETIRED","MERGED"]}
   is_nullable: 1
 
 =cut
@@ -94,7 +94,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "enum",
     default_value => "ACTIVE",
-    extra => { list => ["ACTIVE", "RETIRED"] },
+    extra => { list => ["ACTIVE", "RETIRED", "MERGED"] },
     is_nullable => 1,
   },
 );
@@ -126,8 +126,8 @@ __PACKAGE__->set_primary_key("track_id");
 __PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-22 17:16:38
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aUNg38oOgJpK43PCcQoI7Q
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-24 10:26:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ggo8NVYzHP0q3l3CyapL7g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

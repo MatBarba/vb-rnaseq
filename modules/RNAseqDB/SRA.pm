@@ -98,11 +98,32 @@ sub _add_runs_from() {
   
   # Add each one individually
   my $total = 0;
-  for my $run (@{ $sra->runs() }) {
+  RUN: for my $run (@{ $sra->runs() }) {
+    next RUN if not _is_run_transcriptomic($run);
     my $num_inserted = $self->_add_run( $run->accession() );
     $total += $num_inserted;
   }
   return $total;
+}
+
+sub _is_run_transcriptomic {
+  my $run = shift;
+
+  # Check study type
+  my $study_type = $run->study()->type();
+  if ($study_type eq 'Transcriptome Analysis') {
+    return 1;
+  }
+
+  # Otherwise, check experiment type (in case the study is mixed)
+  my $design = $run->experiment()->design();
+  my $source = $design->{LIBRARY_DESCRIPTOR}->{LIBRARY_SOURCE};
+  if ($source eq 'TRANSCRIPTOMIC') {
+    return 1;
+  }
+
+  # Not RNAseq then
+  return 0;
 }
 
 # add_run       Import this run
@@ -238,7 +259,11 @@ sub _get_study_id {
         abstract        => $study->abstract(),
       });
     my $study_id = $insertion->id();
-    my @pubmed_links = grep { $_->{XREF_LINK}->{DB} eq 'pubmed' } @{ $study->links() };
+    my @pubmed_links = grep {
+          defined($_->{XREF_LINK}->{DB} )
+          and $_->{XREF_LINK}->{DB} eq 'pubmed'
+        } @{ $study->links() };
+
     foreach my $pubmed_link (@pubmed_links) {
       my $pubmed_id = $pubmed_link->{XREF_LINK}->{ID};
       $self->_add_study_publication($study_id, $pubmed_id);

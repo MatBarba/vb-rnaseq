@@ -5,6 +5,7 @@ use autodie qw( :all );
 use Test::More;
 use Test::Exception;
 use Log::Log4perl qw( :easy );
+#Log::Log4perl->easy_init($WARN);
 #Log::Log4perl->easy_init($DEBUG);
 my $logger = get_logger();
 
@@ -26,16 +27,20 @@ $db->add_species({
     production_name => 'aedes_aegypti',
     taxon_id        => 7159,
   });
+$db->add_species({
+    production_name => 'glossina_brevipalpis',
+    taxon_id        => 37001,
+  });
 
 # Check tables are empty
-check_tables_numbers($db, [0, 0, 0, 0]);
+check_tables_numbers($db, [0,0,0,0,0,0]);
 
 # Try to add 1 run from a species that is not defined in the taxonomy
 {
   my $acc = 'SRR1271738';
   my $num = $db->add_sra($acc);
   ok( $num == 0, "Don't insert 1 SRA run $acc (species not allowed)" );
-  check_tables_numbers($db, [0, 0, 0, 0]);
+  check_tables_numbers($db, [0,0,0,0,0,0,0]);
 }
 
 # Add 1 run
@@ -43,7 +48,7 @@ check_tables_numbers($db, [0, 0, 0, 0]);
   my $acc = 'SRR1271734';
   my $num = $db->add_sra($acc);
   ok( $num == 1, "Insert 1 SRA run $acc" );
-  check_tables_numbers($db, [1,1,1,1]);
+  check_tables_numbers($db, [1,1,1,1,0,0]);
 }
 
 # Add 1 experiment (same study)
@@ -51,7 +56,7 @@ check_tables_numbers($db, [0, 0, 0, 0]);
   my $acc = 'SRX533493';
   my $num = $db->add_sra($acc);
   ok( $num == 1, "Insert 1 SRA experiment $acc" );
-  check_tables_numbers($db, [1,2,2,2]);
+  check_tables_numbers($db, [1,2,2,2,0,0]);
 }
 
 # Add 1 sample (same study)
@@ -59,7 +64,7 @@ check_tables_numbers($db, [0, 0, 0, 0]);
   my $acc = 'SRS602296';
   my $num = $db->add_sra($acc);
   ok( $num == 1, "Insert 1 SRA sample $acc" );
-  check_tables_numbers($db, [1,3,3,3]);
+  check_tables_numbers($db, [1,3,3,3,0,0]);
 }
 
 # Add 1 study (same, whole study, there should 2 runs left to add, so 5 in total)
@@ -67,7 +72,7 @@ check_tables_numbers($db, [0, 0, 0, 0]);
   my $acc = 'SRP041691';
   my $num = $db->add_sra($acc);
   ok( $num == 2, "Insert 1 SRA study $acc ($num runs inserted)" );
-  check_tables_numbers($db, [1,5,5,5]);
+  check_tables_numbers($db, [1,5,5,5,0,0]);
 }
 
 # Add 1 study with a pubmed
@@ -78,6 +83,14 @@ check_tables_numbers($db, [0, 0, 0, 0]);
   check_tables_numbers($db, [2,9,9,9,1,1]);
 }
 
+# Add a study with genomic runs
+{
+  my $acc = 'SRP017485';
+  my $num = $db->add_sra($acc);
+  cmp_ok( $num, '==', 8, "Insert 1 SRA study with 8 transcriptomic runs + 5 genomic that we don't want" );
+  check_tables_numbers($db, [3,17,17,17,1,1]);
+}
+
 sub check_number_in_table {
   my ($db, $table, $expected_number) = @_;
   return if not defined $expected_number;
@@ -85,7 +98,7 @@ sub check_number_in_table {
   
   my $req = $db->resultset( $table );
   my @lines = $req->all;
-  ok( scalar @lines == $expected_number, sprintf("Right number of lines in %s (%d / %d)", $table, scalar @lines, $expected_number) );
+  cmp_ok( scalar @lines, '==', $expected_number, sprintf("Right number of lines in $table" ) );
 }
 
 sub check_tables_numbers {

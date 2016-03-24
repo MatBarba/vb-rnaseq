@@ -49,16 +49,7 @@ sub usage {
     --password <str>  : password
     --db <str>        : database name
     
-    Pipeline config:
-    --registry <path>     : Path a registry file for the pipeline
-    --pipeline_dir <path> : Path to a directory where the pipeline will store its work files
-    
-    Output:
-    --output <path>   : path to the output file
-    --format <str>    : output format: json (default), pipeline.
-    
-    Other:
-    --species <str>   : only outputs tracks for a given species (production_name)
+    --list <str>      : comma separated list of SRA ids to merge in 1 track
     
     --help            : show this help message
     --verbose         : show detailed progress

@@ -98,16 +98,23 @@ sub merge_tracks_by_sra_ids {
   # - Inactivation of the constitutive, merged tracks (status=MERGED)
   # - Creation of a new sra_track link between the samples and the track
   
-  # Create a new track
-  my $merger_track = $self->resultset('Track')->create({});
-  
   # Get the list of SRA samples from the list of SRA_ids
   my $sample_ids = $self->_sra_to_sample_ids($sra_accs);
   
   # Get the list of tracks associated with them
   my $old_track_ids = $self->_get_tracks_for_samples($sample_ids);
+
+  # Check that there are multiple tracks to merge, abort otherwise
+  if (scalar @$old_track_ids == 1) {
+    $logger->warn("Trying to merge tracks, but there is already one track for them");
+    return;
+  } else {
+    $logger->debug(sprintf "Can merge %d tracks", scalar @$old_track_ids);
+  }
   
   # Then, create a link for each sample to the new merged track
+  # (Create a new track first)
+  my $merger_track = $self->resultset('Track')->create({});
   my $merged_track_id = $merger_track->track_id;
   map { $self->_add_sra_track($_, $merged_track_id) } @$sample_ids;
   
@@ -126,7 +133,10 @@ sub _get_tracks_for_samples {
   
   my @samples_conds = map { { 'sra_tracks.sample_id' => $_ } } @$sample_ids;
   
-  my $tracks_req = $self->resultset('Track')->search(\@samples_conds,
+  my $tracks_req = $self->resultset('Track')->search({
+      -or => \@samples_conds,
+      -and => { status => 'ACTIVE' },
+    },
     {
       prefetch  => 'sra_tracks',
   });

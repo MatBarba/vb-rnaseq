@@ -34,6 +34,7 @@ $db->add_species({
   ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (none expected)");
   $logger->debug(Dumper $tracks);
   check_expected_track($tracks, [0,0]);
+  check_tables_numbers($db, [0,0,0,0,0]);
 }
 
 {
@@ -45,6 +46,7 @@ $db->add_species({
   
   # Check sizes
   check_expected_track($tracks, [1, 5]);
+  check_tables_numbers($db, [1,5,5,5,5]);
 }
 
 {
@@ -57,6 +59,7 @@ $db->add_species({
   
   # Check sizes
   check_expected_track($tracks, [2, 9]);
+  check_tables_numbers($db, [2,9,9,9,9]);
 }
 
 { 
@@ -66,7 +69,9 @@ $db->add_species({
   
   ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (3 samples merged)");
   check_expected_track($tracks, [2, 7]);
+  check_tables_numbers($db, [2,9,9,9,10]);
 }
+
 { 
   # Merge tracks by study
   my @to_merge = qw( SRP003874 );
@@ -74,6 +79,16 @@ $db->add_species({
   
   ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (1 study = 4 samples merged)");
   check_expected_track($tracks, [2, 4]);
+  check_tables_numbers($db, [2,9,9,9,11]);
+}
+{ 
+  # Try to merge a second time
+  my @to_merge = qw( SRP003874 );
+  $db->merge_tracks_by_sra_ids(\@to_merge);
+  
+  ok(my $tracks = $db->get_new_sra_tracks(), "Merge a second time (1 study = 4 samples)");
+  check_expected_track($tracks, [2, 4]);
+  check_tables_numbers($db, [2,9,9,9,11]);
 }
 
 sub check_expected_track {
@@ -94,6 +109,26 @@ sub check_expected_track {
     cmp_ok( $num_tracks, '==', $nums->[1], "Got $nums->[1] tracks");
   }
   
+}
+
+sub check_number_in_table {
+  my ($db, $table, $expected_number) = @_;
+  return if not defined $expected_number;
+  $table = ucfirst $table;
+  
+  my $req = $db->resultset( $table );
+  my @lines = $req->all;
+  cmp_ok( scalar @lines, '==', $expected_number, sprintf("Right number of lines in $table" ) );
+}
+
+sub check_tables_numbers {
+  my $db = shift;
+  my $nums = shift;
+  check_number_in_table($db, 'Study', $nums->[0]);
+  check_number_in_table($db, 'Experiment', $nums->[1]);
+  check_number_in_table($db, 'Run', $nums->[2]);
+  check_number_in_table($db, 'Sample', $nums->[3]);
+  check_number_in_table($db, 'Track', $nums->[4]);
 }
 
 # Delete temp database

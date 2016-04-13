@@ -23,7 +23,7 @@ my Readonly $RUN_REGEX        = qr{[SED]RR\d+};
 my Readonly $SAMPLE_REGEX     = qr{[SED]RS\d+};
 
 my Readonly $PRIVATE_PREFIX    = 'VBSR';
-my Readonly $STUDY_PREFIX      = $PRIVATE_PREFIX . 'S';
+my Readonly $STUDY_PREFIX      = $PRIVATE_PREFIX . 'P';
 my Readonly $EXPERIMENT_PREFIX = $PRIVATE_PREFIX . 'X';
 my Readonly $RUN_PREFIX        = $PRIVATE_PREFIX . 'R';
 my Readonly $SAMPLE_PREFIX     = $PRIVATE_PREFIX . 'S';
@@ -509,7 +509,7 @@ sub add_private_study {
         my $update_run = $self->resultset('Run')->search({
             run_id => $run_id,
           })->update( $run );
-        $logger->info("CREATED study $study->{ study_private_acc }");
+        $logger->info("CREATED run $run->{ run_private_acc }");
       }
       $num++;
     }

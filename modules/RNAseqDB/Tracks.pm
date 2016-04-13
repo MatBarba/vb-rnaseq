@@ -48,12 +48,22 @@ sub _add_track {
 sub _add_sra_track {
   my ($self, $sample_id, $track_id) = @_;
   
+  # First, check that the link doesn't already exists
+  my $sra_track_search = $self->resultset('SraTrack')->search({
+      sample_id    => $sample_id,
+      track_id  => $track_id,
+  });
+  my $links_count = $sra_track_search->all;
+  if ($links_count > 0) {
+    $logger->warn("There is already a link between sample $sample_id and track $track_id");
+    return;
+  }
+  
   my $sra_track_insertion = $self->resultset('SraTrack')->create({
       sample_id    => $sample_id,
       track_id  => $track_id,
   });
-
-  return $sra_track_insertion;
+  return;
 }
 
 sub get_new_sra_tracks {

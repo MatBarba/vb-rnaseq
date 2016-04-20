@@ -110,6 +110,10 @@ sub merge_tracks_by_sra_ids {
   
   # Get the list of SRA samples from the list of SRA_ids
   my $sample_ids = $self->_sra_to_sample_ids($sra_accs);
+  if (not defined $sample_ids) {
+    $logger->warn("Abort merging: can't find all the members to merge");
+    return;
+  }
   
   # Get the list of tracks associated with them
   my $old_track_ids = $self->_get_tracks_for_samples($sample_ids);
@@ -126,11 +130,13 @@ sub merge_tracks_by_sra_ids {
   # (Create a new track first)
   my $merger_track = $self->resultset('Track')->create({});
   my $merged_track_id = $merger_track->track_id;
+  $logger->debug(sprintf "Merged in track %d", $merged_track_id);
   map { $self->_add_sra_track($_, $merged_track_id) } @$sample_ids;
   
   # Finally, inactivate the old tracks
   # Inactivate (status=merged)
   my @old_tracks = map { { track_id => $_ } } @$old_track_ids;
+  $logger->debug(sprintf "Inactivated tracks: %s", join(',', @$old_track_ids));
   my $old_tracks_update = $self->resultset('Track')->search(\@old_tracks)->update({
     status => 'MERGED'
   });

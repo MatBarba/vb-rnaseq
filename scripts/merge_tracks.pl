@@ -40,7 +40,7 @@ sub usage {
     $help = "[ $error ]\n";
   }
   $help .= <<'EOF';
-    This script export the list of tracks to create from an RNAseq DB in a JSON format.
+    This script exports the list of tracks to create from an RNAseq DB in a JSON format.
 
     Database connection:
     --host    <str>   : host name

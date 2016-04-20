@@ -5,6 +5,7 @@ use Moose::Role;
 use strict;
 use warnings;
 use List::Util qw( first );
+use List::MoreUtils qw(uniq);
 use JSON;
 use Perl6::Slurp;
 use Log::Log4perl qw( :easy );
@@ -395,10 +396,11 @@ sub _sra_to_sample_ids {
   if (scalar @sample_accs == 0) {
     $logger->warn("Could not find any SRA accession to merge");
     return;
+  } else {
+    @sample_accs = uniq @sample_accs;
+    $logger->debug("Samples FROM ".join(',', @$sra_accs).": " . join(',', @sample_accs));
+    return \@sample_accs;
   }
-  $logger->debug("Samples FROM ".join(',', @$sra_accs).": " . join(',', @sample_accs));
-  
-  return \@sample_accs;
 }
 
 #######################################################################################################################

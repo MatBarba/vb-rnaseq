@@ -23,16 +23,23 @@ __PACKAGE__->table("drupal_node");
 
 =head1 ACCESSORS
 
-=head2 drupal_node_id
+=head2 drupal_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 experiment_id
+=head2 drupal_node_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+=head2 track_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 autogen_txt
@@ -68,15 +75,17 @@ __PACKAGE__->table("drupal_node");
 =cut
 
 __PACKAGE__->add_columns(
-  "drupal_node_id",
+  "drupal_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "experiment_id",
-  { data_type => "integer", is_nullable => 1 },
+  "drupal_node_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  "track_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "autogen_txt",
   { data_type => "text", is_nullable => 1 },
   "manual_txt",
@@ -103,18 +112,33 @@ __PACKAGE__->add_columns(
 
 =over 4
 
+=item * L</drupal_id>
+
+=back
+
+=cut
+
+__PACKAGE__->set_primary_key("drupal_id");
+
+=head1 UNIQUE CONSTRAINTS
+
+=head2 C<drupal_node_id>
+
+=over 4
+
 =item * L</drupal_node_id>
 
 =back
 
 =cut
 
-__PACKAGE__->set_primary_key("drupal_node_id");
+__PACKAGE__->add_unique_constraint("drupal_node_id", ["drupal_node_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-24 10:26:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:hxBbr6mTWOmi8UUM0E5Bqw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-04-20 16:05:46
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/DBcNdjSetXe+EXC/ugOAg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->has_many( drupal_node_tracks => 'RNAseqDB::Schema::Result::DrupalNodeTrack', 'drupal_id');
 1;

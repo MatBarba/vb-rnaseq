@@ -441,7 +441,7 @@ CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
 @desc Defines what constitutes a track, i.e. one or several samples.
 
 @column sra_track_id           Track id (primary key, internal identifier).
-@column sample_id              SRA sample primary id (foreigh key).
+@column sample_id              SRA sample primary id (foreign key).
 @column track_id               Track table primary id (foreign key).
 @column date                   Entry timestamp.
 
@@ -541,8 +541,9 @@ DRUPAL TABLES
 @table drupal_node
 @desc Contains data that will be displayed in drupal nodes.
 
-@column drupal_node_id         Publication id (primary key, internal identifier).
-@column experiment_id          Experiment primary id (foreign key).
+@column drupal_id              Drupal node id (primary key, internal identifier).
+@column drupal_node_id         Website drupal node id (currently).
+@column track_id               Track id (foreign key).
 @column autogen_txt            Programmatically generated text.
 @column manual_txt             Manually curated text.
 @column metasum                Checksum of @autogen_txt + @manual_txt.
@@ -552,20 +553,45 @@ DRUPAL TABLES
 */
 
 CREATE TABLE drupal_node (
-  drupal_node_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  experiment_id         INT(10),
+  drupal_id             INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  drupal_node_id        INT(10) UNSIGNED UNIQUE,
+  track_id              INT(10) UNSIGNED,
   autogen_txt           TEXT,
   manual_txt            TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
+  KEY drupal_id_idx             (drupal_id),
   KEY drupal_node_id_idx        (drupal_node_id),
-  KEY experiment_id_idx         (experiment_id)
+  KEY drupal_node_track_id_idx  (track_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.autogen_txt, NEW.manual_txt) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_txt, NEW.manual_txt) );
 CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.autogen_txt, NEW.manual_txt) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_txt, NEW.manual_txt) );
+
+
+/**
+@table drupal_node_track
+@desc Links tracks to drupal_nodes.
+
+@column drupal_node_track_id   DrupalNode-Track id (primary key, internal identifier).
+@column drupal_id              Drupal_node primary id (foreign key).
+@column track_id               Track table primary id (foreign key).
+@column date                   Entry timestamp.
+
+*/
+
+CREATE TABLE drupal_node_track (
+  drupal_node_track_id  INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  drupal_id             INT(10),
+  track_id              INT(10),
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  KEY drupal_node_track_id_idx                 (drupal_node_track_id),
+  KEY drupal_node_track_sample_id_idx          (drupal_id),
+  KEY drupal_node_track_track_id_idx           (track_id)
+) ENGINE=MyISAM;
 

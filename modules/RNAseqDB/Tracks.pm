@@ -40,7 +40,11 @@ sub _add_track {
   my $track_insertion = $self->resultset('Track')->create({});
   
   # Add the link from the sample to the track
-  $self->_add_sra_track($sample_id, $track_insertion->id);
+  my $track_id = $track_insertion->id;
+  $self->_add_sra_track($sample_id, $track_id);
+  
+  # Also create a drupal node for this track
+  $self->_add_drupal_node_from_track($track_id);
   
   return;
 }
@@ -130,6 +134,7 @@ sub merge_tracks_by_sra_ids {
   # (Create a new track first)
   my $merger_track = $self->resultset('Track')->create({});
   my $merged_track_id = $merger_track->track_id;
+  $self->_add_drupal_node_from_track($merged_track_id);
   $logger->debug(sprintf "Merged in track %d", $merged_track_id);
   map { $self->_add_sra_track($_, $merged_track_id) } @$sample_ids;
   

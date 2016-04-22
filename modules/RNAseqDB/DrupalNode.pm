@@ -69,6 +69,28 @@ sub _add_drupal_node_track {
   return;
 }
 
+sub _get_drupal_tracks_links {
+  my ($self, $conditions) = @_;
+  $conditions ||= {};
+  
+  my $drupal_track_search = $self->resultset('DrupalNodeTrack')->search($conditions);
+  my @links = $drupal_track_search->all;
+  return \@links;
+}
+
+sub _inactivate_drupal_nodes {
+  my ($self, $track_ids_aref) = @_;
+  
+  # 1) Get the tracks-drupal_nodes links
+  my @conditions = map { { 'track_id' => $_ } } @$track_ids_aref;
+  my $links = $self->_get_drupal_tracks_links(\@conditions);
+  
+  # 2) Inactivate the corresponding drupal nodes
+  my @drupal_ids = map { { 'drupal_id' => $_->drupal_id } } @$links;
+  my $tracks_update = $self->resultset('DrupalNode')->search(\@drupal_ids)->update({
+    status => 'RETIRED',
+  });
+}
 
 1;
 

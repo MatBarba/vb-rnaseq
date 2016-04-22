@@ -128,25 +128,36 @@ sub merge_tracks_by_sra_ids {
     return;
   } else {
     $logger->debug(sprintf "Can merge %d tracks", scalar @$old_track_ids);
+    # Inactivate tracks as MERGED
+    $self->inactivate_tracks($old_track_ids, 'MERGED');
   }
   
-  # Then, create a link for each sample to the new merged track
-  # (Create a new track first)
+  # Create a new merged track
   my $merger_track = $self->resultset('Track')->create({});
   my $merged_track_id = $merger_track->track_id;
-  $self->_add_drupal_node_from_track($merged_track_id);
   $logger->debug(sprintf "Merged in track %d", $merged_track_id);
+  
+  # Then, create a link for each sample to the new merged track
   map { $self->_add_sra_track($_, $merged_track_id) } @$sample_ids;
   
-  # Finally, inactivate the old tracks
-  # Inactivate (status=merged)
-  my @old_tracks = map { { track_id => $_ } } @$old_track_ids;
-  $logger->debug(sprintf "Inactivated tracks: %s", join(',', @$old_track_ids));
-  my $old_tracks_update = $self->resultset('Track')->search(\@old_tracks)->update({
-    status => 'MERGED'
-  });
+  # Also create and link a drupal node to the track
+  $self->_add_drupal_node_from_track($merged_track_id);
 
   return;
+}
+
+sub inactivate_tracks {
+  my ($self, $track_ids_aref, $status) = @_;
+  $status ||= 'RETIRED';
+  
+  my @tracks = map { { track_id => $_ } } @$track_ids_aref;
+  $logger->debug(sprintf "Inactivated tracks: %s", join(',', @$track_ids_aref));
+  my $tracks_update = $self->resultset('Track')->search(\@tracks)->update({
+    status => $status,
+  });
+
+  # Also inactivate corresponding drupal_nodes
+  $self->_inactivate_drupal_nodes($track_ids_aref);
 }
 
 sub _get_tracks_for_samples {
@@ -165,6 +176,16 @@ sub _get_tracks_for_samples {
   my @tracks = map { $_->track_id } $tracks_req->all;
   
   return \@tracks;
+}
+
+sub _get_active_tracks {
+  my ($self) = @_;
+  
+  my $track_search = $self->resultset('Track')->search({
+    status  => 'ACTIVE',
+  });
+  my $tracks = $track_search->all;
+  return $tracks;
 }
 
 1;
@@ -218,6 +239,16 @@ This module is a role to interface the tracks part of the RNAseqDB::DB object.
   usage:
     my $sras = [ 'SRS000001', 'SRS000002' ];
     $rdb->merge_tracks_by_sra_ids($sras);
+    
+=item inactivate_tracks()
+
+  function       : inactivate tracks
+  arg[1]         : array ref of track ids
+  arg[2]         : new status ('RETIRED' or 'MERGED') - default is 'RETIRED'
+  
+  usage:
+    my $track_ids = [ 1, 2 ];
+    $rdb->inactivate_tracks(trac_ids, 'MERGED');
     
 =back
 

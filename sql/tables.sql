@@ -595,3 +595,35 @@ CREATE TABLE drupal_node_track (
   KEY drupal_node_track_track_id_idx           (track_id)
 ) ENGINE=MyISAM;
 
+
+/**
+ VIEWS
+*/
+
+CREATE VIEW sra_to_active_track AS
+  SELECT
+    study_id,
+    study_sra_acc,
+    study_private_acc,
+    experiment_id,
+    experiment_sra_acc,
+    experiment_private_acc,
+    run_id,
+    run_sra_acc,
+    run_private_acc,
+    sample_id,
+    sample_sra_acc,
+    sample_private_acc,
+    track_id,
+    production_name
+  FROM
+    study
+    LEFT JOIN experiment USING(study_id)
+    LEFT JOIN run        USING(experiment_id)
+    LEFT JOIN sample     USING(sample_id)
+    LEFT JOIN sra_track  USING(sample_id)
+    LEFT JOIN track      USING(track_id)
+    LEFT JOIN taxonomy   USING(strain_id)
+  WHERE track.status="ACTIVE"
+  ;
+

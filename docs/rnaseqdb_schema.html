@@ -222,6 +222,18 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <li><a href="#publication" class="sql_schema_link" style="font-weight:bold">publication</a></li>
         <li><a href="#study_publication" class="sql_schema_link" style="font-weight:bold">study_publication</a></li>
         <li><a href="#drupal_node" class="sql_schema_link" style="font-weight:bold">drupal_node</a></li>
+        <li><a href="#drupal_node_track" class="sql_schema_link" style="font-weight:bold">drupal_node_track</a></li>
+
+      </ul>
+    </div>
+
+  <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:#DD3">
+      <div class="sql_schema_table_group_bullet" style="background-color:#DD3"></div>
+      <h2>Views</h2>
+    </div>
+      <ul class="sql_schema_table_list">
+        <li><a href="#sra_to_active_track" class="sql_schema_link" style="font-weight:bold">sra_to_active_track</a></li>
 
       </ul>
     </div>
@@ -1261,7 +1273,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2"><b>sample_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">SRA sample primary id (foreigh key).</td>
+        <td class="bg2">SRA sample primary id (foreign key).</td>
         <td class="bg2">key: <i>sra_track_sample_id_idx</i></td>
       </tr>
 
@@ -1467,43 +1479,116 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>drupal_node_id</b></td>
+        <td class="bg1"><b>drupal_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
-        <td class="bg1">Publication id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>drupal_node_id_idx</i></td>
+        <td class="bg1">Drupal node id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>drupal_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>experiment_id</b></td>
+        <td class="bg2"><b>drupal_node_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Experiment primary id (foreign key).</td>
-        <td class="bg2">key: <i>experiment_id_idx</i></td>
+        <td class="bg2">Website drupal node id (currently).</td>
+        <td class="bg2">key: <i>drupal_node_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>autogen_txt</b></td>
-        <td class="bg1">TEXT</td>
+        <td class="bg1"><b>track_id</b></td>
+        <td class="bg1">INT(10)</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Programmatically generated text.</td>
-        <td class="bg1"></td>
+        <td class="bg1">Track id (foreign key).</td>
+        <td class="bg1">key: <i>drupal_node_track_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>manual_txt</b></td>
+        <td class="bg2"><b>autogen_txt</b></td>
         <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Manually curated text.</td>
+        <td class="bg2">Programmatically generated text.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>metasum</b></td>
-        <td class="bg1">CHAR(32)</td>
+        <td class="bg1"><b>manual_txt</b></td>
+        <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @autogen_txt + @manual_txt.</td>
+        <td class="bg1">Manually curated text.</td>
         <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @autogen_txt + @manual_txt.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="drupal_node_track"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>drupal_node_track</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_drupal_node_track" class="help-header sql_schema_show_hide" onclick="show_hide('drupal_node_track','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Links tracks to drupal_nodes.</p>
+
+  <div id="div_drupal_node_track" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>drupal_node_track_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">DrupalNode-Track id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>drupal_node_track_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>drupal_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Drupal_node primary id (foreign key).</td>
+        <td class="bg2">key: <i>drupal_node_track_sample_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>track_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Track table primary id (foreign key).</td>
+        <td class="bg1">key: <i>drupal_node_track_track_id_idx</i></td>
       </tr>
 
       <tr>
@@ -1513,13 +1598,148 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2">Entry timestamp.</td>
         <td class="bg2"></td>
       </tr>
+    </table>
+  </div>
+</div></div>
+
+<div class="sql_schema_group_header" style="border-color:#DD3">
+  <div id="6" class="sql_schema_group_bullet" style="background-color:#DD3"></div>
+  <h2 id="6">Views</h2>
+</div>
+<div class="sql_schema_table">
+  <div id="sra_to_active_track"class="sql_schema_table_header" style="border-top-color:#DD3">
+    <div class="sql_schema_table_header_left"><span style="background-color:#DD3"></span>sra_to_active_track</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_sra_to_active_track" class="help-header sql_schema_show_hide" onclick="show_hide('sra_to_active_track','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Links all SRAs to active tracks (only accessions).</p>
+
+  <div id="div_sra_to_active_track" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
 
       <tr>
-        <td class="bg1"><b>status</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg1">'ACTIVE'</td>
-        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"><b>study_id</b></td>
         <td class="bg1"></td>
+        <td class="bg1"></td>
+        <td class="bg1">From table study.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>study_sra_acc</b></td>
+        <td class="bg2"></td>
+        <td class="bg2"></td>
+        <td class="bg2">From table study.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>study_private_acc</b></td>
+        <td class="bg1"></td>
+        <td class="bg1"></td>
+        <td class="bg1">From table study.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>experiment_id</b></td>
+        <td class="bg2"></td>
+        <td class="bg2"></td>
+        <td class="bg2">From table experiment.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>experiment_sra_acc</b></td>
+        <td class="bg1"></td>
+        <td class="bg1"></td>
+        <td class="bg1">From table experiment.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>experiment_private_acc</b></td>
+        <td class="bg2"></td>
+        <td class="bg2"></td>
+        <td class="bg2">From table experiment.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>run_id</b></td>
+        <td class="bg1"></td>
+        <td class="bg1"></td>
+        <td class="bg1">From table run.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>run_sra_acc</b></td>
+        <td class="bg2"></td>
+        <td class="bg2"></td>
+        <td class="bg2">From table run.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>run_private_acc</b></td>
+        <td class="bg1"></td>
+        <td class="bg1"></td>
+        <td class="bg1">From table run.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>sample_id</b></td>
+        <td class="bg2"></td>
+        <td class="bg2"></td>
+        <td class="bg2">From table sample.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>sample_sra_acc</b></td>
+        <td class="bg1"></td>
+        <td class="bg1"></td>
+        <td class="bg1">From table sample.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>sample_private_acc</b></td>
+        <td class="bg2"></td>
+        <td class="bg2"></td>
+        <td class="bg2">From table sample.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>track_id</b></td>
+        <td class="bg1"></td>
+        <td class="bg1"></td>
+        <td class="bg1">From table track.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>production_name</b></td>
+        <td class="bg2"></td>
+        <td class="bg2"></td>
+        <td class="bg2">From table species.</td>
+        <td class="bg2"></td>
       </tr>
     </table>
   </div>

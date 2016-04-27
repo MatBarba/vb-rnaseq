@@ -598,8 +598,30 @@ CREATE TABLE drupal_node_track (
 
 /**
  VIEWS
+@header Views
+@colour #DD3
 */
 
+/**
+@table sra_to_active_track
+@desc Links all SRAs to active tracks (only accessions).
+
+@column study_id                From table study.
+@column study_sra_acc	          From table study.
+@column study_private_acc	      From table study.
+@column experiment_id	          From table experiment.
+@column experiment_sra_acc	    From table experiment.
+@column experiment_private_acc	From table experiment.
+@column run_id	                From table run.
+@column run_sra_acc	            From table run.
+@column run_private_acc	        From table run.
+@column sample_id	              From table sample.
+@column sample_sra_acc        	From table sample.
+@column sample_private_acc	    From table sample.
+@column track_id	              From table track.
+@column production_name	        From table species.
+
+*/
 CREATE VIEW sra_to_active_track AS
   SELECT
     study_id,

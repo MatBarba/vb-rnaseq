@@ -4,15 +4,15 @@ use Moose::Role;
 
 use strict;
 use warnings;
-#use List::Util qw( first );
-#use JSON;
-#use Perl6::Slurp;
 use Log::Log4perl qw( :easy );
+use List::MoreUtils qw(uniq);
 
 my $logger = get_logger();
 use Data::Dumper;
 use Readonly;
-#use Try::Tiny;
+use RNAseqDB::Common;
+my $common = RNAseqDB::Common->new();
+my $sra_regex = $common->get_sra_regex();
 
 sub _add_track {
   my ($self, $sample_id) = @_;
@@ -186,6 +186,45 @@ sub _get_active_tracks {
   });
   my $tracks = $track_search->all;
   return $tracks;
+}
+
+sub get_tracks_from_sra {
+  my ($self, $sras_aref) = @_;
+  
+  # Format sra ids
+  my $sras_search = $self->_format_sras_for_search($sras_aref);
+  
+  $logger->debug("Get tracks for " . join( ',',  @$sras_aref));
+  my $tracks_get = $self->resultset('SraToActiveTrack')->search($sras_search);
+  
+  my @tracks = $tracks_get->all;
+  my @track_ids = uniq map { $_->track_id } @tracks;
+  $logger->debug("Tracks found: @track_ids");
+  return \@track_ids;
+}
+
+sub _format_sras_for_search {
+  my ($self, $sras_aref) = @_;
+  
+  my @sras;
+  for my $sra_acc (@$sras_aref) {
+    if ($sra_acc =~ /$sra_regex->{study}/) {
+      push @sras, { study_sra_acc => $sra_acc };
+    }
+    elsif ($sra_acc =~ /$sra_regex->{experiment}/) {
+      push @sras, { experiment_sra_acc => $sra_acc };
+    }
+    elsif ($sra_acc =~ /$sra_regex->{run}/) {
+      push @sras, { run_sra_acc => $sra_acc };
+    }
+    elsif ($sra_acc =~ /$sra_regex->{sample}/) {
+      push @sras, { 'sample_sra_acc' => $sra_acc };
+    }
+     else {
+       $logger->warn("Can't identify SRA accession: $sra_acc");
+     }
+  }
+  return \@sras;
 }
 
 1;

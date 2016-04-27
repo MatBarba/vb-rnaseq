@@ -16,12 +16,9 @@ use Readonly;
 use Try::Tiny;
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
-
-# Patterns to discriminate between the different SRA elements
-my Readonly $STUDY_REGEX      = qr{[SED]RP\d+};
-my Readonly $EXPERIMENT_REGEX = qr{[SED]RX\d+};
-my Readonly $RUN_REGEX        = qr{[SED]RR\d+};
-my Readonly $SAMPLE_REGEX     = qr{[SED]RS\d+};
+use RNAseqDB::Common;
+my $common = RNAseqDB::Common->new();
+my $sra_regex = $common->get_sra_regex();
 
 my Readonly $PRIVATE_PREFIX    = 'VBSR';
 my Readonly $STUDY_PREFIX      = $PRIVATE_PREFIX . 'P';
@@ -35,17 +32,17 @@ my Readonly $SAMPLE_PREFIX     = $PRIVATE_PREFIX . 'S';
 sub add_sra {
   my ($self, $sra_acc) = @_;
   
-  if ($sra_acc =~ $STUDY_REGEX) {
+  if ($sra_acc =~ $sra_regex->{study}) {
     return $self->_add_runs_from($sra_acc, 'study');
   }
-  elsif ($sra_acc =~ $EXPERIMENT_REGEX) {
+  elsif ($sra_acc =~ $sra_regex->{experiment}) {
     return $self->_add_runs_from($sra_acc, 'experiment');
   }
-  elsif ($sra_acc =~ $RUN_REGEX) {
+  elsif ($sra_acc =~ $sra_regex->{run}) {
     # Special case: all other cases are wrappers around this
     return $self->_add_run($sra_acc);
   }
-  elsif ($sra_acc =~ $SAMPLE_REGEX) {
+  elsif ($sra_acc =~ $sra_regex->{sample}) {
     return $self->_add_runs_from($sra_acc, 'sample');
   }
   else {
@@ -351,7 +348,7 @@ sub _sra_to_sample_ids {
   my @sample_accs;
   ACCESSION : for my $acc (@$sra_accs) {
     my $samples_req;
-    if ($acc =~ $STUDY_REGEX) {
+    if ($acc =~ $sra_regex->{study}) {
       $samples_req = $self->resultset('Sample')->search({
           'study.study_sra_acc' => $acc
         },
@@ -359,7 +356,7 @@ sub _sra_to_sample_ids {
           prefetch => { runs => {experiment => 'study' } }
         });
     }
-    elsif ($acc =~ $EXPERIMENT_REGEX) {
+    elsif ($acc =~ $sra_regex->{experiment}) {
       $samples_req = $self->resultset('Sample')->search({
           'experiment.experiment_sra_acc' => $acc
         },
@@ -367,7 +364,7 @@ sub _sra_to_sample_ids {
           prefetch => { runs => 'experiment' }
         });
     }
-    elsif ($acc =~ $RUN_REGEX) {
+    elsif ($acc =~ $sra_regex->{run}) {
       $samples_req = $self->resultset('Sample')->search({
           'runs.run_sra_acc' => $acc
         },
@@ -375,7 +372,7 @@ sub _sra_to_sample_ids {
           prefetch => 'runs'
         });
     }
-    elsif ($acc =~ $SAMPLE_REGEX) {
+    elsif ($acc =~ $sra_regex->{sample}) {
       $samples_req = $self->resultset('Sample')->search({
           sample_sra_acc => $acc
         });

@@ -208,7 +208,19 @@ sub _format_sras_for_search {
   
   my @sras;
   for my $sra_acc (@$sras_aref) {
-    if ($sra_acc =~ /$sra_regex->{study}/) {
+    if ($sra_acc =~ /$sra_regex->{vb_study}/) {
+      push @sras, { study_private_acc => $sra_acc };
+    }
+    elsif ($sra_acc =~ /$sra_regex->{vb_experiment}/) {
+      push @sras, { experiment_private_acc => $sra_acc };
+    }
+    elsif ($sra_acc =~ /$sra_regex->{vb_run}/) {
+      push @sras, { run_private_acc => $sra_acc };
+    }
+    elsif ($sra_acc =~ /$sra_regex->{vb_sample}/) {
+      push @sras, { 'sample_private_acc' => $sra_acc };
+    }
+    elsif ($sra_acc =~ /$sra_regex->{study}/) {
       push @sras, { study_sra_acc => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{experiment}/) {

@@ -92,6 +92,23 @@ sub _inactivate_drupal_nodes {
   });
 }
 
+sub get_drupal_id_from_track_id {
+  my ($self, $track_id) = @_;
+  
+  my $links = $self->_get_drupal_tracks_links({ track_id => $track_id });
+  my @drupal_ids = map { $_->drupal_id } @$links;
+  return \@drupal_ids;
+}
+
+sub update_drupal_node {
+  my ($self, $drupal_id, $node_content) = @_;
+  
+  $logger->debug("Update drupal node $drupal_id");
+  my $drupal_update = $self->resultset('DrupalNode')->search({
+      drupal_id => $drupal_id,
+  })->update($node_content);
+}
+
 1;
 
 __END__

@@ -17,6 +17,10 @@ has sra_regex => (
     experiment => qr{[SED]RX\d+},
     run        => qr{[SED]RR\d+},
     sample     => qr{[SED]RS\d+},
+    vb_study      => qr{VBSRP\d+},
+    vb_experiment => qr{VBSRX\d+},
+    vb_run        => qr{VBSRR\d+},
+    vb_sample     => qr{VBSRS\d+},
   } }
 );
 

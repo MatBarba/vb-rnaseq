@@ -42,12 +42,12 @@ __PACKAGE__->table("drupal_node");
   extra: {unsigned => 1}
   is_nullable: 1
 
-=head2 autogen_txt
+=head2 autogen_text
 
   data_type: 'text'
   is_nullable: 1
 
-=head2 manual_txt
+=head2 manual_text
 
   data_type: 'text'
   is_nullable: 1
@@ -72,6 +72,16 @@ __PACKAGE__->table("drupal_node");
   extra: {list => ["ACTIVE","RETIRED"]}
   is_nullable: 1
 
+=head2 manual_title
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 autogen_title
+
+  data_type: 'text'
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -86,9 +96,9 @@ __PACKAGE__->add_columns(
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "track_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
-  "autogen_txt",
+  "autogen_text",
   { data_type => "text", is_nullable => 1 },
-  "manual_txt",
+  "manual_text",
   { data_type => "text", is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
@@ -106,6 +116,10 @@ __PACKAGE__->add_columns(
     extra => { list => ["ACTIVE", "RETIRED"] },
     is_nullable => 1,
   },
+  "manual_title",
+  { data_type => "text", is_nullable => 1 },
+  "autogen_title",
+  { data_type => "text", is_nullable => 1 },
 );
 
 =head1 PRIMARY KEY
@@ -135,8 +149,8 @@ __PACKAGE__->set_primary_key("drupal_id");
 __PACKAGE__->add_unique_constraint("drupal_node_id", ["drupal_node_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-04-20 16:05:46
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/DBcNdjSetXe+EXC/ugOAg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-04-27 17:22:46
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yjLo7j/oJ2Kz2pzUhY1fdg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

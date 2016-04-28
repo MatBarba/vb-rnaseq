@@ -568,9 +568,9 @@ CREATE TABLE drupal_node (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_txt, NEW.manual_txt) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text) );
 CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_txt, NEW.manual_txt) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text) );
 
 
 /**
@@ -603,6 +603,54 @@ CREATE TABLE drupal_node_track (
 */
 
 /**
+@table sra_to_track
+@desc Links all SRAs to tracks (only accessions).
+
+@column study_id                From table study.
+@column study_sra_acc	          From table study.
+@column study_private_acc	      From table study.
+@column experiment_id	          From table experiment.
+@column experiment_sra_acc	    From table experiment.
+@column experiment_private_acc	From table experiment.
+@column run_id	                From table run.
+@column run_sra_acc	            From table run.
+@column run_private_acc	        From table run.
+@column sample_id	              From table sample.
+@column sample_sra_acc        	From table sample.
+@column sample_private_acc	    From table sample.
+@column track_id	              From table track.
+@column track_status	          From table track.
+@column production_name	        From table species.
+
+*/
+CREATE VIEW sra_to_track AS
+  SELECT
+    study_id,
+    study_sra_acc,
+    study_private_acc,
+    experiment_id,
+    experiment_sra_acc,
+    experiment_private_acc,
+    run_id,
+    run_sra_acc,
+    run_private_acc,
+    sample_id,
+    sample_sra_acc,
+    sample_private_acc,
+    track_id,
+    track.status AS track_status,
+    production_name
+  FROM
+    study
+    LEFT JOIN experiment USING(study_id)
+    LEFT JOIN run        USING(experiment_id)
+    LEFT JOIN sample     USING(sample_id)
+    LEFT JOIN sra_track  USING(sample_id)
+    LEFT JOIN track      USING(track_id)
+    LEFT JOIN taxonomy   USING(strain_id)
+  ;
+  
+/**
 @table sra_to_active_track
 @desc Links all SRAs to active tracks (only accessions).
 
@@ -619,33 +667,13 @@ CREATE TABLE drupal_node_track (
 @column sample_sra_acc        	From table sample.
 @column sample_private_acc	    From table sample.
 @column track_id	              From table track.
+@column track_status	          From table track.
 @column production_name	        From table species.
 
 */
 CREATE VIEW sra_to_active_track AS
-  SELECT
-    study_id,
-    study_sra_acc,
-    study_private_acc,
-    experiment_id,
-    experiment_sra_acc,
-    experiment_private_acc,
-    run_id,
-    run_sra_acc,
-    run_private_acc,
-    sample_id,
-    sample_sra_acc,
-    sample_private_acc,
-    track_id,
-    production_name
-  FROM
-    study
-    LEFT JOIN experiment USING(study_id)
-    LEFT JOIN run        USING(experiment_id)
-    LEFT JOIN sample     USING(sample_id)
-    LEFT JOIN sra_track  USING(sample_id)
-    LEFT JOIN track      USING(track_id)
-    LEFT JOIN taxonomy   USING(strain_id)
-  WHERE track.status="ACTIVE"
+  SELECT *
+  FROM sra_to_track
+  WHERE track_status="ACTIVE"
   ;
 

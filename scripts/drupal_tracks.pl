@@ -37,10 +37,15 @@ $logger->debug($drupal);
 # Match the drupal nodes to the tracks
 match_drupal_tracks($db, $drupal);
 
+# Update the drupal nodes informations
+update_drupal_nodes($db, $drupal);
+
 # Write the updated json file
-open my $JSOUT, '>', $opt{output};
-print $JSOUT encode_json($drupal);
-close $JSOUT;
+if (defined $opt{output}) {
+  open my $JSOUT, '>', $opt{output};
+  print $JSOUT encode_json($drupal);
+  close $JSOUT;
+}
 
 ###############################################################################
 # MAIN FUNCTIONS
@@ -53,10 +58,10 @@ sub match_drupal_tracks {
     $logger->debug("\t$node_id");
     
     # First, try to get track from a sample
-    my @types = qw( srs srr srx srp );
+    my @types = qw( srs srr srx srp vbsrs vbsrr vbsrx vbsrp );
     TYPE: foreach my $type (@types) {
       if (not defined $node->{ $type } or $node->{ $type } =~ /^\s*$/) {
-        $logger->info("\t$node_id: Skip $type");
+        $logger->debug("\t$node_id: Skip $type");
         next TYPE;
       }
       my @sras = split /[ ,]/, $node->{ $type };
@@ -76,7 +81,41 @@ sub match_drupal_tracks {
       }
     }
     $logger->warn(sprintf "%s: Could not use any SRA accession to match this drupal node (%s)", $node_id, $node->{title});
+  }
+}
+
+sub update_drupal_nodes {
+  my ($db, $drupal) = @_;
+  $logger->debug("Update all drupal nodes linked to tracks...");
+  
+  NODE: for my $node (@$drupal) {
+    my $node_id = $node->{node_id};
+    my $track_id = $node->{track_id};
+    if (not defined $track_id) {
+      $logger->warn("No track associated with drupal node $node_id");
+      next NODE;
+    }
     
+    # Get the drupal node_id to update
+    my $node_ids_aref = $db->get_drupal_id_from_track_id($track_id);
+    my $n_nodes = scalar @$node_ids_aref;
+    if ($n_nodes == 0) {
+      $logger->warn("No drupal node found associated with track $track_id (for node $node_id)");
+      next NODE;
+    }
+    elsif ($n_nodes > 1) {
+      $logger->warn("More than one active drupal node found associated with track $track_id (for node $node_id)");
+      next NODE;
+    }
+    
+    # One drupal node, one track: let's update the drupal_node
+    my $drupal_id = $node_ids_aref->[0];
+    my $node_content = {
+      manual_text    => $node->{text},
+      manual_title   => $node->{title},
+      drupal_node_id => $node_id,
+    };
+    $db->update_drupal_node($drupal_id, $node_content);
   }
 }
 
@@ -131,7 +170,6 @@ sub opt_check {
   usage("Need --port")   if not $opt{port};
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
-  usage("Need --output")   if not $opt{output};
   usage("Need --input")   if not $opt{input};
   $opt{password} ||= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};

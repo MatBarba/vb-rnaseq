@@ -146,6 +146,33 @@ sub merge_tracks_by_sra_ids {
   return;
 }
 
+sub inactivate_tracks_by_sra_ids {
+  my ($self, $sra_accs) = @_;
+  
+  # Get the list of SRA samples from the list of SRA_ids
+  my $sample_ids = $self->_sra_to_sample_ids($sra_accs);
+  if (not defined $sample_ids) {
+    $logger->warn("Abort inactivation: can't find all the members listed");
+    return;
+  }
+  
+  # Get the list of tracks associated with them
+  my $track_ids = $self->_get_tracks_for_samples($sample_ids);
+  
+  # Check that the number of tracks is the same as the number of provided accessions
+  my $n_tracks = scalar @$track_ids;
+  my $n_sras   = scalar @$sra_accs;
+  if ($n_tracks != $n_sras) {
+    $logger->warn("Not the same number of tracks ($n_tracks) and SRA accessions ($n_sras). Abort inactivation.");
+    return;
+  }
+  
+  # All is well: inactivate
+  $self->inactivate_tracks($track_ids, 'RETIRED');
+
+  return;
+}
+
 sub inactivate_tracks {
   my ($self, $track_ids_aref, $status) = @_;
   $status ||= 'RETIRED';

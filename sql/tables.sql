@@ -544,8 +544,10 @@ DRUPAL TABLES
 @column drupal_id              Drupal node id (primary key, internal identifier).
 @column drupal_node_id         Website drupal node id (currently).
 @column track_id               Track id (foreign key).
-@column autogen_txt            Programmatically generated text.
-@column manual_txt             Manually curated text.
+@column autogen_text           Programmatically generated text.
+@column manual_text            Manually curated text.
+@column autogen_title          Programmatically generated title.
+@column manual_title           Manually curated title.
 @column metasum                Checksum of @autogen_txt + @manual_txt.
 @column date                   Entry timestamp.
 @column status                 Active (True) or retired (False) row.

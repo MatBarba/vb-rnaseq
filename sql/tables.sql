@@ -556,9 +556,11 @@ CREATE TABLE drupal_node (
   drupal_id             INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   drupal_node_id        INT(10) UNSIGNED UNIQUE,
   track_id              INT(10) UNSIGNED,
-  autogen_txt           TEXT,
-  manual_txt            TEXT,
+  autogen_text          TEXT,
+  manual_text           TEXT,
   metasum               CHAR(32),
+  autogen_title         TEXT,
+  manual_title          TEXT,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -568,9 +570,9 @@ CREATE TABLE drupal_node (
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
 CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
 
 
 /**

@@ -134,8 +134,28 @@ This module is a role to interface the drupal_node part of the RNAseqDB::DB obje
  
 =item update_drupal_node()
 
-  function       : 
-  returntype     : 
+  function       : update one drupal_node data
+  arg[1]         : drupal_id
+  arg[2]         : hash with new content
+  
+  Usage:
+  
+    my $drupal_id = 1;
+    my $content = {
+      title => 'Foobar',
+    };
+    $rdb->update_drupal_node($drupal_id, $content);
+    
+=item get_drupal_id_from_track_id()
+
+  function       : returns track_ids from drupal_ids
+  arg            : ref array of track_ids
+  returntype     : ref array of drupal_ids
+  
+  Usage:
+  
+    my $track_ids = [1, 2];
+    my $drupal_ids = $rdb->get_drupal_id_from_track_id($track_ids);
     
 =back
 

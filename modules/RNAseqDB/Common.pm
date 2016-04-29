@@ -27,3 +27,22 @@ has sra_regex => (
  __PACKAGE__->meta->make_immutable;
 1;
 
+__END__
+
+
+=head1 NAME
+
+RNAseqDB::Common - Basic data for the RNAseqDB
+
+
+=head1 SYNOPSIS
+
+    my $reg = $db->get_sra_regex();
+    if ('SRP000001' =~ /$reg->{study}/) {
+      print "OK";
+    }
+
+=head1 DESCRIPTION
+
+This role provides some common general functions or data.
+

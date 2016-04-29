@@ -318,6 +318,25 @@ This module is a role to interface the tracks part of the RNAseqDB::DB object.
     my $sras = [ 'SRS000001', 'SRS000002' ];
     $rdb->merge_tracks_by_sra_ids($sras);
     
+=item get_tracks_from_sra
+
+  function       : retrieve a list of tracks
+  arg            : a ref array of SRA accessions
+  return         : a ref array of track_ids
+  
+  usage:
+    my $sras = [ 'SRS000001', 'SRS000002' ];
+    my $track_ids = $rdb->get_tracks_from_sras($sras);
+    
+=item inactivate_tracks_by_sra_ids()
+
+  function       : inactivate tracks from a list of SRA accessions
+  arg[1]         : array ref of track ids
+  
+  usage:
+    my $sras = [ 'SRS000001', 'SRS000002' ];
+    $rdb->inactivate_tracks_by_sra_ids($sras);
+    
 =item inactivate_tracks()
 
   function       : inactivate tracks

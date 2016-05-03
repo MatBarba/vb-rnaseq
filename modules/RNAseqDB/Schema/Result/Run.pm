@@ -182,5 +182,6 @@ __PACKAGE__->add_unique_constraint("run_sra_acc", ["run_sra_acc"]);
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->belongs_to( sample     => 'RNAseqDB::Schema::Result::Sample', 'sample_id'         );
 __PACKAGE__->belongs_to( experiment => 'RNAseqDB::Schema::Result::Experiment', 'experiment_id' );
+__PACKAGE__->has_many(   sra_tracks => 'RNAseqDB::Schema::Result::SraTrack', 'run_id'          );
 1;
 

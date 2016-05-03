@@ -118,7 +118,7 @@ sub check_number_in_table {
   
   my $req = $db->resultset( $table );
   my @lines = $req->all;
-  cmp_ok( scalar @lines, '==', $expected_number, sprintf("Right number of lines in $table" ) );
+  cmp_ok( scalar @lines, '==', $expected_number, sprintf("Right number of lines in $table = $expected_number" ) );
 }
 
 sub check_tables_numbers {

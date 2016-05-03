@@ -172,13 +172,15 @@ sub _add_run {
   if (    defined $experiment_id
       and defined $sample_id) {
     $logger->info("ADDING run " . $run->accession() . "");
-    $self->resultset('Run')->create({
+    my $run_req = $self->resultset('Run')->create({
         run_sra_acc     => $run->accession(),
         experiment_id   => $experiment_id,
         sample_id       => $sample_id,
         title           => $run->title(),
         submitter       => $submitter,
       });
+    my $run_id = $run_req->id;
+    $self->_add_track($run_id);
   } else {
     $logger->warn("An error occured: can't insert the run " . $run_acc);
     return 0;
@@ -337,52 +339,51 @@ sub _get_sample_id {
         label             => $label,
       });
     my $sample_id = $insertion->id();
-    $self->_add_track($sample_id);
     return $sample_id;
   }
 }
 
-sub _sra_to_sample_ids {
+sub _sra_to_run_ids {
   my ($self, $sra_accs) = @_;
 
-  my @sample_accs;
+  my @run_accs;
   ACCESSION : for my $acc (@$sra_accs) {
-    my $samples_req;
+    my $runs_req;
     if ($acc =~ $sra_regex->{study}) {
-      $samples_req = $self->resultset('Sample')->search({
+      $runs_req = $self->resultset('Run')->search({
           'study.study_sra_acc' => $acc
         },
         {
-          prefetch => { runs => {experiment => 'study' } }
+          prefetch => { experiment => 'study' }
         });
     }
     elsif ($acc =~ $sra_regex->{experiment}) {
-      $samples_req = $self->resultset('Sample')->search({
-          'experiment.experiment_sra_acc' => $acc
+      $runs_req = $self->resultset('Run')->search({
+          'experiment_sra_acc' => $acc
         },
         {
-          prefetch => { runs => 'experiment' }
+          prefetch => 'experiment'
         });
     }
     elsif ($acc =~ $sra_regex->{run}) {
-      $samples_req = $self->resultset('Sample')->search({
-          'runs.run_sra_acc' => $acc
-        },
-        {
-          prefetch => 'runs'
+      $runs_req = $self->resultset('Run')->search({
+          'run_sra_acc' => $acc
         });
     }
     elsif ($acc =~ $sra_regex->{sample}) {
-      $samples_req = $self->resultset('Sample')->search({
-          sample_sra_acc => $acc
+      $runs_req = $self->resultset('Run')->search({
+          'sample_sra_acc' => $acc,
+        },
+        {
+          prefetch => 'sample'
         });
     } else {
       $logger->warn("Can't recognize SRA accession $acc (to merge)");
       next ACCESSION;
     }
-    my @sample_res = $samples_req->all;
-    if (@sample_res > 0) {
-      push @sample_accs, map { $_->sample_id } @sample_res;
+    my @run_res = $runs_req->all;
+    if (@run_res > 0) {
+      push @run_accs, map { $_->run_id } @run_res;
     }
     else {
       $logger->warn("Can't find SRA accession $acc to merge");
@@ -390,13 +391,13 @@ sub _sra_to_sample_ids {
     }
   }
   
-  if (scalar @sample_accs == 0) {
+  if (scalar @run_accs == 0) {
     $logger->warn("Could not find any SRA accession to merge");
     return;
   } else {
-    @sample_accs = uniq @sample_accs;
-    $logger->debug("Samples FROM ".join(',', @$sra_accs).": " . join(',', @sample_accs));
-    return \@sample_accs;
+    @run_accs = uniq @run_accs;
+    $logger->debug("Runs FROM ".join(',', @$sra_accs).": " . join(',', @run_accs));
+    return \@run_accs;
   }
 }
 
@@ -462,9 +463,6 @@ sub add_private_study {
       $logger->info("CREATED sample $sample->{ sample_private_acc }");
     }
     
-    # Also, add a track linked to it
-    $self->_add_track($sample_id);
-    
     # Keep the match sample id = sample_name (to link the runs)
     $samples_ids{ $sample_href->{sample_name} } = $sample_id;
   }
@@ -500,6 +498,9 @@ sub add_private_study {
       # Insert the run
       my $insert_run = $self->resultset('Run')->create( $run );
       my $run_id = $insert_run->id;
+
+      # Also, add a track linked to it
+      $self->_add_track($run_id);
 
       # Create an accession for this run from its id
       if (not defined $run->{run_private_acc}) {

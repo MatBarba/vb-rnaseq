@@ -33,6 +33,7 @@ __PACKAGE__->table("experiment");
 =head2 study_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 experiment_sra_acc
@@ -83,7 +84,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "study_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "experiment_sra_acc",
   { data_type => "char", is_nullable => 1, size => 12 },
   "experiment_private_acc",
@@ -159,8 +160,8 @@ __PACKAGE__->add_unique_constraint("experiment_sra_acc", ["experiment_sra_acc"])
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OCk68YyxezddX9RKL/fu3w
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xA9nKFi6ClUFNXrLm4u4iw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

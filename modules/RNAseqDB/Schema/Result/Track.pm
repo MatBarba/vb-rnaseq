@@ -33,6 +33,7 @@ __PACKAGE__->table("track");
 =head2 file_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 title
@@ -76,7 +77,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "file_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "title",
   { data_type => "text", is_nullable => 1 },
   "description",
@@ -126,8 +127,8 @@ __PACKAGE__->set_primary_key("track_id");
 __PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-24 10:26:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ggo8NVYzHP0q3l3CyapL7g
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JyvWN+lHk4K9DLir0YzKNg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

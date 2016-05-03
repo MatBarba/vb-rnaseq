@@ -33,11 +33,13 @@ __PACKAGE__->table("drupal_node_track");
 =head2 drupal_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 track_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 date
@@ -58,9 +60,9 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "drupal_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "track_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "date",
   {
     data_type => "timestamp",
@@ -83,8 +85,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("drupal_node_track_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-04-20 16:05:46
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qpdCHgWc6ddjjCkBVEIPUg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mL0m4ZKfvmEyjIFqxC5stw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

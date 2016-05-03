@@ -66,7 +66,7 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 
 CREATE TABLE experiment (
   experiment_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  study_id               INT(10) NOT NULL,
+  study_id               INT(10) UNSIGNED NOT NULL,
   experiment_sra_acc     CHAR(12) UNIQUE,
   experiment_private_acc CHAR(12) UNIQUE,
   title                  TEXT,
@@ -104,8 +104,8 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 
 CREATE TABLE run (
   run_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  experiment_id          INT(10) NOT NULL,
-  sample_id              INT(10) NOT NULL,
+  experiment_id          INT(10) UNSIGNED NOT NULL,
+  sample_id              INT(10) UNSIGNED NOT NULL,
   run_sra_acc            CHAR(12) UNIQUE,
   run_private_acc        CHAR(12) UNIQUE,
   title                  TEXT,
@@ -153,11 +153,11 @@ CREATE TABLE sample (
   sample_private_acc        CHAR(12) UNIQUE,
   title                     TEXT,
   description               TEXT,
-  taxon_id                  INT(10),
+  taxon_id                  INT(10) UNSIGNED,
   strain                    TEXT,
   biosample_acc             VARCHAR(15) UNIQUE,
   biosample_group_acc       VARCHAR(15),
-  strain_id                 INT(10) NOT NULL,
+  strain_id                 INT(10) UNSIGNED NOT NULL,
   label                     TEXT,
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -196,7 +196,7 @@ CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
 
 CREATE TABLE species (
   species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  taxon_id                  INT(10) UNIQUE,
+  taxon_id                  INT(10) UNSIGNED UNIQUE,
   binomial_name             VARCHAR(128),
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -226,7 +226,7 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 
 CREATE TABLE strain (
   strain_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  species_id                INT(10),
+  species_id                INT(10) UNSIGNED,
   production_name           VARCHAR(64) NOT NULL,
   strain                    VARCHAR(32),
   metasum                   CHAR(32) UNIQUE,
@@ -344,7 +344,7 @@ CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
 
 CREATE TABLE analysis_param (
   analysis_param_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  analysis_id           INT(10),
+  analysis_id           INT(10) UNSIGNED,
   program               TEXT,
   parameters            TEXT,
   metasum               CHAR(32) UNIQUE,
@@ -363,37 +363,34 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 /**
 
 @table analysis_file
-@desc Linker between the tables file and analysis_parameter. Also links to the relevant runs and samples.
+@desc Linker between the tables file and analysis_parameter. Also links to the relevant runs.
 
 @column analysis_file_id             Analysis-file linker id (primary key, internal identifier).
 @column analysis_parameter_id        Analysis_parameter primary id (foreigh key).
 @column file_id                      File primary id (foreign key).
 @column file_io                      If the file is an input or an output.
-@column scope                        Does the file represents a run, or a sample (merged)?
-@column scope_id                     Run or Sample primary id (foreign key).
+@column run_id                       Run primary id (foreign key).
 @column metasum                      Checksum of @analysis_parameter_id + @file_id + @file_io + @scope + @scope_id
 
 */
 
 CREATE TABLE analysis_file (
   analysis_file_id            INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  analysis_parameter_id       INT(10),
-  file_id                     INT(10),
+  analysis_parameter_id       INT(10) UNSIGNED,
+  file_id                     INT(10) UNSIGNED,
   file_io                     ENUM('INPUT', 'OUTPUT'),
-  scope                       ENUM('run', 'sample'),
-  scope_id                    INT(10),
+  run_id                      INT(10) UNSIGNED,
   metasum                     CHAR(32) UNIQUE,
   
   KEY analysis_file_id_idx                      (analysis_file_id),
   KEY analysis_file_analysis_parameter_id_idx   (analysis_parameter_id),
-  KEY analysis_file_file_id_idx                 (file_id),
-  KEY analysis_file_scope_id_idx                (scope_id)
+  KEY analysis_file_file_id_idx                 (file_id)
 ) ENGINE=MyISAM;
 
 CREATE TRIGGER analysis_file_md5_upd_tr BEFORE UPDATE ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.scope, NEW.scope_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.run_id) );
 CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.scope, NEW.scope_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.run_id) );
 
 
 /**
@@ -406,7 +403,7 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 /**
 
 @table track
-@desc Where the tracks are stored, with a link to the corresponding file and sample.
+@desc Where the tracks are stored, with a link to the corresponding file.
 
 @column track_id               Track id (primary key, internal identifier).
 @column file_id                File primary id (foreigh key).
@@ -420,7 +417,7 @@ CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
 
 CREATE TABLE track (
   track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  file_id               INT(10) UNIQUE,
+  file_id               INT(10) UNSIGNED UNIQUE,
   title                 TEXT,
   description           TEXT,
   metasum               CHAR(32),
@@ -438,10 +435,10 @@ CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
 
 /**
 @table sra_track
-@desc Defines what constitutes a track, i.e. one or several samples.
+@desc Defines what constitutes a track, i.e. one or several runs.
 
 @column sra_track_id           Track id (primary key, internal identifier).
-@column sample_id              SRA sample primary id (foreign key).
+@column run_id                 SRA run primary id (foreign key).
 @column track_id               Track table primary id (foreign key).
 @column date                   Entry timestamp.
 
@@ -449,12 +446,12 @@ CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
 
 CREATE TABLE sra_track (
   sra_track_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  sample_id             INT(10),
-  track_id              INT(10),
+  run_id                INT(10) UNSIGNED,
+  track_id              INT(10) UNSIGNED,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   KEY sra_track_id_idx                 (sra_track_id),
-  KEY sra_track_sample_id_idx          (sample_id),
+  KEY sra_track_run_id_idx             (run_id),
   KEY sra_track_track_id_idx           (track_id)
 ) ENGINE=MyISAM;
 
@@ -490,7 +487,7 @@ PUBLICATIONS TABLES
 
 CREATE TABLE publication (
   publication_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  pubmed_id             INT(10) UNIQUE,
+  pubmed_id             INT(10) UNSIGNED UNIQUE,
   doi                   VARCHAR(32),
   authors               TEXT,
   title                 TEXT,
@@ -522,8 +519,8 @@ CREATE TRIGGER publication_md5_ins_tr BEFORE INSERT ON publication
 
 CREATE TABLE study_publication (
   study_pub_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  study_id              INT(10) NOT NULL,
-  publication_id        INT(10) NOT NULL,
+  study_id              INT(10) UNSIGNED NOT NULL,
+  publication_id        INT(10) UNSIGNED NOT NULL,
   
   KEY study_pub_id_idx                (study_pub_id),
   KEY study_pub_study_id_idx          (study_id),
@@ -590,12 +587,12 @@ CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
 
 CREATE TABLE drupal_node_track (
   drupal_node_track_id  INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  drupal_id             INT(10),
-  track_id              INT(10),
+  drupal_id             INT(10) UNSIGNED,
+  track_id              INT(10) UNSIGNED,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   KEY drupal_node_track_id_idx                 (drupal_node_track_id),
-  KEY drupal_node_track_sample_id_idx          (drupal_id),
+  KEY drupal_node_track_drupal_id_idx          (drupal_id),
   KEY drupal_node_track_track_id_idx           (track_id)
 ) ENGINE=MyISAM;
 
@@ -649,7 +646,7 @@ CREATE VIEW sra_to_track AS
     LEFT JOIN experiment USING(study_id)
     LEFT JOIN run        USING(experiment_id)
     LEFT JOIN sample     USING(sample_id)
-    LEFT JOIN sra_track  USING(sample_id)
+    LEFT JOIN sra_track  USING(run_id)
     LEFT JOIN track      USING(track_id)
     LEFT JOIN taxonomy   USING(strain_id)
   ;

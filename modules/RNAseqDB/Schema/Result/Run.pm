@@ -33,11 +33,13 @@ __PACKAGE__->table("run");
 =head2 experiment_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 sample_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 run_sra_acc
@@ -93,9 +95,9 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "experiment_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "sample_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "run_sra_acc",
   { data_type => "char", is_nullable => 1, size => 12 },
   "run_private_acc",
@@ -173,8 +175,8 @@ __PACKAGE__->add_unique_constraint("run_private_acc", ["run_private_acc"]);
 __PACKAGE__->add_unique_constraint("run_sra_acc", ["run_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RSbPtqneQif6h37EyKQReQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z2HMuNJ3XWllJM3vCPHtTw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

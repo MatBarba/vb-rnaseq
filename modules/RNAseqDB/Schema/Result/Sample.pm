@@ -55,6 +55,7 @@ __PACKAGE__->table("sample");
 =head2 taxon_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 strain
@@ -77,6 +78,7 @@ __PACKAGE__->table("sample");
 =head2 strain_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 label
@@ -123,7 +125,7 @@ __PACKAGE__->add_columns(
   "description",
   { data_type => "text", is_nullable => 1 },
   "taxon_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "strain",
   { data_type => "text", is_nullable => 1 },
   "biosample_acc",
@@ -131,7 +133,7 @@ __PACKAGE__->add_columns(
   "biosample_group_acc",
   { data_type => "varchar", is_nullable => 1, size => 15 },
   "strain_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "label",
   { data_type => "text", is_nullable => 1 },
   "metasum",
@@ -215,8 +217,8 @@ __PACKAGE__->add_unique_constraint("sample_private_acc", ["sample_private_acc"])
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-21 11:39:02
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xZqRhsR233teEtKWdUaNlQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/ET1f6POhH5x5F3fpSYWfA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

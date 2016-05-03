@@ -33,6 +33,7 @@ __PACKAGE__->table("species");
 =head2 taxon_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 binomial_name
@@ -72,7 +73,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "taxon_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "binomial_name",
   { data_type => "varchar", is_nullable => 1, size => 128 },
   "metasum",
@@ -132,8 +133,8 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 __PACKAGE__->add_unique_constraint("taxon_id", ["taxon_id"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zk0G+9jTMOyR0niwigfY5A
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ae/ARXiMz6R0HFUxsHmAiA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

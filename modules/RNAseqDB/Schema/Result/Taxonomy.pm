@@ -33,6 +33,7 @@ __PACKAGE__->table("taxonomy");
 =head2 taxon_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 production_name
@@ -67,7 +68,7 @@ __PACKAGE__->add_columns(
   "binomial_name",
   { data_type => "varchar", is_nullable => 1, size => 128 },
   "taxon_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "production_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "strain",
@@ -89,8 +90,8 @@ __PACKAGE__->add_columns(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-08 17:12:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rGDCIeA2LLq4zme3m9A6EQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/TlqIpe1fKh80rlthwAiuw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

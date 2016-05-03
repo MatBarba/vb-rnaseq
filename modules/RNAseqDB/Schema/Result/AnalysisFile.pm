@@ -33,11 +33,13 @@ __PACKAGE__->table("analysis_file");
 =head2 analysis_parameter_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 file_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 file_io
@@ -46,15 +48,10 @@ __PACKAGE__->table("analysis_file");
   extra: {list => ["INPUT","OUTPUT"]}
   is_nullable: 1
 
-=head2 scope
-
-  data_type: 'enum'
-  extra: {list => ["run","sample"]}
-  is_nullable: 1
-
-=head2 scope_id
+=head2 run_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 metasum
@@ -74,23 +71,17 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "analysis_parameter_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "file_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "file_io",
   {
     data_type => "enum",
     extra => { list => ["INPUT", "OUTPUT"] },
     is_nullable => 1,
   },
-  "scope",
-  {
-    data_type => "enum",
-    extra => { list => ["run", "sample"] },
-    is_nullable => 1,
-  },
-  "scope_id",
-  { data_type => "integer", is_nullable => 1 },
+  "run_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
 );
@@ -122,8 +113,8 @@ __PACKAGE__->set_primary_key("analysis_file_id");
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:drLzuOZmxswFC5+DSbl0/w
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SmAYR0B2/MTdDCsRCa3vIg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

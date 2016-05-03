@@ -33,6 +33,7 @@ __PACKAGE__->table("strain");
 =head2 species_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 production_name
@@ -78,7 +79,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "species_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "production_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "strain",
@@ -128,8 +129,8 @@ __PACKAGE__->set_primary_key("strain_id");
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mLUddkAgvbNEfVBwfviVBQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SonzKn7Y1xE9a+R4/NIFdg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

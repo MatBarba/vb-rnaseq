@@ -33,11 +33,13 @@ __PACKAGE__->table("study_publication");
 =head2 study_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 publication_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =cut
@@ -51,9 +53,9 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "study_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "publication_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -69,8 +71,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("study_pub_id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-02-26 16:36:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:M4Nqh9FVhq9nx4tRoTEmmg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ciPDMKGfHnCTBiI4kc4Aew
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

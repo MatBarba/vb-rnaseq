@@ -84,6 +84,7 @@ __PACKAGE__->table("sra_to_active_track");
 =head2 sample_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 sample_sra_acc
@@ -101,6 +102,14 @@ __PACKAGE__->table("sra_to_active_track");
 =head2 track_id
 
   data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+=head2 track_status
+
+  data_type: 'enum'
+  default_value: 'ACTIVE'
+  extra: {list => ["ACTIVE","RETIRED","MERGED"]}
   is_nullable: 1
 
 =head2 production_name
@@ -146,20 +155,27 @@ __PACKAGE__->add_columns(
   "run_private_acc",
   { data_type => "char", is_nullable => 1, size => 12 },
   "sample_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "sample_sra_acc",
   { data_type => "char", is_nullable => 1, size => 12 },
   "sample_private_acc",
   { data_type => "char", is_nullable => 1, size => 12 },
   "track_id",
-  { data_type => "integer", is_nullable => 1 },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  "track_status",
+  {
+    data_type => "enum",
+    default_value => "ACTIVE",
+    extra => { list => ["ACTIVE", "RETIRED", "MERGED"] },
+    is_nullable => 1,
+  },
   "production_name",
   { data_type => "varchar", is_nullable => 1, size => 64 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-04-25 14:29:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:hr+lO3vzueZGImYYlA7ZoQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zgu9TZJ0Loh38P7FTKL1hw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -27,26 +27,69 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-my $data = $db->get_new_sra_tracks( $opt{species} );
+my $data = $db->get_new_runs_tracks( $opt{species} );
+if (keys %$data == 0) {
+  die "No track to extract";
+}
+
 open my $OUT, '>', $opt{output};
 if ($opt{format} eq 'json') {
   print $OUT encode_json($data) . "\n";
 }
 elsif ($opt{format} eq 'pipeline') {
-  my $command_line = tracks_for_pipeline($data, \%opt);
-  print $OUT $command_line if defined $command_line;
+  my $command_lines = tracks_for_pipeline($data, \%opt);
+  print $OUT join("\n", @$command_lines) if @$command_lines;
 }
 else {
   warn "Unsupported format: $opt{format}\n";
 }
 
+
+###############################################################################
+# SUBS
+
 sub tracks_for_pipeline {
   my ($data, $opt) =  @_;
   
-  my  @params = ();
+  my @command_lines;
   
-  # Common values of the command-line
+  # The start of the command line is the same for every track
+  my $commandline_start = create_command_line_start($opt);
+  my $pipeline_command = 'RNASEQ_PIPELINE';
+  push @command_lines, "$pipeline_command=$commandline_start";
   
+  # Create the command line for each new track
+  foreach my $species (sort keys %$data) {
+    my $species_line = "-species $species";
+    my $merge_level = "-merge_level taxon";
+    
+    #  all tracks
+    my $tracks = $data->{$species}->{tracks};
+    foreach my $track_id (keys %$tracks) {
+      my $run_ids = $tracks->{$track_id};
+
+      if (@$run_ids) {
+        # Create a command line for this track
+        my @line;
+        push @line, (
+          '$' . $pipeline_command,
+          $merge_level,
+          $species_line
+        );
+        push @line, map { "-run_id $_" } @$run_ids;
+        my $command = join ' ', @line;
+        push @command_lines, $command;
+      } else {
+        $logger->warn("No tracks to align for $species");
+      }
+    }
+  }
+  
+  return \@command_lines;
+}
+
+sub create_command_line_start {
+  my ($opt) = @_;
   my @main_line = ();
   push @main_line, 'init_pipeline.pl';
   push @main_line, 'Bio::EnsEMBL::EGPipeline::PipeConfig::ShortReadAlignment_conf';
@@ -58,47 +101,8 @@ sub tracks_for_pipeline {
   #####################################################################################################
   push @main_line, '-aligner star';
   push @main_line, '-bigwig 1';
-  push @params, join(" \\\n\t", @main_line);
-  
-  my $n = 0;
-  foreach my $species (sort keys %$data) {
-    my @species_line = ();
-    
-    # Species production_name
-    push @species_line, "-species $species";
-    
-    # Species taxon_id
-    my $taxon_id = $data->{$species}->{taxon_id};
-    push @species_line, "-taxids $species=$taxon_id";
-    
-    # Species sras
-    my @uniq_sras;
-    my $tracks_sra = $data->{$species}->{tracks};
-    foreach my $track_id (keys %$tracks_sra) {
-      my $sra_ids = $tracks_sra->{ $track_id };
-      if (scalar @$sra_ids == 1) {
-        push @uniq_sras, @$sra_ids;
-        $n += scalar @$sra_ids;
-      } else {
-        $logger->warn("Merged tracks not yet implemented (for track $track_id)");
-      }
-    }
-    
-    # Add all the tracks with a unique sample id in one go
-    if (scalar @uniq_sras) {
-      push @params, join(' ', @species_line);
-      push @params, "\t-sra_species $species=" . join(",", @uniq_sras);
-    } else {
-        $logger->warn("No tracks to align for $species");
-    }
-  }
-  
-  if ($n > 0) {
-    return join " \\\n", @params;
-  } else {
-    $logger->warn("WARNING: no new tracks found");
-    return;
-  }
+  #push @main_line, '-hive_force_init 1';
+  return join(" ", @main_line);
 }
 
 ###############################################################################

@@ -69,8 +69,9 @@ sub _add_sra_track {
   return;
 }
 
-sub get_new_sra_tracks {
-  my ($self, $species) = @_;
+sub get_new_runs_tracks {
+  my $self = shift;
+  my ($species) = @_;
   
   my $track_req = $self->resultset('SraTrack')->search({
       'track.file_id' => undef,
@@ -80,7 +81,7 @@ sub get_new_sra_tracks {
     {
     prefetch    => ['track', { 'run' => { 'sample' => { 'strain' => 'species' } } } ],
   });
-
+  
   my @res_tracks = $track_req->all;
   
   #$track_req->result_class('DBIx::Class::ResultClass::HashRefInflator');

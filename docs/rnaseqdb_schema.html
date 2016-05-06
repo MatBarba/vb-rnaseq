@@ -166,8 +166,8 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       <ul class="sql_schema_table_list">
         <li><a href="#study" class="sql_schema_link" style="font-weight:bold">study</a></li>
         <li><a href="#experiment" class="sql_schema_link" style="font-weight:bold">experiment</a></li>
-        <li><a href="#run" class="sql_schema_link" style="font-weight:bold">run</a></li>
         <li><a href="#sample" class="sql_schema_link" style="font-weight:bold">sample</a></li>
+        <li><a href="#run" class="sql_schema_link" style="font-weight:bold">run</a></li>
 
       </ul>
     </div>
@@ -428,111 +428,6 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </table>
   </div>
 </div></div><div class="sql_schema_table">
-  <div id="run"class="sql_schema_table_header" style="border-top-color:#C70C09">
-    <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>run</div>
-    <div class="sql_schema_table_header_right">
-  
-  <a id="a_run" class="help-header sql_schema_show_hide" onclick="show_hide('run','columns')">
-    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
-  </a>
-      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
-    </div>
-    <div style="clear:both"></div>
-  </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data defining SRA runs.</p>
-
-  <div id="div_run" style="display:none">
-    <table class="ss sql_schema_table_column">
-      <tr class="center">
-        <th>Column</th>
-        <th>Type</th>
-        <th class="val">Default value</th>
-        <th class="desc">Description</th>
-        <th class="index">Index</th>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>run_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">-</td>
-        <td class="bg1">SRA run id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>run_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>experiment_id</b></td>
-        <td class="bg2">INT(10)</td>
-        <td class="bg2">-</td>
-        <td class="bg2">Experiment primary key (Foreign key).</td>
-        <td class="bg2">key: <i>run_experiment_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>sample_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">-</td>
-        <td class="bg1">Sample primary key (Foreign key).</td>
-        <td class="bg1">key: <i>run_sample_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>run_sra_acc</b></td>
-        <td class="bg2">CHAR(12)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">SRA run accession (e.g. SRR000000).</td>
-        <td class="bg2">key: <i>run_sra_acc_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>run_private_acc</b></td>
-        <td class="bg1">CHAR(12)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Private run accession (e.g. VBSRR000000), for data without SRA accessions.</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>title</b></td>
-        <td class="bg2">TEXT</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Title of the SRA run.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>submitter</b></td>
-        <td class="bg1">TEXT</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Submitter name of the SRA run.</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>metasum</b></td>
-        <td class="bg2">CHAR(32)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>date</b></td>
-        <td class="bg1">TIMESTAMP</td>
-        <td class="bg1">CURRENT_TIMESTAMP</td>
-        <td class="bg1">Entry timestamp.</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>status</b></td>
-        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg2">'ACTIVE'</td>
-        <td class="bg2">Active (True) or retired (False) row.</td>
-        <td class="bg2"></td>
-      </tr>
-    </table>
-  </div>
-</div></div><div class="sql_schema_table">
   <div id="sample"class="sql_schema_table_header" style="border-top-color:#C70C09">
     <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>sample</div>
     <div class="sql_schema_table_header_right">
@@ -649,6 +544,111 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2">CHAR(32)</td>
         <td class="bg2">NULL</td>
         <td class="bg2">Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc + @label.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="run"class="sql_schema_table_header" style="border-top-color:#C70C09">
+    <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>run</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_run" class="help-header sql_schema_show_hide" onclick="show_hide('run','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data defining SRA runs.</p>
+
+  <div id="div_run" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>run_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">SRA run id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>run_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>experiment_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Experiment primary key (Foreign key).</td>
+        <td class="bg2">key: <i>run_experiment_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>sample_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Sample primary key (Foreign key).</td>
+        <td class="bg1">key: <i>run_sample_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>run_sra_acc</b></td>
+        <td class="bg2">CHAR(12)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">SRA run accession (e.g. SRR000000).</td>
+        <td class="bg2">key: <i>run_sra_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>run_private_acc</b></td>
+        <td class="bg1">CHAR(12)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Private run accession (e.g. VBSRR000000), for data without SRA accessions.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>title</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Title of the SRA run.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>submitter</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Submitter name of the SRA run.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.</td>
         <td class="bg2"></td>
       </tr>
 
@@ -1082,7 +1082,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Linker between the tables file and analysis_parameter. Also links to the relevant runs and samples.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Linker between the tables file and analysis_parameter. Also links to the relevant runs.</p>
 
   <div id="div_analysis_file" style="display:none">
     <table class="ss sql_schema_table_column">
@@ -1103,11 +1103,11 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>analysis_parameter_id</b></td>
+        <td class="bg2"><b>analysis_param_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Analysis_parameter primary id (foreigh key).</td>
-        <td class="bg2">key: <i>analysis_file_analysis_parameter_id_idx</i></td>
+        <td class="bg2">Analysis_parameter primary id (foreign key).</td>
+        <td class="bg2">key: <i>analysis_file_analysis_param_id_idx</i></td>
       </tr>
 
       <tr>
@@ -1127,27 +1127,19 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>scope</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>run</li>  <li> sample</li></ul></td>
+        <td class="bg1"><b>run_id</b></td>
+        <td class="bg1">INT(10)</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Does the file represents a run, or a sample (merged)?</td>
+        <td class="bg1">Run primary id (foreign key).</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>scope_id</b></td>
-        <td class="bg2">INT(10)</td>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Run or Sample primary id (foreign key).</td>
-        <td class="bg2">key: <i>analysis_file_scope_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>metasum</b></td>
-        <td class="bg1">CHAR(32)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @analysis_parameter_id + @file_id + @file_io + @scope + @scope_id</td>
-        <td class="bg1"></td>
+        <td class="bg2">Checksum of @analysis_param_id + @file_id + @file_io + @scope + @scope_id</td>
+        <td class="bg2"></td>
       </tr>
     </table>
   </div>
@@ -1169,7 +1161,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the tracks are stored, with a link to the corresponding file and sample.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the tracks are stored, with a link to the corresponding file.</p>
 
   <div id="div_track" style="display:none">
     <table class="ss sql_schema_table_column">
@@ -1250,7 +1242,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Defines what constitutes a track, i.e. one or several samples.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Defines what constitutes a track, i.e. one or several runs.</p>
 
   <div id="div_sra_track" style="display:none">
     <table class="ss sql_schema_table_column">
@@ -1271,11 +1263,11 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>sample_id</b></td>
+        <td class="bg2"><b>run_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">SRA sample primary id (foreign key).</td>
-        <td class="bg2">key: <i>sra_track_sample_id_idx</i></td>
+        <td class="bg2">SRA run primary id (foreign key).</td>
+        <td class="bg2">key: <i>sra_track_run_id_idx</i></td>
       </tr>
 
       <tr>
@@ -1496,67 +1488,59 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>track_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Track id (foreign key).</td>
-        <td class="bg1">key: <i>drupal_node_track_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>autogen_text</b></td>
-        <td class="bg2">TEXT</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Programmatically generated text.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>manual_text</b></td>
+        <td class="bg1"><b>autogen_text</b></td>
         <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Manually curated text.</td>
+        <td class="bg1">Programmatically generated text.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>autogen_title</b></td>
+        <td class="bg2"><b>manual_text</b></td>
         <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Programmatically generated title.</td>
+        <td class="bg2">Manually curated text.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>manual_title</b></td>
+        <td class="bg1"><b>autogen_title</b></td>
         <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Manually curated title.</td>
+        <td class="bg1">Programmatically generated title.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>metasum</b></td>
-        <td class="bg2">CHAR(32)</td>
+        <td class="bg2"><b>manual_title</b></td>
+        <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Checksum of @autogen_txt + @manual_txt.</td>
+        <td class="bg2">Manually curated title.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>date</b></td>
-        <td class="bg1">TIMESTAMP</td>
-        <td class="bg1">CURRENT_TIMESTAMP</td>
-        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @autogen_txt + @manual_txt.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>status</b></td>
-        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg2">'ACTIVE'</td>
-        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
         <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
       </tr>
     </table>
   </div>
@@ -1597,7 +1581,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
         <td class="bg2">Drupal_node primary id (foreign key).</td>
-        <td class="bg2">key: <i>drupal_node_track_sample_id_idx</i></td>
+        <td class="bg2">key: <i>drupal_node_track_drupal_id_idx</i></td>
       </tr>
 
       <tr>

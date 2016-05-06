@@ -34,12 +34,14 @@ __PACKAGE__->table("study_publication");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 publication_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =cut
@@ -53,9 +55,19 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "study_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "publication_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -70,9 +82,41 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("study_pub_id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ciPDMKGfHnCTBiI4kc4Aew
+=head2 publication
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Publication>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "publication",
+  "RNAseqDB::Schema::Result::Publication",
+  { publication_id => "publication_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+=head2 study
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Study>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "study",
+  "RNAseqDB::Schema::Result::Study",
+  { study_id => "study_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NfiXel5hMxBC6ssdIj0jDQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

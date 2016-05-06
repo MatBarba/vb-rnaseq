@@ -160,9 +160,26 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 __PACKAGE__->add_unique_constraint("pubmed_id", ["pubmed_id"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UzrZQ9Q//g8r59OPtyWzGQ
+=head2 study_publications
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::StudyPublication>
+
+=cut
+
+__PACKAGE__->has_many(
+  "study_publications",
+  "RNAseqDB::Schema::Result::StudyPublication",
+  { "foreign.publication_id" => "self.publication_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KA/y3LuA164SKiHRoAvTIA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -126,13 +126,44 @@ __PACKAGE__->set_primary_key("track_id");
 
 __PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JyvWN+lHk4K9DLir0YzKNg
+=head2 drupal_node_tracks
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::DrupalNodeTrack>
+
+=cut
+
+__PACKAGE__->has_many(
+  "drupal_node_tracks",
+  "RNAseqDB::Schema::Result::DrupalNodeTrack",
+  { "foreign.track_id" => "self.track_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 sra_tracks
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::SraTrack>
+
+=cut
+
+__PACKAGE__->has_many(
+  "sra_tracks",
+  "RNAseqDB::Schema::Result::SraTrack",
+  { "foreign.track_id" => "self.track_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:32:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h35xbI9XGvmgyllUjX4tWw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->has_many( sra_tracks => 'RNAseqDB::Schema::Result::SraTrack', 'track_id');
 
 1;
 

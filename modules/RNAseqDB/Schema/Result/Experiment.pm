@@ -34,6 +34,7 @@ __PACKAGE__->table("experiment");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 experiment_sra_acc
@@ -84,7 +85,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "study_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "experiment_sra_acc",
   { data_type => "char", is_nullable => 1, size => 12 },
   "experiment_private_acc",
@@ -159,14 +165,43 @@ __PACKAGE__->add_unique_constraint("experiment_sra_acc", ["experiment_sra_acc"])
 
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xA9nKFi6ClUFNXrLm4u4iw
+=head2 runs
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::Run>
+
+=cut
+
+__PACKAGE__->has_many(
+  "runs",
+  "RNAseqDB::Schema::Result::Run",
+  { "foreign.experiment_id" => "self.experiment_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 study
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Study>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "study",
+  "RNAseqDB::Schema::Result::Study",
+  { study_id => "study_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4OLwvNPVUzWcGgfxqgphYA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->has_many(   runs         => 'RNAseqDB::Schema::Result::Run',        'experiment_id' );
-__PACKAGE__->belongs_to( study        => 'RNAseqDB::Schema::Result::Study',      'study_id'      );
-__PACKAGE__->has_one(    drupal_node  => 'RNAseqDB::Schema::Result::DrupalNode', 'experiment_id' );
 1;
 

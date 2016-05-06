@@ -30,7 +30,7 @@ SRA tracking tables
 */
 
 CREATE TABLE study (
-  study_id           INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  study_id           INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   study_sra_acc      CHAR(12) UNIQUE,
   study_private_acc  CHAR(12) UNIQUE,
   title              TEXT,
@@ -41,7 +41,7 @@ CREATE TABLE study (
   
   KEY study_id_idx        (study_id),
   KEY study_sra_acc_idx   (study_sra_acc)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER study_md5_upd_tr BEFORE UPDATE ON study
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.study_sra_acc, NEW.study_private_acc, NEW.title, NEW.abstract) );
@@ -65,7 +65,7 @@ CREATE TRIGGER study_md5_ins_tr BEFORE INSERT ON study
 */
 
 CREATE TABLE experiment (
-  experiment_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  experiment_id          INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   study_id               INT(10) UNSIGNED NOT NULL,
   experiment_sra_acc     CHAR(12) UNIQUE,
   experiment_private_acc CHAR(12) UNIQUE,
@@ -74,56 +74,17 @@ CREATE TABLE experiment (
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
+  FOREIGN KEY(study_id) REFERENCES study(study_id),
+  
   KEY experiment_id_idx            (experiment_id),
   KEY experiment_study_id_idx      (study_id),
   KEY experiment_sra_acc_idx       (experiment_sra_acc)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER experiment_md5_upd_tr BEFORE UPDATE ON experiment
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.experiment_private_acc, NEW.experiment_sra_acc, NEW.title) );
 CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.experiment_private_acc, NEW.experiment_sra_acc, NEW.title) );
-
-/**
-
-@table run
-@desc Contains data defining SRA runs.
-
-@column run_id                  SRA run id (primary key, internal identifier).
-@column experiment_id           Experiment primary key (Foreign key).
-@column sample_id               Sample primary key (Foreign key).
-@column run_sra_acc             SRA run accession (e.g. SRR000000).
-@column run_private_acc         Private run accession (e.g. VBSRR000000), for data without SRA accessions.
-@column title                   Title of the SRA run.
-@column submitter               Submitter name of the SRA run.
-@column metasum                 Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.
-@column date                    Entry timestamp.
-@column status                  Active (True) or retired (False) row.
-
-*/
-
-CREATE TABLE run (
-  run_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  experiment_id          INT(10) UNSIGNED NOT NULL,
-  sample_id              INT(10) UNSIGNED NOT NULL,
-  run_sra_acc            CHAR(12) UNIQUE,
-  run_private_acc        CHAR(12) UNIQUE,
-  title                  TEXT,
-  submitter              TEXT,
-  metasum                CHAR(32) UNIQUE,
-  date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
-  
-  KEY run_id_idx              (run_id),
-  KEY run_experiment_id_idx   (experiment_id),
-  KEY run_sample_id_idx       (sample_id),
-  KEY run_sra_acc_idx         (run_sra_acc)
-) ENGINE=MyISAM;
-
-CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
-CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
 
 /**
 
@@ -167,12 +128,56 @@ CREATE TABLE sample (
   KEY sample_sra_acc_idx         (sample_sra_acc),
   KEY biosample_acc_idx          (biosample_acc),
   KEY biosample_group_acc_idx    (biosample_group_acc)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER sample_md5_upd_tr BEFORE UPDATE ON sample
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc, NEW.label) );
 CREATE TRIGGER sample_md5_ins_tr BEFORE INSERT ON sample
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.sample_sra_acc, NEW.sample_private_acc, NEW.title, NEW.description, NEW.taxon_id, NEW.strain, NEW.biosample_acc, NEW.biosample_group_acc, NEW.label) );
+
+/**
+
+@table run
+@desc Contains data defining SRA runs.
+
+@column run_id                  SRA run id (primary key, internal identifier).
+@column experiment_id           Experiment primary key (Foreign key).
+@column sample_id               Sample primary key (Foreign key).
+@column run_sra_acc             SRA run accession (e.g. SRR000000).
+@column run_private_acc         Private run accession (e.g. VBSRR000000), for data without SRA accessions.
+@column title                   Title of the SRA run.
+@column submitter               Submitter name of the SRA run.
+@column metasum                 Checksum of @run_sra_acc + @run_private_acc + @title + @submitter.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE run (
+  run_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  experiment_id          INT(10) UNSIGNED NOT NULL,
+  sample_id              INT(10) UNSIGNED NOT NULL,
+  run_sra_acc            CHAR(12) UNIQUE,
+  run_private_acc        CHAR(12) UNIQUE,
+  title                  TEXT,
+  submitter              TEXT,
+  metasum                CHAR(32) UNIQUE,
+  date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  
+  FOREIGN KEY(experiment_id) REFERENCES experiment(experiment_id),
+  FOREIGN KEY(sample_id) REFERENCES sample(sample_id),
+  
+  KEY run_id_idx              (run_id),
+  KEY run_experiment_id_idx   (experiment_id),
+  KEY run_sample_id_idx       (sample_id),
+  KEY run_sra_acc_idx         (run_sra_acc)
+) ENGINE=InnoDB;
+
+CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
+CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
 
 
 /**
@@ -203,7 +208,7 @@ CREATE TABLE species (
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY species_id_idx              (species_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
@@ -215,7 +220,7 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 @desc A list of all existing (allowed) strains.
 
 @column strain_id               Strain id (primary key, internal identifier).
-@column species_id        Species primary key (foreign key).
+@column species_id              Species primary key (foreign key).
 @column production_name         Production name for this strain (species + strain).
 @column strain                  Name of the strain.
 @column metasum                 Checksum of @production_name + @strain.
@@ -233,8 +238,10 @@ CREATE TABLE strain (
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
+  FOREIGN KEY(species_id) REFERENCES species(species_id),
+  
   KEY strain_id_idx              (strain_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
@@ -290,7 +297,7 @@ CREATE TABLE file (
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY file_id_idx            (file_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER file_md5_upd_tr BEFORE UPDATE ON file
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.path, NEW.type, NEW.md5) );
@@ -320,7 +327,7 @@ CREATE TABLE analysis (
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY analysis_id_idx      (analysis_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description) );
@@ -351,9 +358,11 @@ CREATE TABLE analysis_param (
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
+  FOREIGN KEY(analysis_id) REFERENCES analysis(analysis_id),
+  
   KEY analysis_param_id_idx            (analysis_param_id),
   KEY analysis_param_analysis_id_idx   (analysis_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_param_md5_upd_tr BEFORE UPDATE ON analysis_param
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.parameters) );
@@ -366,31 +375,35 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 @desc Linker between the tables file and analysis_parameter. Also links to the relevant runs.
 
 @column analysis_file_id             Analysis-file linker id (primary key, internal identifier).
-@column analysis_parameter_id        Analysis_parameter primary id (foreigh key).
+@column analysis_param_id            Analysis_parameter primary id (foreign key).
 @column file_id                      File primary id (foreign key).
 @column file_io                      If the file is an input or an output.
 @column run_id                       Run primary id (foreign key).
-@column metasum                      Checksum of @analysis_parameter_id + @file_id + @file_io + @scope + @scope_id
+@column metasum                      Checksum of @analysis_param_id + @file_id + @file_io + @scope + @scope_id
 
 */
 
 CREATE TABLE analysis_file (
   analysis_file_id            INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  analysis_parameter_id       INT(10) UNSIGNED,
+  analysis_param_id           INT(10) UNSIGNED,
   file_id                     INT(10) UNSIGNED,
   file_io                     ENUM('INPUT', 'OUTPUT'),
   run_id                      INT(10) UNSIGNED,
   metasum                     CHAR(32) UNIQUE,
   
+  FOREIGN KEY(analysis_param_id) REFERENCES analysis_param(analysis_param_id),
+  FOREIGN KEY(file_id) REFERENCES file(file_id),
+  FOREIGN KEY(run_id) REFERENCES run(run_id),
+  
   KEY analysis_file_id_idx                      (analysis_file_id),
-  KEY analysis_file_analysis_parameter_id_idx   (analysis_parameter_id),
+  KEY analysis_file_analysis_param_id_idx   (analysis_param_id),
   KEY analysis_file_file_id_idx                 (file_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_file_md5_upd_tr BEFORE UPDATE ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.run_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_param_id, NEW.file_id, NEW.file_io, NEW.run_id) );
 CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_parameter_id, NEW.file_id, NEW.file_io, NEW.run_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_param_id, NEW.file_id, NEW.file_io, NEW.run_id) );
 
 
 /**
@@ -426,7 +439,7 @@ CREATE TABLE track (
   
   KEY track_id_idx                     (track_id),
   KEY track_file_id_idx                (file_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
@@ -450,10 +463,13 @@ CREATE TABLE sra_track (
   track_id              INT(10) UNSIGNED,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
+  FOREIGN KEY(run_id) REFERENCES run(run_id),
+  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  
   KEY sra_track_id_idx                 (sra_track_id),
   KEY sra_track_run_id_idx             (run_id),
   KEY sra_track_track_id_idx           (track_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 /**
 @header Misc tables
@@ -499,7 +515,7 @@ CREATE TABLE publication (
   
   KEY publication_id_idx        (publication_id),
   KEY pubmed_id_idx             (pubmed_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 CREATE TRIGGER publication_md5_upd_tr BEFORE UPDATE ON publication
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.pubmed_id, NEW.doi, NEW.authors, NEW.title, NEW.abstract, NEW.year) );
@@ -522,10 +538,13 @@ CREATE TABLE study_publication (
   study_id              INT(10) UNSIGNED NOT NULL,
   publication_id        INT(10) UNSIGNED NOT NULL,
   
+  FOREIGN KEY(study_id) REFERENCES study(study_id),
+  FOREIGN KEY(publication_id) REFERENCES publication(publication_id),
+  
   KEY study_pub_id_idx                (study_pub_id),
   KEY study_pub_study_id_idx          (study_id),
   KEY study_pub_publication_id_idx    (publication_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 /**
 
@@ -540,7 +559,6 @@ DRUPAL TABLES
 
 @column drupal_id              Drupal node id (primary key, internal identifier).
 @column drupal_node_id         Website drupal node id (currently).
-@column track_id               Track id (foreign key).
 @column autogen_text           Programmatically generated text.
 @column manual_text            Manually curated text.
 @column autogen_title          Programmatically generated title.
@@ -554,7 +572,6 @@ DRUPAL TABLES
 CREATE TABLE drupal_node (
   drupal_id             INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   drupal_node_id        INT(10) UNSIGNED UNIQUE,
-  track_id              INT(10) UNSIGNED,
   autogen_text          TEXT,
   manual_text           TEXT,
   metasum               CHAR(32),
@@ -564,14 +581,13 @@ CREATE TABLE drupal_node (
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   KEY drupal_id_idx             (drupal_id),
-  KEY drupal_node_id_idx        (drupal_node_id),
-  KEY drupal_node_track_id_idx  (track_id)
-) ENGINE=MyISAM;
+  KEY drupal_node_id_idx        (drupal_node_id)
+) ENGINE=InnoDB;
 
 CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
 CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.track_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
 
 
 /**
@@ -591,10 +607,13 @@ CREATE TABLE drupal_node_track (
   track_id              INT(10) UNSIGNED,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
+  FOREIGN KEY(drupal_id) REFERENCES drupal_node(drupal_id),
+  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  
   KEY drupal_node_track_id_idx                 (drupal_node_track_id),
   KEY drupal_node_track_drupal_id_idx          (drupal_id),
   KEY drupal_node_track_track_id_idx           (track_id)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
 
 /**

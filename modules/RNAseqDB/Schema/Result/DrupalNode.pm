@@ -36,12 +36,6 @@ __PACKAGE__->table("drupal_node");
   extra: {unsigned => 1}
   is_nullable: 1
 
-=head2 track_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_nullable: 1
-
 =head2 autogen_text
 
   data_type: 'text'
@@ -93,8 +87,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "drupal_node_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
-  "track_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "autogen_text",
   { data_type => "text", is_nullable => 1 },
@@ -148,11 +140,27 @@ __PACKAGE__->set_primary_key("drupal_id");
 
 __PACKAGE__->add_unique_constraint("drupal_node_id", ["drupal_node_id"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:e+vwmfoAjbpldpEz18s3Kw
+=head2 drupal_node_tracks
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::DrupalNodeTrack>
+
+=cut
+
+__PACKAGE__->has_many(
+  "drupal_node_tracks",
+  "RNAseqDB::Schema::Result::DrupalNodeTrack",
+  { "foreign.drupal_id" => "self.drupal_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:32:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:t/cjHiLO3s1mKFIuZ6vGig
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->has_many( drupal_node_tracks => 'RNAseqDB::Schema::Result::DrupalNodeTrack', 'drupal_id');
 1;

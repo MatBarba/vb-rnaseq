@@ -34,12 +34,14 @@ __PACKAGE__->table("sra_track");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 1
 
 =head2 track_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 1
 
 =head2 date
@@ -60,9 +62,19 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "run_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "track_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "date",
   {
     data_type => "timestamp",
@@ -84,13 +96,53 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("sra_track_id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XAGp62tONkvbwrmJ3RpP4w
+=head2 run
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Run>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "run",
+  "RNAseqDB::Schema::Result::Run",
+  { run_id => "run_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
+=head2 track
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Track>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "track",
+  "RNAseqDB::Schema::Result::Track",
+  { track_id => "track_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bdkVfgq2X5WNJuEZEqkFgg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->belongs_to( track  => 'RNAseqDB::Schema::Result::Track',  'track_id' );
-__PACKAGE__->belongs_to( run => 'RNAseqDB::Schema::Result::Run', 'run_id');
 1;
 

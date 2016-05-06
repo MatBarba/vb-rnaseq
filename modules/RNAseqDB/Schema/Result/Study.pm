@@ -158,13 +158,43 @@ __PACKAGE__->add_unique_constraint("study_private_acc", ["study_private_acc"]);
 
 __PACKAGE__->add_unique_constraint("study_sra_acc", ["study_sra_acc"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qezfx3Ljq3M/DkxuyAdFDQ
+=head2 experiments
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::Experiment>
+
+=cut
+
+__PACKAGE__->has_many(
+  "experiments",
+  "RNAseqDB::Schema::Result::Experiment",
+  { "foreign.study_id" => "self.study_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 study_publications
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::StudyPublication>
+
+=cut
+
+__PACKAGE__->has_many(
+  "study_publications",
+  "RNAseqDB::Schema::Result::StudyPublication",
+  { "foreign.study_id" => "self.study_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KQTRuXSNwDyvWEvkGx1A0Q
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->has_many( experiments       => 'RNAseqDB::Schema::Result::Experiment',       'study_id' );
-__PACKAGE__->has_many( study_publication => 'RNAseqDB::Schema::Result::StudyPublication', 'study_id' );
 1;
 

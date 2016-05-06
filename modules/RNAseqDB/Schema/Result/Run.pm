@@ -34,12 +34,14 @@ __PACKAGE__->table("run");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 sample_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 run_sra_acc
@@ -95,9 +97,19 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "experiment_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "sample_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "run_sra_acc",
   { data_type => "char", is_nullable => 1, size => 12 },
   "run_private_acc",
@@ -174,14 +186,73 @@ __PACKAGE__->add_unique_constraint("run_private_acc", ["run_private_acc"]);
 
 __PACKAGE__->add_unique_constraint("run_sra_acc", ["run_sra_acc"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z2HMuNJ3XWllJM3vCPHtTw
+=head2 analysis_files
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::AnalysisFile>
+
+=cut
+
+__PACKAGE__->has_many(
+  "analysis_files",
+  "RNAseqDB::Schema::Result::AnalysisFile",
+  { "foreign.run_id" => "self.run_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 experiment
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Experiment>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "experiment",
+  "RNAseqDB::Schema::Result::Experiment",
+  { experiment_id => "experiment_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+=head2 sample
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Sample>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "sample",
+  "RNAseqDB::Schema::Result::Sample",
+  { sample_id => "sample_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+=head2 sra_tracks
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::SraTrack>
+
+=cut
+
+__PACKAGE__->has_many(
+  "sra_tracks",
+  "RNAseqDB::Schema::Result::SraTrack",
+  { "foreign.run_id" => "self.run_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b1f9TG7EUkhPU8RLFTHfvg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->belongs_to( sample     => 'RNAseqDB::Schema::Result::Sample', 'sample_id'         );
-__PACKAGE__->belongs_to( experiment => 'RNAseqDB::Schema::Result::Experiment', 'experiment_id' );
-__PACKAGE__->has_many(   sra_tracks => 'RNAseqDB::Schema::Result::SraTrack', 'run_id'          );
 1;
 

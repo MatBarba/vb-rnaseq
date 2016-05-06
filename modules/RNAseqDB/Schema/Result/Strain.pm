@@ -34,6 +34,7 @@ __PACKAGE__->table("strain");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 1
 
 =head2 production_name
@@ -79,7 +80,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "species_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "production_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "strain",
@@ -128,9 +134,31 @@ __PACKAGE__->set_primary_key("strain_id");
 
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SonzKn7Y1xE9a+R4/NIFdg
+=head2 species
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Species>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "species",
+  "RNAseqDB::Schema::Result::Species",
+  { species_id => "species_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:R6p5TGG4qZ4PrxPaxvFP1g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

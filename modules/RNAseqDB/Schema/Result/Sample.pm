@@ -216,9 +216,26 @@ __PACKAGE__->add_unique_constraint("sample_private_acc", ["sample_private_acc"])
 
 __PACKAGE__->add_unique_constraint("sample_sra_acc", ["sample_sra_acc"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/ET1f6POhH5x5F3fpSYWfA
+=head2 runs
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::Run>
+
+=cut
+
+__PACKAGE__->has_many(
+  "runs",
+  "RNAseqDB::Schema::Result::Run",
+  { "foreign.sample_id" => "self.sample_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Qm6Jt9H/3o8sAFxTbr5kjw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

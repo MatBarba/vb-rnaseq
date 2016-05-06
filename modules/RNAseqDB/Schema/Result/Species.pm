@@ -132,9 +132,26 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 __PACKAGE__->add_unique_constraint("taxon_id", ["taxon_id"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ae/ARXiMz6R0HFUxsHmAiA
+=head2 strains
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::Strain>
+
+=cut
+
+__PACKAGE__->has_many(
+  "strains",
+  "RNAseqDB::Schema::Result::Strain",
+  { "foreign.species_id" => "self.species_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6DF2Ilyjd3GsnTuiBPBStA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

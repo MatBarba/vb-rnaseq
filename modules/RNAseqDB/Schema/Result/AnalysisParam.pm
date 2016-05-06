@@ -34,6 +34,7 @@ __PACKAGE__->table("analysis_param");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 1
 
 =head2 program
@@ -77,7 +78,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "analysis_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "program",
   { data_type => "text", is_nullable => 1 },
   "parameters",
@@ -126,9 +132,46 @@ __PACKAGE__->set_primary_key("analysis_param_id");
 
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/Ao7aIcElTDxDyKddzoJiQ
+=head2 analysis
+
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Analysis>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "analysis",
+  "RNAseqDB::Schema::Result::Analysis",
+  { analysis_id => "analysis_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
+=head2 analysis_files
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::AnalysisFile>
+
+=cut
+
+__PACKAGE__->has_many(
+  "analysis_files",
+  "RNAseqDB::Schema::Result::AnalysisFile",
+  { "foreign.analysis_param_id" => "self.analysis_param_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xGGUGWDdlfZrwqoGGroptw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

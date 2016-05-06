@@ -131,9 +131,26 @@ __PACKAGE__->set_primary_key("file_id");
 
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-03-14 16:55:28
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3XA3ca50V4XCaBz6EasPiA
+=head2 analysis_files
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::AnalysisFile>
+
+=cut
+
+__PACKAGE__->has_many(
+  "analysis_files",
+  "RNAseqDB::Schema::Result::AnalysisFile",
+  { "foreign.file_id" => "self.file_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EA/HoTN4WdNTNth1aO17qw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -14,5 +14,5 @@ eval $($HOST_COMMAND details env_DB_)
 
 # DBIx (re)generation
 perl -MDBIx::Class::Schema::Loader=make_schema_at,dump_to_dir:./modules/ \
-  -e "make_schema_at(\"RNAseqDB::Schema\",{ debug => 1} , [ \"dbi:mysql:host=$DB_HOST:port=$DB_PORT:database=$DB_NAME\", $DB_USER, $DB_PASS ])"
+  -e "make_schema_at(\"RNAseqDB::Schema\",{ debug => 0 } , [ \"dbi:mysql:host=$DB_HOST:port=$DB_PORT:database=$DB_NAME\", $DB_USER, $DB_PASS ])"
 

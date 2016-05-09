@@ -411,7 +411,17 @@ This module is a role to interface the tracks part of the RNAseqDB::DB object.
   
   usage:
     my $track_ids = [ 1, 2 ];
-    $rdb->inactivate_tracks(trac_ids, 'MERGED');
+    $rdb->inactivate_tracks(track_ids, 'MERGED');
+    
+=item get_track_level()
+
+  function       : return the merge_level of a track
+  arg[1]         : track_id
+  return         : A string 'sample', 'study' or undef
+  
+  usage:
+    my $track_id = 1;
+    my $merge_level = $rdb->get_track_level(track_id);
     
 =back
 

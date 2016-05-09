@@ -1,5 +1,5 @@
 #!perl
-#use Test::More skip_all => "Slow, do it later";
+use Test::More skip_all => "Slow, do it later";
 
 if (!require Test::Perl::Critic) {
     Test::More::plan(

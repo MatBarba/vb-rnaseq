@@ -103,7 +103,7 @@ sub check_expected_track {
   if (defined $nums->[1]) {
     my $num_tracks = 0;
     for my $sp (keys %$tracks) {
-      my $sras_aref = $tracks->{ $sp }->{tracks};
+      my $sras_aref = $tracks->{ $sp };
       my @sras = values %$sras_aref;
       $num_tracks += scalar @sras;
     }

@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 
+use 5.10.0;
 use strict;
 use warnings;
 use Readonly;
@@ -56,36 +57,54 @@ sub tracks_for_pipeline {
   # The start of the command line is the same for every track
   my $commandline_start = create_command_line_start($opt);
   my $pipeline_command = 'RNASEQ_PIPELINE';
-  push @command_lines, "$pipeline_command=$commandline_start";
+  push @command_lines, "$pipeline_command=\"$commandline_start\"";
   
   # Create the command line for each new track
   foreach my $species (sort keys %$data) {
     my $species_line = "-species $species";
-    my $merge_level = "-merge_level taxon";
     
     #  all tracks
-    my $tracks = $data->{$species}->{tracks};
+    my $tracks = $data->{$species};
+    my %merged_runs;
     foreach my $track_id (keys %$tracks) {
-      my $run_ids = $tracks->{$track_id};
-
-      if (@$run_ids) {
-        # Create a command line for this track
-        my @line;
-        push @line, (
-          '$' . $pipeline_command,
-          $merge_level,
-          $species_line
-        );
-        push @line, map { "-run_id $_" } @$run_ids;
-        my $command = join ' ', @line;
-        push @command_lines, $command;
+      my $track = $tracks->{$track_id};
+      my $run_accs = $track->{run_accs};
+      my $merge_level = $track->{merge_level};
+      
+      if (@$run_accs) {
+        # Push in merge_levels if any
+        if (defined $merge_level) {
+          push @{ $merged_runs{$merge_level} }, @$run_accs;
+        } else {
+          # Create a command line for this track
+          push @command_lines, create_track_command($pipeline_command, $species_line, $run_accs, 'taxon');
+        }
       } else {
         $logger->warn("No tracks to align for $species");
       }
     }
+    
+    # Group by merge_level
+    foreach my $merge_level (keys %merged_runs) {
+      push @command_lines, create_track_command($pipeline_command, $species_line, $merged_runs{$merge_level}, $merge_level);
+    }
   }
   
   return \@command_lines;
+}
+
+sub create_track_command {
+  my ($pipeline_command, $species_line, $run_accs, $merge_level) = @_;
+  
+  my @line;
+  push @line, (
+    '$' . $pipeline_command,
+    $species_line,
+    "-merge_level $merge_level",
+  );
+  push @line, map { "-run_id $_" } @$run_accs;
+  my $command = join ' ', @line;
+  return $command;
 }
 
 sub create_command_line_start {

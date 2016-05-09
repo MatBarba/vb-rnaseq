@@ -94,15 +94,62 @@ sub get_new_runs_tracks {
   for my $track (@res_tracks) {
     my $track_id = $track->track_id;
     my $run = $track->run;
-    my $sample = $run->sample;
-    my $strain = $sample->strain;
+    my $strain = $run->sample->strain;
     my $production_name = $strain->production_name;
     my $taxon_id        = $strain->species->taxon_id;
-    $new_track{$production_name}{taxon_id} = $taxon_id;
     
-    push @{ $new_track{$production_name}{tracks}{ $track_id } }, $run->run_sra_acc;
+    my $track_data = $new_track{$production_name}{$track_id};
+    
+    if (defined $track_data) {
+      push @{ $track_data->{run_accs} }, $run->run_sra_acc;
+    } else {
+      my $merge_level = $self->get_track_level($track_id);
+      $track_data = {
+        run_accs => [$run->run_sra_acc],
+        merge_level => $merge_level,
+        taxon_id => $taxon_id,
+      };
+    }
+    $new_track{$production_name}{$track_id} = $track_data;
   }
   return \%new_track;
+}
+
+sub get_track_level {
+  my $self = shift;
+  my ($track_id) = @_;
+
+  my $track_data = $self->resultset('SraToActiveTrack')->search({
+      'track_id' => $track_id,
+    });
+
+  # Sample?
+  my @track_samples = uniq $track_data->get_column('sample_id')->all;
+  if (@track_samples == 1) {
+    return 'sample';
+  }
+
+  # Study?
+  my @studies = uniq $track_data->get_column('study_id')->all;
+  if (@studies == 1) {
+    # One study, but is it all the samples of the study?
+    my $study_id = shift @studies;
+    my $study_data = $self->resultset('SraToActiveTrack')->search({
+        'study_id' => $study_id,
+      });
+    my @study_samples = uniq $study_data->get_column('sample_id')->all;
+    if (@study_samples == @track_samples) {
+      return 'study';
+    }
+    else {
+      $logger->debug("Study $study_id has more samples than the track: can't merge at study level for track $track_id");
+      return;
+    }
+  }
+  else {
+    $logger->debug("Track $track_id has several studies: can't merge at study level");
+    return;
+  }
 }
 
 sub merge_tracks_by_sra_ids {

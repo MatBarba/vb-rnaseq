@@ -1,3 +1,4 @@
+use 5.10.0;
 use utf8;
 package RNAseqDB::SRA;
 use Moose::Role;
@@ -33,17 +34,23 @@ sub add_sra {
   my ($self, $sra_acc) = @_;
   
   if ($sra_acc =~ $sra_regex->{study}) {
-    return $self->_add_runs_from($sra_acc, 'study');
+    my $num = $self->_add_runs_from($sra_acc, 'study');
+    $self->_merge_sample_tracks($sra_acc);
+    return $num;
   }
   elsif ($sra_acc =~ $sra_regex->{experiment}) {
-    return $self->_add_runs_from($sra_acc, 'experiment');
+    my $num = $self->_add_runs_from($sra_acc, 'experiment');
+    $self->_merge_sample_tracks($sra_acc);
+    return $num;
   }
   elsif ($sra_acc =~ $sra_regex->{run}) {
     # Special case: all other cases are wrappers around this
     return $self->_add_run($sra_acc);
   }
   elsif ($sra_acc =~ $sra_regex->{sample}) {
-    return $self->_add_runs_from($sra_acc, 'sample');
+    my $num = $self->_add_runs_from($sra_acc, 'sample');
+    $self->_merge_sample_tracks($sra_acc);
+    return $num;
   }
   else {
     $logger->warn("WARNING; Invalid SRA accession: $sra_acc");
@@ -349,7 +356,7 @@ sub _sra_to_run_ids {
   my @run_accs;
   ACCESSION : for my $acc (@$sra_accs) {
     my $runs_req;
-    if ($acc =~ $sra_regex->{study}) {
+    if ($acc =~ /$sra_regex->{study}/) {
       $runs_req = $self->resultset('Run')->search({
           'study.study_sra_acc' => $acc
         },
@@ -357,7 +364,7 @@ sub _sra_to_run_ids {
           prefetch => { experiment => 'study' }
         });
     }
-    elsif ($acc =~ $sra_regex->{experiment}) {
+    elsif ($acc =~ /$sra_regex->{experiment}/) {
       $runs_req = $self->resultset('Run')->search({
           'experiment_sra_acc' => $acc
         },
@@ -365,12 +372,12 @@ sub _sra_to_run_ids {
           prefetch => 'experiment'
         });
     }
-    elsif ($acc =~ $sra_regex->{run}) {
+    elsif ($acc =~ /$sra_regex->{run}/) {
       $runs_req = $self->resultset('Run')->search({
           'run_sra_acc' => $acc
         });
     }
-    elsif ($acc =~ $sra_regex->{sample}) {
+    elsif ($acc =~ /$sra_regex->{sample}/) {
       $runs_req = $self->resultset('Run')->search({
           'sample_sra_acc' => $acc,
         },
@@ -378,7 +385,7 @@ sub _sra_to_run_ids {
           prefetch => 'sample'
         });
     } else {
-      $logger->warn("Can't recognize SRA accession $acc (to merge)");
+      warn("Can't recognize SRA accession $acc (to merge)");
       next ACCESSION;
     }
     my @run_res = $runs_req->all;
@@ -386,19 +393,60 @@ sub _sra_to_run_ids {
       push @run_accs, map { $_->run_id } @run_res;
     }
     else {
-      $logger->warn("Can't find SRA accession $acc to merge");
+      warn("Can't find SRA accession $acc to merge");
       next ACCESSION;
     }
   }
   
   if (scalar @run_accs == 0) {
-    $logger->warn("Could not find any SRA accession to merge");
+    warn("Could not find any SRA accession to merge");
     return;
   } else {
     @run_accs = uniq @run_accs;
     $logger->debug("Runs FROM ".join(',', @$sra_accs).": " . join(',', @run_accs));
     return \@run_accs;
   }
+}
+
+sub _get_samples_from {
+  my $self = shift;
+  my ($acc) = @_;
+  
+  my $samples_req;
+  my @samples;
+  
+  # Study
+  if ($acc =~ $sra_regex->{study}) {
+    $samples_req = $self->resultset('Sample')->search({
+        'study.study_sra_acc' => $acc
+      },
+      {
+        prefetch => { runs => { experiment => 'study' } }
+      });
+  }
+  # Experiment
+  elsif ($acc =~ $sra_regex->{experiment}) {
+    $samples_req = $self->resultset('Sample')->search({
+        'experiment.experiment_sra_acc' => $acc
+      },
+      {
+        prefetch => { runs => 'experiment' }
+      });
+  }
+  # Special case: just one sample
+  elsif ($acc =~ $sra_regex->{sample}) {
+    return [$acc];
+  } else {
+    $logger->warn("Can't recognize SRA accession $acc (to get samples)");
+    return;
+  }
+  
+  # Retrieve the list of samples
+  my @samples_res = $samples_req->all;
+  if (@samples_res > 0) {
+    push @samples, map { $_->sample_sra_acc } @samples_res;
+  }
+  return \@samples;
 }
 
 #######################################################################################################################

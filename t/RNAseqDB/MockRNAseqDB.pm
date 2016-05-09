@@ -12,6 +12,7 @@ use JSON;
 use Perl6::Slurp;
 use Data::Dumper;
 
+
 use RNAseqDB::DB;
 use Log::Log4perl qw( :easy );
 my $logger = get_logger();
@@ -20,6 +21,9 @@ use lib dirname($0);
 
 our $db_connected;
 our %dbconf;
+
+# File where the test database name is stored for later use
+my $db_file = dirname($0) . "/test_db.json";
 
 sub create_mock_db {
   # Load database schema
@@ -37,13 +41,24 @@ sub create_mock_db {
   die "Missing user for DB\n" unless $dbconf{user};
   die "Missing dbname for DB\n" unless $dbconf{dbname};
 
-  # Add some random number at the end to avoid a collision with an existing database
-  my $rand_num = int(rand(9999999));
-  $dbconf{dbname} .= '_' . $rand_num;
+  # Retrieve an existing database name to reuse
+  if (-s $db_file) {
+    my $cached_dbconf = decode_json(slurp $db_file);
+    $dbconf{'dbname'} = $cached_dbconf->{dbname};
+  }
+  # Or not: create a new db name
+  else {
+    # Add some random number at the end to avoid a collision with an existing database
+    my $rand_num = int(rand(9999999));
+    $dbconf{dbname} .= '_' . $rand_num;
+    open my $DB_FILE, '>', $db_file;
+    print $DB_FILE encode_json(\%dbconf);
+    close $DB_FILE;
+  }
 
   # Create temp database
   my $mysql_command = "mysql --host=$dbconf{host} --port=$dbconf{port} --user=$dbconf{user} --password=$dbconf{pass}";
-  system "$mysql_command -e ". '"CREATE DATABASE ' . $dbconf{dbname} . ';"';
+  system "$mysql_command -e ". '"DROP DATABASE IF EXISTS ' . $dbconf{dbname} . '; CREATE DATABASE ' . $dbconf{dbname} . ';"';
   # Load the schema
   system "$mysql_command $dbconf{dbname} < $schema_path";
 
@@ -54,7 +69,7 @@ sub create_mock_db {
       $dbconf{pass},
       { RaiseError => 1 },
     ));
-  ok(defined $db_connected, "Connection to DB");
+  ok(defined $db_connected, "Connection to DB $dbconf{dbname} on $dbconf{host}");
   return $db;
 }
 

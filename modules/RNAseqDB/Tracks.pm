@@ -116,7 +116,7 @@ sub merge_tracks_by_sra_ids {
   # Get the list of SRA runs from the list of SRA_ids
   my $run_ids = $self->_sra_to_run_ids($sra_accs);
   if (not defined $run_ids) {
-    $logger->warn("Abort merging: can't find all the members to merge");
+    warn "Abort merging: can't find all the members to merge";
     return;
   }
   
@@ -124,8 +124,13 @@ sub merge_tracks_by_sra_ids {
   my $old_track_ids = $self->_get_tracks_for_runs($run_ids);
 
   # Check that there are multiple tracks to merge, abort otherwise
-  if (scalar @$old_track_ids == 1) {
-    $logger->warn("Trying to merge tracks, but there is already one track for them");
+  my $n_tracks = scalar @$old_track_ids;
+  if ($n_tracks == 0) {
+    warn "No tracks found to merge!";
+    return;
+  }
+  elsif ($n_tracks == 1) {
+    $logger->warn("Trying to merge tracks, but there is only one track to merge");
     return;
   } else {
     $logger->debug(sprintf "Can merge %d tracks", scalar @$old_track_ids);
@@ -145,6 +150,19 @@ sub merge_tracks_by_sra_ids {
   $self->_add_drupal_node_from_track($merged_track_id);
 
   return;
+}
+
+sub _merge_sample_tracks {
+  my $self = shift;
+  my ($sra_acc) = @_;
+  
+  # Retrieve samples
+  my $samples = $self->_get_samples_from($sra_acc);
+  
+  foreach my $sample_acc (@$samples) {
+    $logger->debug("Merge tracks for sample $sample_acc");
+    $self->merge_tracks_by_sra_ids([$sample_acc]);
+  }
 }
 
 sub inactivate_tracks_by_sra_ids {
@@ -285,7 +303,7 @@ This document describes RNAseqDB::Tracks version 0.0.1
 =head1 SYNOPSIS
 
     # Get the list of new SRA tracks to create
-    $rdb->get_new_sra_tracks();
+    $rdb->get_new_runs_tracks();
 
 =head1 DESCRIPTION
 
@@ -295,7 +313,7 @@ This module is a role to interface the tracks part of the RNAseqDB::DB object.
 
 =over
  
-=item get_new_sra_tracks()
+=item get_new_runs_tracks()
 
   function       : get a hash representing the sra tracks
   returntype     : hash of the form:
@@ -308,7 +326,7 @@ This module is a role to interface the tracks part of the RNAseqDB::DB object.
     Where the array sra includes a list of SRA accessions
   
   usage:
-    my $new_tracks = $rdb->get_new_sra_tracks();
+    my $new_tracks = $rdb->get_new_runs_tracks();
     
 =item merge_tracks_by_sra_ids()
 

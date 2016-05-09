@@ -4,6 +4,7 @@ use warnings;
 use autodie qw( :all );
 use Test::More;
 use Test::Exception;
+use Test::Warnings;
 use Log::Log4perl qw( :easy );
 #Log::Log4perl->easy_init($WARN);
 #Log::Log4perl->easy_init($DEBUG);
@@ -46,7 +47,7 @@ check_tables_numbers($db, [0,0,0,0,0,0]);
 # Add 1 run
 {
   my $acc = 'SRR1271734';
-  my $num = $db->add_sra($acc);
+  ok( my $num = $db->add_sra($acc), "Add SRA $acc" );
   ok( $num == 1, "Insert 1 SRA run $acc" );
   check_tables_numbers($db, [1,1,1,1,0,0]);
 }
@@ -54,8 +55,8 @@ check_tables_numbers($db, [0,0,0,0,0,0]);
 # Add 1 experiment (same study)
 {
   my $acc = 'SRX533493';
-  my $num = $db->add_sra($acc);
-  ok( $num == 1, "Insert 1 SRA experiment $acc" );
+  ok( my $num = $db->add_sra($acc), "Experiment $acc added" );
+  ok( $num == 1, "Number of addition = 1" );
   check_tables_numbers($db, [1,2,2,2,0,0]);
 }
 

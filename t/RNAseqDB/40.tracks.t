@@ -4,6 +4,7 @@ use warnings;
 use autodie qw( :all );
 use Test::More;
 use Test::Exception;
+use Test::Warnings;
 use Data::Dumper;
 
 use Log::Log4perl qw( :easy );
@@ -31,7 +32,7 @@ $db->add_species({
 });
 
 {
-  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (none expected)");
+  ok(my $tracks = $db->get_new_runs_tracks(), "Get list of new SRA tracks (none expected)");
   $logger->debug(Dumper $tracks);
   check_expected_track($tracks, [0,0]);
   check_tables_numbers($db, [0,0,0,0,0]);
@@ -41,7 +42,7 @@ $db->add_species({
   # Add 1 study
   $db->add_sra('SRP041691');
   # Get the list of tracks to create
-  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (1 species expected)");
+  ok(my $tracks = $db->get_new_runs_tracks(), "Get list of new SRA tracks (1 species expected)");
   $logger->debug(Dumper $tracks);
   
   # Check sizes
@@ -54,7 +55,7 @@ $db->add_species({
   $db->add_sra('SRP003874');
 
   # Get the list of tracks to create
-  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (2 species expected)");
+  ok(my $tracks = $db->get_new_runs_tracks(), "Get list of new SRA tracks (2 species expected)");
   $logger->debug(Dumper $tracks);
   
   # Check sizes
@@ -67,7 +68,7 @@ $db->add_species({
   my @to_merge = qw( SRS602294 SRS602295 SRS602296 );
   $db->merge_tracks_by_sra_ids(\@to_merge);
   
-  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (3 samples merged)");
+  ok(my $tracks = $db->get_new_runs_tracks(), "Get list of new SRA tracks (3 samples merged)");
   check_expected_track($tracks, [2, 7]);
   check_tables_numbers($db, [2,9,9,9,10]);
 }
@@ -77,7 +78,7 @@ $db->add_species({
   my @to_merge = qw( SRP003874 );
   $db->merge_tracks_by_sra_ids(\@to_merge);
   
-  ok(my $tracks = $db->get_new_sra_tracks(), "Get list of new SRA tracks (1 study = 4 samples merged)");
+  ok(my $tracks = $db->get_new_runs_tracks(), "Get list of new SRA tracks (1 study = 4 samples merged)");
   check_expected_track($tracks, [2, 4]);
   check_tables_numbers($db, [2,9,9,9,11]);
 }
@@ -86,7 +87,7 @@ $db->add_species({
   my @to_merge = qw( SRP003874 );
   $db->merge_tracks_by_sra_ids(\@to_merge);
   
-  ok(my $tracks = $db->get_new_sra_tracks(), "Merge a second time (1 study = 4 samples)");
+  ok(my $tracks = $db->get_new_runs_tracks(), "Merge a second time (1 study = 4 samples)");
   check_expected_track($tracks, [2, 4]);
   check_tables_numbers($db, [2,9,9,9,11]);
 }

@@ -2,6 +2,86 @@
 
 
 /**
+@header Taxonomy tables
+@colour #CC75FF
+*/
+
+/**
+
+@table species
+@desc A list of all existing species.
+
+@column species_id              Species id (primary key, internal identifier).
+@column taxon_id                NCBI species id.
+@column binomial_name           Species binomial name.
+@column metasum                 Checksum of @binomial_name + @taxon.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE species (
+  species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  taxon_id                  INT(10) UNSIGNED UNIQUE,
+  binomial_name             VARCHAR(128),
+  metasum                   CHAR(32) UNIQUE,
+  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  
+  KEY species_id_idx              (species_id)
+) ENGINE=InnoDB;
+
+CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
+CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
+ 
+/**
+@table strain
+@desc A list of all existing (allowed) strains.
+
+@column strain_id               Strain id (primary key, internal identifier).
+@column species_id              Species primary key (foreign key).
+@column production_name         Production name for this strain (species + strain).
+@column strain                  Name of the strain.
+@column metasum                 Checksum of @production_name + @strain.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE strain (
+  strain_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  species_id                INT(10) UNSIGNED,
+  production_name           VARCHAR(64) NOT NULL,
+  strain                    VARCHAR(32),
+  metasum                   CHAR(32) UNIQUE,
+  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  
+  FOREIGN KEY(species_id) REFERENCES species(species_id),
+  
+  KEY strain_id_idx              (strain_id)
+) ENGINE=InnoDB;
+
+CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
+CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
+
+    
+CREATE VIEW taxonomy AS
+  SELECT binomial_name,
+         taxon_id,
+         production_name,
+        strain,
+        strain_id,
+        strain.status AS status
+  FROM strain LEFT JOIN species
+    USING(species_id)
+;
+
+/**
 @header SRA tables
 @colour  #C70C09
 */
@@ -124,6 +204,8 @@ CREATE TABLE sample (
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
+  FOREIGN KEY(strain_id) REFERENCES strain(strain_id),
+  
   KEY sample_id_idx              (sample_id),
   KEY sample_sra_acc_idx         (sample_sra_acc),
   KEY biosample_acc_idx          (biosample_acc),
@@ -179,87 +261,6 @@ CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
 CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
 
-
-/**
-@header Taxonomy tables
-@colour #CC75FF
-*/
-
-/**
-
-@table species
-@desc A list of all existing species.
-
-@column species_id              Species id (primary key, internal identifier).
-@column taxon_id                NCBI species id.
-@column binomial_name           Species binomial name.
-@column metasum                 Checksum of @binomial_name + @taxon.
-@column date                    Entry timestamp.
-@column status                  Active (True) or retired (False) row.
-
-*/
-
-CREATE TABLE species (
-  species_id                INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  taxon_id                  INT(10) UNSIGNED UNIQUE,
-  binomial_name             VARCHAR(128),
-  metasum                   CHAR(32) UNIQUE,
-  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
-  
-  KEY species_id_idx              (species_id)
-) ENGINE=InnoDB;
-
-CREATE TRIGGER species_md5_upd_tr BEFORE UPDATE ON species
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
-CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.binomial_name, NEW.taxon_id) );
- 
-/**
-@table strain
-@desc A list of all existing (allowed) strains.
-
-@column strain_id               Strain id (primary key, internal identifier).
-@column species_id              Species primary key (foreign key).
-@column production_name         Production name for this strain (species + strain).
-@column strain                  Name of the strain.
-@column metasum                 Checksum of @production_name + @strain.
-@column date                    Entry timestamp.
-@column status                  Active (True) or retired (False) row.
-
-*/
-
-CREATE TABLE strain (
-  strain_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  species_id                INT(10) UNSIGNED,
-  production_name           VARCHAR(64) NOT NULL,
-  strain                    VARCHAR(32),
-  metasum                   CHAR(32) UNIQUE,
-  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
-  
-  FOREIGN KEY(species_id) REFERENCES species(species_id),
-  
-  KEY strain_id_idx              (strain_id)
-) ENGINE=InnoDB;
-
-CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
-CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
-
-    
-CREATE VIEW taxonomy AS
-  SELECT binomial_name,
-         taxon_id,
-         production_name,
-        strain,
-        strain_id,
-        strain.status AS status
-  FROM strain LEFT JOIN species
-    USING(species_id)
-;
-
 /**
 
 PIPELINE TABLES
@@ -306,67 +307,70 @@ CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
 
 /**
 
-@table analysis
+@table analysis_description
 @desc Where all the analysis to create tracks are described.
 
-@column analysis_id            Analysis id (primary key, internal identifier).
-@column name                   Name of the analysis.
-@column description            Description of the analysis.
-@column metasum                Checksum of @name + @description.
-@column date                   Entry timestamp.
-@column status                 Active (True) or retired (False) row.
+@column analysis_description_id  Analysis id (primary key, internal identifier).
+@column name                     Name of the analysis.
+@column description              Description of the analysis.
+@column metasum                  Checksum of @name + @description.
+@column date                     Entry timestamp.
+@column status                   Active (True) or retired (False) row.
 
 */
 
-CREATE TABLE analysis (
-  analysis_id           INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  name                  VARCHAR(32) UNIQUE,
-  description           TEXT,
-  metasum               CHAR(32) UNIQUE,
-  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+CREATE TABLE analysis_description (
+  analysis_description_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  name                        VARCHAR(32) UNIQUE,
+  description                 TEXT,
+  metasum                     CHAR(32) UNIQUE,
+  date                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                      ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  KEY analysis_id_idx      (analysis_id)
+  KEY analysis_description_id_idx      (analysis_description_id)
 ) ENGINE=InnoDB;
 
-CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis
+CREATE TRIGGER analysis_description_md5_upd_tr BEFORE UPDATE ON analysis_description
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description) );
-CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
+CREATE TRIGGER analysis_description_md5_ins_tr BEFORE INSERT ON analysis_description
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description) );
 
 /**
 
-@table analysis_param
+@table analysis
 @desc Where the analysis parameters used to process every files are stored.
 
-@column analysis_param_id      Analysis parameters id (primary key, internal identifier).
-@column analysis_id            Analysis primary id (foreigh key).
-@column program                Name of the Program used.
-@column parameters             Complete command line parameters used.
-@column metasum                Checksum of @program + @parameters.
-@column date                   Entry timestamp.
-@column status                 Active (True) or retired (False) row.
+@column analysis_id              Analysis parameters id (primary key, internal identifier).
+@column analysis_description_id  Analysis description primary id (foreigh key).
+@column program                  Name of the Program used.
+@column parameters               Complete command line parameters used.
+@column track_id                 Track primary id (foreign key).
+@column metasum                  Checksum of @program + @parameters.
+@column date                     Entry timestamp.
+@column status                   Active (True) or retired (False) row.
 
 */
 
-CREATE TABLE analysis_param (
-  analysis_param_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  analysis_id           INT(10) UNSIGNED,
-  program               TEXT,
-  parameters            TEXT,
-  metasum               CHAR(32) UNIQUE,
-  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+CREATE TABLE analysis (
+  analysis_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  analysis_description_id  INT(10) UNSIGNED,
+  program                  TEXT,
+  parameters               TEXT,
+  track_id                 INT(10) UNSIGNED,
+  metasum                  CHAR(32) UNIQUE,
+  date                     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                   ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(analysis_id) REFERENCES analysis(analysis_id),
+  FOREIGN KEY(analysis_description_id) REFERENCES analysis_description(analysis_description_id),
   
-  KEY analysis_param_id_idx            (analysis_param_id),
-  KEY analysis_param_analysis_id_idx   (analysis_id)
+  KEY analysis_id_idx            (analysis_id),
+  KEY analysis_description_id_idx   (analysis_description_id),
+  KEY track_id_idx               (track_id)
 ) ENGINE=InnoDB;
 
-CREATE TRIGGER analysis_param_md5_upd_tr BEFORE UPDATE ON analysis_param
+CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.parameters) );
-CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
+CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.parameters) );
 
 /**
@@ -375,35 +379,33 @@ CREATE TRIGGER analysis_param_md5_ins_tr BEFORE INSERT ON analysis_param
 @desc Linker between the tables file and analysis_parameter. Also links to the relevant runs.
 
 @column analysis_file_id             Analysis-file linker id (primary key, internal identifier).
-@column analysis_param_id            Analysis_parameter primary id (foreign key).
+@column analysis_id                  Analysis primary id (foreign key).
 @column file_id                      File primary id (foreign key).
 @column file_io                      If the file is an input or an output.
 @column run_id                       Run primary id (foreign key).
-@column metasum                      Checksum of @analysis_param_id + @file_id + @file_io + @scope + @scope_id
+@column metasum                      Checksum of @analysis_id + @file_id + @file_io + @scope + @scope_id
 
 */
 
 CREATE TABLE analysis_file (
   analysis_file_id            INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  analysis_param_id           INT(10) UNSIGNED,
+  analysis_id                 INT(10) UNSIGNED,
   file_id                     INT(10) UNSIGNED,
   file_io                     ENUM('INPUT', 'OUTPUT'),
-  run_id                      INT(10) UNSIGNED,
   metasum                     CHAR(32) UNIQUE,
   
-  FOREIGN KEY(analysis_param_id) REFERENCES analysis_param(analysis_param_id),
+  FOREIGN KEY(analysis_id) REFERENCES analysis(analysis_id),
   FOREIGN KEY(file_id) REFERENCES file(file_id),
-  FOREIGN KEY(run_id) REFERENCES run(run_id),
   
-  KEY analysis_file_id_idx                      (analysis_file_id),
-  KEY analysis_file_analysis_param_id_idx   (analysis_param_id),
-  KEY analysis_file_file_id_idx                 (file_id)
+  KEY analysis_file_id_idx                (analysis_file_id),
+  KEY analysis_file_analysis_id_idx       (analysis_id),
+  KEY analysis_file_file_id_idx           (file_id)
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_file_md5_upd_tr BEFORE UPDATE ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_param_id, NEW.file_id, NEW.file_io, NEW.run_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_id, NEW.file_id, NEW.file_io) );
 CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_param_id, NEW.file_id, NEW.file_io, NEW.run_id) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_id, NEW.file_id, NEW.file_io) );
 
 
 /**

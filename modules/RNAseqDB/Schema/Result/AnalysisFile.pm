@@ -30,7 +30,7 @@ __PACKAGE__->table("analysis_file");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 analysis_param_id
+=head2 analysis_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -50,13 +50,6 @@ __PACKAGE__->table("analysis_file");
   extra: {list => ["INPUT","OUTPUT"]}
   is_nullable: 1
 
-=head2 run_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 1
-
 =head2 metasum
 
   data_type: 'char'
@@ -73,7 +66,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "analysis_param_id",
+  "analysis_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -91,13 +84,6 @@ __PACKAGE__->add_columns(
   {
     data_type => "enum",
     extra => { list => ["INPUT", "OUTPUT"] },
-    is_nullable => 1,
-  },
-  "run_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
     is_nullable => 1,
   },
   "metasum",
@@ -132,18 +118,18 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 =head1 RELATIONS
 
-=head2 analysis_param
+=head2 analysis
 
 Type: belongs_to
 
-Related object: L<RNAseqDB::Schema::Result::AnalysisParam>
+Related object: L<RNAseqDB::Schema::Result::Analysis>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "analysis_param",
-  "RNAseqDB::Schema::Result::AnalysisParam",
-  { analysis_param_id => "analysis_param_id" },
+  "analysis",
+  "RNAseqDB::Schema::Result::Analysis",
+  { analysis_id => "analysis_id" },
   {
     is_deferrable => 1,
     join_type     => "LEFT",
@@ -172,29 +158,9 @@ __PACKAGE__->belongs_to(
   },
 );
 
-=head2 run
 
-Type: belongs_to
-
-Related object: L<RNAseqDB::Schema::Result::Run>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "run",
-  "RNAseqDB::Schema::Result::Run",
-  { run_id => "run_id" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
-  },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RZuB5OXJ0BYnHX2IyAhN8A
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:hXcDKerjdxDPaAruOx9Upg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

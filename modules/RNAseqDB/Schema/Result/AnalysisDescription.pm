@@ -1,12 +1,12 @@
 use utf8;
-package RNAseqDB::Schema::Result::Analysis;
+package RNAseqDB::Schema::Result::AnalysisDescription;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-RNAseqDB::Schema::Result::Analysis
+RNAseqDB::Schema::Result::AnalysisDescription
 
 =cut
 
@@ -15,42 +15,30 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<analysis>
+=head1 TABLE: C<analysis_description>
 
 =cut
 
-__PACKAGE__->table("analysis");
+__PACKAGE__->table("analysis_description");
 
 =head1 ACCESSORS
 
-=head2 analysis_id
+=head2 analysis_description_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 analysis_description_id
+=head2 name
 
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
+  data_type: 'varchar'
   is_nullable: 1
+  size: 32
 
-=head2 program
+=head2 description
 
   data_type: 'text'
-  is_nullable: 1
-
-=head2 parameters
-
-  data_type: 'text'
-  is_nullable: 1
-
-=head2 track_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 metasum
@@ -76,26 +64,17 @@ __PACKAGE__->table("analysis");
 =cut
 
 __PACKAGE__->add_columns(
-  "analysis_id",
+  "analysis_description_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "analysis_description_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
-  },
-  "program",
+  "name",
+  { data_type => "varchar", is_nullable => 1, size => 32 },
+  "description",
   { data_type => "text", is_nullable => 1 },
-  "parameters",
-  { data_type => "text", is_nullable => 1 },
-  "track_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -118,13 +97,13 @@ __PACKAGE__->add_columns(
 
 =over 4
 
-=item * L</analysis_id>
+=item * L</analysis_description_id>
 
 =back
 
 =cut
 
-__PACKAGE__->set_primary_key("analysis_id");
+__PACKAGE__->set_primary_key("analysis_description_id");
 
 =head1 UNIQUE CONSTRAINTS
 
@@ -140,46 +119,40 @@ __PACKAGE__->set_primary_key("analysis_id");
 
 __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
-=head1 RELATIONS
+=head2 C<name>
 
-=head2 analysis_description
+=over 4
 
-Type: belongs_to
+=item * L</name>
 
-Related object: L<RNAseqDB::Schema::Result::AnalysisDescription>
+=back
 
 =cut
 
-__PACKAGE__->belongs_to(
-  "analysis_description",
-  "RNAseqDB::Schema::Result::AnalysisDescription",
-  { analysis_description_id => "analysis_description_id" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
-  },
-);
+__PACKAGE__->add_unique_constraint("name", ["name"]);
 
-=head2 analysis_files
+=head1 RELATIONS
+
+=head2 analyses
 
 Type: has_many
 
-Related object: L<RNAseqDB::Schema::Result::AnalysisFile>
+Related object: L<RNAseqDB::Schema::Result::Analysis>
 
 =cut
 
 __PACKAGE__->has_many(
-  "analysis_files",
-  "RNAseqDB::Schema::Result::AnalysisFile",
-  { "foreign.analysis_id" => "self.analysis_id" },
+  "analyses",
+  "RNAseqDB::Schema::Result::Analysis",
+  {
+    "foreign.analysis_description_id" => "self.analysis_description_id",
+  },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
 # Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/tzr5TY5LZikZaio6wkH2w
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NQ2J0h+0iA+2KalyxtdplQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

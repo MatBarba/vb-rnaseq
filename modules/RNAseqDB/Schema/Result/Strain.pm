@@ -136,6 +136,21 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 =head1 RELATIONS
 
+=head2 samples
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::Sample>
+
+=cut
+
+__PACKAGE__->has_many(
+  "samples",
+  "RNAseqDB::Schema::Result::Sample",
+  { "foreign.strain_id" => "self.strain_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 species
 
 Type: belongs_to
@@ -157,8 +172,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:R6p5TGG4qZ4PrxPaxvFP1g
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZBYRKLPsotjD7cl4wkiVPQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

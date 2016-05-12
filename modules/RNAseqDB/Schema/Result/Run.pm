@@ -188,21 +188,6 @@ __PACKAGE__->add_unique_constraint("run_sra_acc", ["run_sra_acc"]);
 
 =head1 RELATIONS
 
-=head2 analysis_files
-
-Type: has_many
-
-Related object: L<RNAseqDB::Schema::Result::AnalysisFile>
-
-=cut
-
-__PACKAGE__->has_many(
-  "analysis_files",
-  "RNAseqDB::Schema::Result::AnalysisFile",
-  { "foreign.run_id" => "self.run_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 experiment
 
 Type: belongs_to
@@ -249,8 +234,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:b1f9TG7EUkhPU8RLFTHfvg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lM3dm9E1vkrTomiyBfXeoQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

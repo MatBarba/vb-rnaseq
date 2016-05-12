@@ -79,6 +79,7 @@ __PACKAGE__->table("sample");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 label
@@ -133,7 +134,12 @@ __PACKAGE__->add_columns(
   "biosample_group_acc",
   { data_type => "varchar", is_nullable => 1, size => 15 },
   "strain_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "label",
   { data_type => "text", is_nullable => 1 },
   "metasum",
@@ -233,9 +239,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 strain
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Qm6Jt9H/3o8sAFxTbr5kjw
+Type: belongs_to
+
+Related object: L<RNAseqDB::Schema::Result::Strain>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "strain",
+  "RNAseqDB::Schema::Result::Strain",
+  { strain_id => "strain_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NlewYiq9v8+PF/9SoQs1UQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

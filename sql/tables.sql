@@ -52,7 +52,7 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 
 CREATE TABLE strain (
   strain_id                 INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  species_id                INT(10) UNSIGNED,
+  species_id                INT(10) UNSIGNED NOT NULL,
   production_name           VARCHAR(64) NOT NULL,
   strain                    VARCHAR(32),
   metasum                   CHAR(32) UNIQUE,
@@ -178,9 +178,9 @@ CREATE TRIGGER experiment_md5_ins_tr BEFORE INSERT ON experiment
 @column description             Description of the SRA sample.
 @column taxon_id                NCBI taxon id.
 @column strain                  Name of the strain.
+@column strain_id               Strain primary id (foreign key), to match the correct production_name.
 @column biosample_acc           Biosample accession.
 @column biosample_group_acc     Biosample group.
-@column strain_id               Strain primary id (foreign key), to match the correct production_name.
 @column label                   Label for the sample, useful to find replicates.
 @column metasum                 Checksum of @sample_sra_acc + @sample_private_acc + @title + @description + @taxon_id + @strain + @biosample_acc + @biosample_group_acc + @label.
 @column date                    Entry timestamp.
@@ -196,9 +196,9 @@ CREATE TABLE sample (
   description               TEXT,
   taxon_id                  INT(10) UNSIGNED,
   strain                    TEXT,
+  strain_id                 INT(10) UNSIGNED NOT NULL,
   biosample_acc             VARCHAR(15) UNIQUE,
   biosample_group_acc       VARCHAR(15),
-  strain_id                 INT(10) UNSIGNED NOT NULL,
   label                     TEXT,
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -261,6 +261,70 @@ CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
 CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
 
+
+
+/**
+
+@header Tracks tables
+@colour #3355FF
+
+*/
+
+/**
+
+@table track
+@desc Where the tracks are stored, with a link to the corresponding file.
+
+@column track_id               Track id (primary key, internal identifier).
+@column title                  Title of the track in E! genome browser.
+@column description            Description of the track in E! genome browser.
+@column metasum                Checksum of @title + @description.
+@column date                   Entry timestamp.
+@column status                 Active (True) or retired (False) row.
+
+*/
+
+CREATE TABLE track (
+  track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  title                 TEXT,
+  description           TEXT,
+  metasum               CHAR(32),
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                ENUM('ACTIVE', 'RETIRED', 'MERGED') DEFAULT 'ACTIVE',
+  
+  KEY track_id_idx                     (track_id)
+) ENGINE=InnoDB;
+
+CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
+CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
+
+/**
+@table sra_track
+@desc Defines what constitutes a track, i.e. one or several runs.
+
+@column sra_track_id           Track id (primary key, internal identifier).
+@column run_id                 SRA run primary id (foreign key).
+@column track_id               Track table primary id (foreign key).
+@column date                   Entry timestamp.
+
+*/
+
+CREATE TABLE sra_track (
+  sra_track_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  run_id                INT(10) UNSIGNED NOT NULL,
+  track_id              INT(10) UNSIGNED NOT NULL,
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY(run_id) REFERENCES run(run_id),
+  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  
+  KEY sra_track_id_idx                 (sra_track_id),
+  KEY sra_track_run_id_idx             (run_id),
+  KEY sra_track_track_id_idx           (track_id)
+) ENGINE=InnoDB;
+
 /**
 
 PIPELINE TABLES
@@ -279,6 +343,7 @@ PIPELINE TABLES
 @desc Where all metadata about the files are stored.
 
 @column file_id                File id (primary key, internal identifier).
+@column track_id               Track primary id (foreign key).
 @column path                   Path of the file.
 @column type                   File type (fastq, bam...).
 @column md5                    md5 checksum of the file.
@@ -290,6 +355,7 @@ PIPELINE TABLES
 
 CREATE TABLE file (
   file_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  track_id              INT(10) UNSIGNED NOT NULL,
   path                  TEXT NOT NULL,
   type                  ENUM('fastq', 'bam', 'bai', 'bed', 'bigwig'),
   md5                   CHAR(32),
@@ -297,7 +363,10 @@ CREATE TABLE file (
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  KEY file_id_idx            (file_id)
+  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  
+  KEY file_id_idx         (file_id),
+  KEY file_track_id_idx   (track_id)
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER file_md5_upd_tr BEFORE UPDATE ON file
@@ -342,8 +411,9 @@ CREATE TRIGGER analysis_description_md5_ins_tr BEFORE INSERT ON analysis_descrip
 
 @column analysis_id              Analysis parameters id (primary key, internal identifier).
 @column analysis_description_id  Analysis description primary id (foreigh key).
+@column track_id                 Track primary id (foreign key).
 @column program                  Name of the Program used.
-@column parameters               Complete command line parameters used.
+@column command                  Complete command line parameters used.
 @column track_id                 Track primary id (foreign key).
 @column metasum                  Checksum of @program + @parameters.
 @column date                     Entry timestamp.
@@ -354,124 +424,26 @@ CREATE TRIGGER analysis_description_md5_ins_tr BEFORE INSERT ON analysis_descrip
 CREATE TABLE analysis (
   analysis_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   analysis_description_id  INT(10) UNSIGNED,
+  track_id                 INT(10) UNSIGNED NOT NULL,
   program                  TEXT,
-  parameters               TEXT,
-  track_id                 INT(10) UNSIGNED,
+  command                  TEXT,
   metasum                  CHAR(32) UNIQUE,
   date                     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                   ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   FOREIGN KEY(analysis_description_id) REFERENCES analysis_description(analysis_description_id),
+  FOREIGN KEY(track_id) REFERENCES track(track_id),
   
-  KEY analysis_id_idx            (analysis_id),
-  KEY analysis_description_id_idx   (analysis_description_id),
-  KEY track_id_idx               (track_id)
+  KEY analysis_id_idx              (analysis_id),
+  KEY analysis_description_id_idx  (analysis_description_id),
+  KEY analysis_track_id_idx        (track_id)
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.parameters) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.command) );
 CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.parameters) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.command) );
 
-/**
-
-@table analysis_file
-@desc Linker between the tables file and analysis_parameter. Also links to the relevant runs.
-
-@column analysis_file_id             Analysis-file linker id (primary key, internal identifier).
-@column analysis_id                  Analysis primary id (foreign key).
-@column file_id                      File primary id (foreign key).
-@column file_io                      If the file is an input or an output.
-@column run_id                       Run primary id (foreign key).
-@column metasum                      Checksum of @analysis_id + @file_id + @file_io + @scope + @scope_id
-
-*/
-
-CREATE TABLE analysis_file (
-  analysis_file_id            INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  analysis_id                 INT(10) UNSIGNED,
-  file_id                     INT(10) UNSIGNED,
-  file_io                     ENUM('INPUT', 'OUTPUT'),
-  metasum                     CHAR(32) UNIQUE,
-  
-  FOREIGN KEY(analysis_id) REFERENCES analysis(analysis_id),
-  FOREIGN KEY(file_id) REFERENCES file(file_id),
-  
-  KEY analysis_file_id_idx                (analysis_file_id),
-  KEY analysis_file_analysis_id_idx       (analysis_id),
-  KEY analysis_file_file_id_idx           (file_id)
-) ENGINE=InnoDB;
-
-CREATE TRIGGER analysis_file_md5_upd_tr BEFORE UPDATE ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_id, NEW.file_id, NEW.file_io) );
-CREATE TRIGGER analysis_file_md5_ins_tr BEFORE INSERT ON analysis_file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.analysis_id, NEW.file_id, NEW.file_io) );
-
-
-/**
-
-@header Tracks tables
-@colour #3355FF
-
-*/
-
-/**
-
-@table track
-@desc Where the tracks are stored, with a link to the corresponding file.
-
-@column track_id               Track id (primary key, internal identifier).
-@column file_id                File primary id (foreigh key).
-@column title                  Title of the track in E! genome browser.
-@column description            Description of the track in E! genome browser.
-@column metasum                Checksum of @title + @description.
-@column date                   Entry timestamp.
-@column status                 Active (True) or retired (False) row.
-
-*/
-
-CREATE TABLE track (
-  track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  file_id               INT(10) UNSIGNED UNIQUE,
-  title                 TEXT,
-  description           TEXT,
-  metasum               CHAR(32),
-  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  status                ENUM('ACTIVE', 'RETIRED', 'MERGED') DEFAULT 'ACTIVE',
-  
-  KEY track_id_idx                     (track_id),
-  KEY track_file_id_idx                (file_id)
-) ENGINE=InnoDB;
-
-CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
-CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
-
-/**
-@table sra_track
-@desc Defines what constitutes a track, i.e. one or several runs.
-
-@column sra_track_id           Track id (primary key, internal identifier).
-@column run_id                 SRA run primary id (foreign key).
-@column track_id               Track table primary id (foreign key).
-@column date                   Entry timestamp.
-
-*/
-
-CREATE TABLE sra_track (
-  sra_track_id          INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  run_id                INT(10) UNSIGNED,
-  track_id              INT(10) UNSIGNED,
-  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  FOREIGN KEY(run_id) REFERENCES run(run_id),
-  FOREIGN KEY(track_id) REFERENCES track(track_id),
-  
-  KEY sra_track_id_idx                 (sra_track_id),
-  KEY sra_track_run_id_idx             (run_id),
-  KEY sra_track_track_id_idx           (track_id)
-) ENGINE=InnoDB;
 
 /**
 @header Misc tables
@@ -605,8 +577,8 @@ CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
 
 CREATE TABLE drupal_node_track (
   drupal_node_track_id  INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  drupal_id             INT(10) UNSIGNED,
-  track_id              INT(10) UNSIGNED,
+  drupal_id             INT(10) UNSIGNED NOT NULL,
+  track_id              INT(10) UNSIGNED NOT NULL,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   FOREIGN KEY(drupal_id) REFERENCES drupal_node(drupal_id),

@@ -159,6 +159,18 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
 <div>
 
   <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:#CC75FF">
+      <div class="sql_schema_table_group_bullet" style="background-color:#CC75FF"></div>
+      <h2>Taxonomy tables</h2>
+    </div>
+      <ul class="sql_schema_table_list">
+        <li><a href="#species" class="sql_schema_link" style="font-weight:bold">species</a></li>
+        <li><a href="#strain" class="sql_schema_link" style="font-weight:bold">strain</a></li>
+
+      </ul>
+    </div>
+
+  <div class="sql_schema_table_group">
     <div class="sql_schema_table_group_header" style="border-color:#C70C09">
       <div class="sql_schema_table_group_bullet" style="background-color:#C70C09"></div>
       <h2>SRA tables</h2>
@@ -173,13 +185,13 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </div>
 
   <div class="sql_schema_table_group">
-    <div class="sql_schema_table_group_header" style="border-color:#CC75FF">
-      <div class="sql_schema_table_group_bullet" style="background-color:#CC75FF"></div>
-      <h2>Taxonomy tables</h2>
+    <div class="sql_schema_table_group_header" style="border-color:#3355FF">
+      <div class="sql_schema_table_group_bullet" style="background-color:#3355FF"></div>
+      <h2>Tracks tables</h2>
     </div>
       <ul class="sql_schema_table_list">
-        <li><a href="#species" class="sql_schema_link" style="font-weight:bold">species</a></li>
-        <li><a href="#strain" class="sql_schema_link" style="font-weight:bold">strain</a></li>
+        <li><a href="#track" class="sql_schema_link" style="font-weight:bold">track</a></li>
+        <li><a href="#sra_track" class="sql_schema_link" style="font-weight:bold">sra_track</a></li>
 
       </ul>
     </div>
@@ -191,21 +203,8 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </div>
       <ul class="sql_schema_table_list">
         <li><a href="#file" class="sql_schema_link" style="font-weight:bold">file</a></li>
+        <li><a href="#analysis_description" class="sql_schema_link" style="font-weight:bold">analysis_description</a></li>
         <li><a href="#analysis" class="sql_schema_link" style="font-weight:bold">analysis</a></li>
-        <li><a href="#analysis_param" class="sql_schema_link" style="font-weight:bold">analysis_param</a></li>
-        <li><a href="#analysis_file" class="sql_schema_link" style="font-weight:bold">analysis_file</a></li>
-
-      </ul>
-    </div>
-
-  <div class="sql_schema_table_group">
-    <div class="sql_schema_table_group_header" style="border-color:#3355FF">
-      <div class="sql_schema_table_group_bullet" style="background-color:#3355FF"></div>
-      <h2>Tracks tables</h2>
-    </div>
-      <ul class="sql_schema_table_list">
-        <li><a href="#track" class="sql_schema_link" style="font-weight:bold">track</a></li>
-        <li><a href="#sra_track" class="sql_schema_link" style="font-weight:bold">sra_track</a></li>
 
       </ul>
     </div>
@@ -245,9 +244,169 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
   <input type="hidden" id="expand" value="0" />
   
 
+<div class="sql_schema_group_header" style="border-color:#CC75FF">
+  <div id="1" class="sql_schema_group_bullet" style="background-color:#CC75FF"></div>
+  <h2 id="1">Taxonomy tables</h2>
+</div>
+<div class="sql_schema_table">
+  <div id="species"class="sql_schema_table_header" style="border-top-color:#CC75FF">
+    <div class="sql_schema_table_header_left"><span style="background-color:#CC75FF"></span>species</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_species" class="help-header sql_schema_show_hide" onclick="show_hide('species','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">A list of all existing species.</p>
+
+  <div id="div_species" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>species_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Species id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>species_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>taxon_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">NCBI species id.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>binomial_name</b></td>
+        <td class="bg1">VARCHAR(128)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Species binomial name.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @binomial_name + @taxon.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="strain"class="sql_schema_table_header" style="border-top-color:#CC75FF">
+    <div class="sql_schema_table_header_left"><span style="background-color:#CC75FF"></span>strain</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_strain" class="help-header sql_schema_show_hide" onclick="show_hide('strain','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">A list of all existing (allowed) strains.</p>
+
+  <div id="div_strain" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>strain_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Strain id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>strain_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>species_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Species primary key (foreign key).</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>production_name</b></td>
+        <td class="bg1">VARCHAR(64)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Production name for this strain (species + strain).</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>strain</b></td>
+        <td class="bg2">VARCHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Name of the strain.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @production_name + @strain.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
+      </tr>
+    </table>
+  </div>
+</div></div>
+
 <div class="sql_schema_group_header" style="border-color:#C70C09">
-  <div id="1" class="sql_schema_group_bullet" style="background-color:#C70C09"></div>
-  <h2 id="1">SRA tables</h2>
+  <div id="2" class="sql_schema_group_bullet" style="background-color:#C70C09"></div>
+  <h2 id="2">SRA tables</h2>
 </div>
 <div class="sql_schema_table">
   <div id="study"class="sql_schema_table_header" style="border-top-color:#C70C09">
@@ -508,27 +667,27 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>biosample_acc</b></td>
-        <td class="bg2">VARCHAR(15)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Biosample accession.</td>
-        <td class="bg2">key: <i>biosample_acc_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>biosample_group_acc</b></td>
-        <td class="bg1">VARCHAR(15)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Biosample group.</td>
-        <td class="bg1">key: <i>biosample_group_acc_idx</i></td>
-      </tr>
-
-      <tr>
         <td class="bg2"><b>strain_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">-</td>
         <td class="bg2">Strain primary id (foreign key), to match the correct production_name.</td>
         <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>biosample_acc</b></td>
+        <td class="bg1">VARCHAR(15)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Biosample accession.</td>
+        <td class="bg1">key: <i>biosample_acc_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>biosample_group_acc</b></td>
+        <td class="bg2">VARCHAR(15)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Biosample group.</td>
+        <td class="bg2">key: <i>biosample_group_acc_idx</i></td>
       </tr>
 
       <tr>
@@ -671,25 +830,25 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
   </div>
 </div></div>
 
-<div class="sql_schema_group_header" style="border-color:#CC75FF">
-  <div id="2" class="sql_schema_group_bullet" style="background-color:#CC75FF"></div>
-  <h2 id="2">Taxonomy tables</h2>
+<div class="sql_schema_group_header" style="border-color:#3355FF">
+  <div id="3" class="sql_schema_group_bullet" style="background-color:#3355FF"></div>
+  <h2 id="3">Tracks tables</h2>
 </div>
 <div class="sql_schema_table">
-  <div id="species"class="sql_schema_table_header" style="border-top-color:#CC75FF">
-    <div class="sql_schema_table_header_left"><span style="background-color:#CC75FF"></span>species</div>
+  <div id="track"class="sql_schema_table_header" style="border-top-color:#3355FF">
+    <div class="sql_schema_table_header_left"><span style="background-color:#3355FF"></span>track</div>
     <div class="sql_schema_table_header_right">
   
-  <a id="a_species" class="help-header sql_schema_show_hide" onclick="show_hide('species','columns')">
+  <a id="a_track" class="help-header sql_schema_show_hide" onclick="show_hide('track','columns')">
     <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
   </a>
       <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">A list of all existing species.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the tracks are stored, with a link to the corresponding file.</p>
 
-  <div id="div_species" style="display:none">
+  <div id="div_track" style="display:none">
     <table class="ss sql_schema_table_column">
       <tr class="center">
         <th>Column</th>
@@ -700,26 +859,26 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>species_id</b></td>
+        <td class="bg1"><b>track_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
-        <td class="bg1">Species id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>species_id_idx</i></td>
+        <td class="bg1">Track id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>track_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>taxon_id</b></td>
-        <td class="bg2">INT(10)</td>
+        <td class="bg2"><b>title</b></td>
+        <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">NCBI species id.</td>
+        <td class="bg2">Title of the track in E! genome browser.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>binomial_name</b></td>
-        <td class="bg1">VARCHAR(128)</td>
+        <td class="bg1"><b>description</b></td>
+        <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Species binomial name.</td>
+        <td class="bg1">Description of the track in E! genome browser.</td>
         <td class="bg1"></td>
       </tr>
 
@@ -727,7 +886,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2"><b>metasum</b></td>
         <td class="bg2">CHAR(32)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Checksum of @binomial_name + @taxon.</td>
+        <td class="bg2">Checksum of @title + @description.</td>
         <td class="bg2"></td>
       </tr>
 
@@ -741,7 +900,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
 
       <tr>
         <td class="bg2"><b>status</b></td>
-        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li>  <li> MERGED</li></ul></td>
         <td class="bg2">'ACTIVE'</td>
         <td class="bg2">Active (True) or retired (False) row.</td>
         <td class="bg2"></td>
@@ -749,20 +908,20 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </table>
   </div>
 </div></div><div class="sql_schema_table">
-  <div id="strain"class="sql_schema_table_header" style="border-top-color:#CC75FF">
-    <div class="sql_schema_table_header_left"><span style="background-color:#CC75FF"></span>strain</div>
+  <div id="sra_track"class="sql_schema_table_header" style="border-top-color:#3355FF">
+    <div class="sql_schema_table_header_left"><span style="background-color:#3355FF"></span>sra_track</div>
     <div class="sql_schema_table_header_right">
   
-  <a id="a_strain" class="help-header sql_schema_show_hide" onclick="show_hide('strain','columns')">
+  <a id="a_sra_track" class="help-header sql_schema_show_hide" onclick="show_hide('sra_track','columns')">
     <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
   </a>
       <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">A list of all existing (allowed) strains.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Defines what constitutes a track, i.e. one or several runs.</p>
 
-  <div id="div_strain" style="display:none">
+  <div id="div_sra_track" style="display:none">
     <table class="ss sql_schema_table_column">
       <tr class="center">
         <th>Column</th>
@@ -773,43 +932,27 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>strain_id</b></td>
+        <td class="bg1"><b>sra_track_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
-        <td class="bg1">Strain id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>strain_id_idx</i></td>
+        <td class="bg1">Track id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>sra_track_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>species_id</b></td>
+        <td class="bg2"><b>run_id</b></td>
         <td class="bg2">INT(10)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Species primary key (foreign key).</td>
-        <td class="bg2"></td>
+        <td class="bg2">-</td>
+        <td class="bg2">SRA run primary id (foreign key).</td>
+        <td class="bg2">key: <i>sra_track_run_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>production_name</b></td>
-        <td class="bg1">VARCHAR(64)</td>
+        <td class="bg1"><b>track_id</b></td>
+        <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
-        <td class="bg1">Production name for this strain (species + strain).</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>strain</b></td>
-        <td class="bg2">VARCHAR(32)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Name of the strain.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>metasum</b></td>
-        <td class="bg1">CHAR(32)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @production_name + @strain.</td>
-        <td class="bg1"></td>
+        <td class="bg1">Track table primary id (foreign key).</td>
+        <td class="bg1">key: <i>sra_track_track_id_idx</i></td>
       </tr>
 
       <tr>
@@ -819,21 +962,13 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2">Entry timestamp.</td>
         <td class="bg2"></td>
       </tr>
-
-      <tr>
-        <td class="bg1"><b>status</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg1">'ACTIVE'</td>
-        <td class="bg1">Active (True) or retired (False) row.</td>
-        <td class="bg1"></td>
-      </tr>
     </table>
   </div>
 </div></div>
 
 <div class="sql_schema_group_header" style="border-color:#FF7504">
-  <div id="3" class="sql_schema_group_bullet" style="background-color:#FF7504"></div>
-  <h2 id="3">RNAseq Pipeline tables</h2>
+  <div id="4" class="sql_schema_group_bullet" style="background-color:#FF7504"></div>
+  <h2 id="4">RNAseq Pipeline tables</h2>
 </div>
 <div class="sql_schema_table">
   <div id="file"class="sql_schema_table_header" style="border-top-color:#FF7504">
@@ -868,60 +1003,68 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>path</b></td>
-        <td class="bg2">TEXT</td>
+        <td class="bg2"><b>track_id</b></td>
+        <td class="bg2">INT(10)</td>
         <td class="bg2">-</td>
-        <td class="bg2">Path of the file.</td>
-        <td class="bg2"></td>
+        <td class="bg2">Track primary id (foreign key).</td>
+        <td class="bg2">key: <i>file_track_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>type</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>fastq</li>  <li> bam</li>  <li> bai</li>  <li> bed</li>  <li> bigwig</li></ul></td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">File type (fastq, bam...).</td>
+        <td class="bg1"><b>path</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Path of the file.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>md5</b></td>
-        <td class="bg2">CHAR(32)</td>
+        <td class="bg2"><b>type</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>fastq</li>  <li> bam</li>  <li> bai</li>  <li> bed</li>  <li> bigwig</li></ul></td>
         <td class="bg2">NULL</td>
-        <td class="bg2">md5 checksum of the file.</td>
+        <td class="bg2">File type (fastq, bam...).</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1"><b>md5</b></td>
         <td class="bg1">CHAR(32)</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @path + @type + @md5.</td>
+        <td class="bg1">md5 checksum of the file.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>date</b></td>
-        <td class="bg2">TIMESTAMP</td>
-        <td class="bg2">CURRENT_TIMESTAMP</td>
-        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @path + @type + @md5.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>status</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg1">'ACTIVE'</td>
-        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
         <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
       </tr>
     </table>
   </div>
 </div></div><div class="sql_schema_table">
-  <div id="analysis"class="sql_schema_table_header" style="border-top-color:#FF7504">
-    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis</div>
+  <div id="analysis_description"class="sql_schema_table_header" style="border-top-color:#FF7504">
+    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis_description</div>
     <div class="sql_schema_table_header_right">
   
-  <a id="a_analysis" class="help-header sql_schema_show_hide" onclick="show_hide('analysis','columns')">
+  <a id="a_analysis_description" class="help-header sql_schema_show_hide" onclick="show_hide('analysis_description','columns')">
     <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
   </a>
       <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
@@ -930,7 +1073,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
   </div>
 <div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where all the analysis to create tracks are described.</p>
 
-  <div id="div_analysis" style="display:none">
+  <div id="div_analysis_description" style="display:none">
     <table class="ss sql_schema_table_column">
       <tr class="center">
         <th>Column</th>
@@ -941,11 +1084,11 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>analysis_id</b></td>
+        <td class="bg1"><b>analysis_description_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
         <td class="bg1">Analysis id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>analysis_id_idx</i></td>
+        <td class="bg1">key: <i>analysis_description_id_idx</i></td>
       </tr>
 
       <tr>
@@ -990,11 +1133,11 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </table>
   </div>
 </div></div><div class="sql_schema_table">
-  <div id="analysis_param"class="sql_schema_table_header" style="border-top-color:#FF7504">
-    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis_param</div>
+  <div id="analysis"class="sql_schema_table_header" style="border-top-color:#FF7504">
+    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis</div>
     <div class="sql_schema_table_header_right">
   
-  <a id="a_analysis_param" class="help-header sql_schema_show_hide" onclick="show_hide('analysis_param','columns')">
+  <a id="a_analysis" class="help-header sql_schema_show_hide" onclick="show_hide('analysis','columns')">
     <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
   </a>
       <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
@@ -1003,7 +1146,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
   </div>
 <div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the analysis parameters used to process every files are stored.</p>
 
-  <div id="div_analysis_param" style="display:none">
+  <div id="div_analysis" style="display:none">
     <table class="ss sql_schema_table_column">
       <tr class="center">
         <th>Column</th>
@@ -1014,123 +1157,42 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>analysis_param_id</b></td>
+        <td class="bg1"><b>analysis_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
         <td class="bg1">Analysis parameters id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>analysis_param_id_idx</i></td>
+        <td class="bg1">key: <i>analysis_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>analysis_id</b></td>
+        <td class="bg2"><b>analysis_description_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Analysis primary id (foreigh key).</td>
-        <td class="bg2">key: <i>analysis_param_analysis_id_idx</i></td>
+        <td class="bg2">Analysis description primary id (foreigh key).</td>
+        <td class="bg2">key: <i>analysis_description_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>program</b></td>
-        <td class="bg1">TEXT</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Name of the Program used.</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>parameters</b></td>
-        <td class="bg2">TEXT</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Complete command line parameters used.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>metasum</b></td>
-        <td class="bg1">CHAR(32)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @program + @parameters.</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>date</b></td>
-        <td class="bg2">TIMESTAMP</td>
-        <td class="bg2">CURRENT_TIMESTAMP</td>
-        <td class="bg2">Entry timestamp.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>status</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg1">'ACTIVE'</td>
-        <td class="bg1">Active (True) or retired (False) row.</td>
-        <td class="bg1"></td>
-      </tr>
-    </table>
-  </div>
-</div></div><div class="sql_schema_table">
-  <div id="analysis_file"class="sql_schema_table_header" style="border-top-color:#FF7504">
-    <div class="sql_schema_table_header_left"><span style="background-color:#FF7504"></span>analysis_file</div>
-    <div class="sql_schema_table_header_right">
-  
-  <a id="a_analysis_file" class="help-header sql_schema_show_hide" onclick="show_hide('analysis_file','columns')">
-    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
-  </a>
-      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
-    </div>
-    <div style="clear:both"></div>
-  </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Linker between the tables file and analysis_parameter. Also links to the relevant runs.</p>
-
-  <div id="div_analysis_file" style="display:none">
-    <table class="ss sql_schema_table_column">
-      <tr class="center">
-        <th>Column</th>
-        <th>Type</th>
-        <th class="val">Default value</th>
-        <th class="desc">Description</th>
-        <th class="index">Index</th>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>analysis_file_id</b></td>
+        <td class="bg1"><b>track_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
-        <td class="bg1">Analysis-file linker id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>analysis_file_id_idx</i></td>
+        <td class="bg1">Track primary id (foreign key).</td>
+        <td class="bg1">key: <i>analysis_track_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>analysis_param_id</b></td>
-        <td class="bg2">INT(10)</td>
+        <td class="bg2"><b>program</b></td>
+        <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Analysis_parameter primary id (foreign key).</td>
-        <td class="bg2">key: <i>analysis_file_analysis_param_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>file_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">File primary id (foreign key).</td>
-        <td class="bg1">key: <i>analysis_file_file_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>file_io</b></td>
-        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>INPUT</li>  <li> OUTPUT</li></ul></td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">If the file is an input or an output.</td>
+        <td class="bg2">Name of the Program used.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>run_id</b></td>
-        <td class="bg1">INT(10)</td>
+        <td class="bg1"><b>command</b></td>
+        <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Run primary id (foreign key).</td>
+        <td class="bg1">Complete command line parameters used.</td>
         <td class="bg1"></td>
       </tr>
 
@@ -1138,151 +1200,23 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2"><b>metasum</b></td>
         <td class="bg2">CHAR(32)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Checksum of @analysis_param_id + @file_id + @file_io + @scope + @scope_id</td>
-        <td class="bg2"></td>
-      </tr>
-    </table>
-  </div>
-</div></div>
-
-<div class="sql_schema_group_header" style="border-color:#3355FF">
-  <div id="4" class="sql_schema_group_bullet" style="background-color:#3355FF"></div>
-  <h2 id="4">Tracks tables</h2>
-</div>
-<div class="sql_schema_table">
-  <div id="track"class="sql_schema_table_header" style="border-top-color:#3355FF">
-    <div class="sql_schema_table_header_left"><span style="background-color:#3355FF"></span>track</div>
-    <div class="sql_schema_table_header_right">
-  
-  <a id="a_track" class="help-header sql_schema_show_hide" onclick="show_hide('track','columns')">
-    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
-  </a>
-      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
-    </div>
-    <div style="clear:both"></div>
-  </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Where the tracks are stored, with a link to the corresponding file.</p>
-
-  <div id="div_track" style="display:none">
-    <table class="ss sql_schema_table_column">
-      <tr class="center">
-        <th>Column</th>
-        <th>Type</th>
-        <th class="val">Default value</th>
-        <th class="desc">Description</th>
-        <th class="index">Index</th>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>track_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">-</td>
-        <td class="bg1">Track id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>track_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>file_id</b></td>
-        <td class="bg2">INT(10)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">File primary id (foreigh key).</td>
-        <td class="bg2">key: <i>track_file_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>title</b></td>
-        <td class="bg1">TEXT</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Title of the track in E! genome browser.</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>description</b></td>
-        <td class="bg2">TEXT</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Description of the track in E! genome browser.</td>
+        <td class="bg2">Checksum of @program + @parameters.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>metasum</b></td>
-        <td class="bg1">CHAR(32)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @title + @description.</td>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>date</b></td>
-        <td class="bg2">TIMESTAMP</td>
-        <td class="bg2">CURRENT_TIMESTAMP</td>
-        <td class="bg2">Entry timestamp.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>status</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li>  <li> MERGED</li></ul></td>
-        <td class="bg1">'ACTIVE'</td>
-        <td class="bg1">Active (True) or retired (False) row.</td>
-        <td class="bg1"></td>
-      </tr>
-    </table>
-  </div>
-</div></div><div class="sql_schema_table">
-  <div id="sra_track"class="sql_schema_table_header" style="border-top-color:#3355FF">
-    <div class="sql_schema_table_header_left"><span style="background-color:#3355FF"></span>sra_track</div>
-    <div class="sql_schema_table_header_right">
-  
-  <a id="a_sra_track" class="help-header sql_schema_show_hide" onclick="show_hide('sra_track','columns')">
-    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
-  </a>
-      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
-    </div>
-    <div style="clear:both"></div>
-  </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Defines what constitutes a track, i.e. one or several runs.</p>
-
-  <div id="div_sra_track" style="display:none">
-    <table class="ss sql_schema_table_column">
-      <tr class="center">
-        <th>Column</th>
-        <th>Type</th>
-        <th class="val">Default value</th>
-        <th class="desc">Description</th>
-        <th class="index">Index</th>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>sra_track_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">-</td>
-        <td class="bg1">Track id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>sra_track_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>run_id</b></td>
-        <td class="bg2">INT(10)</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">SRA run primary id (foreign key).</td>
-        <td class="bg2">key: <i>sra_track_run_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>track_id</b></td>
-        <td class="bg1">INT(10)</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Track table primary id (foreign key).</td>
-        <td class="bg1">key: <i>sra_track_track_id_idx</i></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>date</b></td>
-        <td class="bg2">TIMESTAMP</td>
-        <td class="bg2">CURRENT_TIMESTAMP</td>
-        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
         <td class="bg2"></td>
       </tr>
     </table>
@@ -1579,7 +1513,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       <tr>
         <td class="bg2"><b>drupal_id</b></td>
         <td class="bg2">INT(10)</td>
-        <td class="bg2">NULL</td>
+        <td class="bg2">-</td>
         <td class="bg2">Drupal_node primary id (foreign key).</td>
         <td class="bg2">key: <i>drupal_node_track_drupal_id_idx</i></td>
       </tr>
@@ -1587,7 +1521,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       <tr>
         <td class="bg1"><b>track_id</b></td>
         <td class="bg1">INT(10)</td>
-        <td class="bg1">NULL</td>
+        <td class="bg1">-</td>
         <td class="bg1">Track table primary id (foreign key).</td>
         <td class="bg1">key: <i>drupal_node_track_track_id_idx</i></td>
       </tr>

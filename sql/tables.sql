@@ -414,7 +414,6 @@ CREATE TRIGGER analysis_description_md5_ins_tr BEFORE INSERT ON analysis_descrip
 @column track_id                 Track primary id (foreign key).
 @column program                  Name of the Program used.
 @column command                  Complete command line parameters used.
-@column track_id                 Track primary id (foreign key).
 @column metasum                  Checksum of @program + @parameters.
 @column date                     Entry timestamp.
 @column status                   Active (True) or retired (False) row.

@@ -70,7 +70,9 @@ sub tracks_for_pipeline {
     foreach my $track_id (keys %$tracks) {
       my $track = $tracks->{$track_id};
       my $run_accs = $track->{run_accs};
+      my $fastqs = $track->{fastqs};
       my $merge_level = $track->{merge_level};
+      my $merge_id = $track->{merge_id};
       
       if (@$run_accs) {
         # Push in merge_levels if any
@@ -80,7 +82,11 @@ sub tracks_for_pipeline {
           # Create a command line for this track
           push @command_lines, create_track_command($pipeline_command, $species_line, $run_accs, 'taxon');
         }
-      } else {
+      }
+      elsif (@$fastqs) {
+        push @command_lines, create_track_command_private($pipeline_command, $species_line, $fastqs, 'taxon');
+      }
+      else {
         $logger->warn("No tracks to align for $species");
       }
     }
@@ -103,7 +109,21 @@ sub create_track_command {
     $species_line,
     "-merge_level $merge_level",
   );
-  push @line, map { "-run_id $_" } @$run_accs;
+  push @line, map { "-run $_" } @$run_accs;
+  my $command = join ' ', @line;
+  return $command;
+}
+
+sub create_track_command_private {
+  my ($pipeline_command, $species_line, $fastqs, $merge_level) = @_;
+  
+  my @line;
+  push @line, (
+    '$' . $pipeline_command,
+    $species_line,
+    "-merge_level $merge_level",
+  );
+  push @line, map { "-seq_file $_" } @$fastqs;
   my $command = join ' ', @line;
   return $command;
 }

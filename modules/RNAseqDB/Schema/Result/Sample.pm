@@ -63,6 +63,13 @@ __PACKAGE__->table("sample");
   data_type: 'text'
   is_nullable: 1
 
+=head2 strain_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
 =head2 biosample_acc
 
   data_type: 'varchar'
@@ -74,13 +81,6 @@ __PACKAGE__->table("sample");
   data_type: 'varchar'
   is_nullable: 1
   size: 15
-
-=head2 strain_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
 
 =head2 label
 
@@ -129,10 +129,6 @@ __PACKAGE__->add_columns(
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "strain",
   { data_type => "text", is_nullable => 1 },
-  "biosample_acc",
-  { data_type => "varchar", is_nullable => 1, size => 15 },
-  "biosample_group_acc",
-  { data_type => "varchar", is_nullable => 1, size => 15 },
   "strain_id",
   {
     data_type => "integer",
@@ -140,6 +136,10 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "biosample_acc",
+  { data_type => "varchar", is_nullable => 1, size => 15 },
+  "biosample_group_acc",
+  { data_type => "varchar", is_nullable => 1, size => 15 },
   "label",
   { data_type => "text", is_nullable => 1 },
   "metasum",
@@ -255,8 +255,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NlewYiq9v8+PF/9SoQs1UQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:VfTi0LD3ym2feS1+JZJgAw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

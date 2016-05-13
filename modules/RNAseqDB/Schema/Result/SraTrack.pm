@@ -35,14 +35,14 @@ __PACKAGE__->table("sra_track");
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 track_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 date
 
@@ -66,14 +66,14 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 1,
+    is_nullable => 0,
   },
   "track_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 1,
+    is_nullable => 0,
   },
   "date",
   {
@@ -110,12 +110,7 @@ __PACKAGE__->belongs_to(
   "run",
   "RNAseqDB::Schema::Result::Run",
   { run_id => "run_id" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
-  },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 =head2 track
@@ -130,17 +125,12 @@ __PACKAGE__->belongs_to(
   "track",
   "RNAseqDB::Schema::Result::Track",
   { track_id => "track_id" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
-  },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bdkVfgq2X5WNJuEZEqkFgg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Hm5zCfIooBrF3nrH6aXgaw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

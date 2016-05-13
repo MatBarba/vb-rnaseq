@@ -37,20 +37,21 @@ __PACKAGE__->table("analysis");
   is_foreign_key: 1
   is_nullable: 1
 
+=head2 track_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
 =head2 program
 
   data_type: 'text'
   is_nullable: 1
 
-=head2 parameters
+=head2 command
 
   data_type: 'text'
-  is_nullable: 1
-
-=head2 track_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 metasum
@@ -90,12 +91,17 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
+  "track_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "program",
   { data_type => "text", is_nullable => 1 },
-  "parameters",
+  "command",
   { data_type => "text", is_nullable => 1 },
-  "track_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -162,24 +168,24 @@ __PACKAGE__->belongs_to(
   },
 );
 
-=head2 analysis_files
+=head2 track
 
-Type: has_many
+Type: belongs_to
 
-Related object: L<RNAseqDB::Schema::Result::AnalysisFile>
+Related object: L<RNAseqDB::Schema::Result::Track>
 
 =cut
 
-__PACKAGE__->has_many(
-  "analysis_files",
-  "RNAseqDB::Schema::Result::AnalysisFile",
-  { "foreign.analysis_id" => "self.analysis_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+__PACKAGE__->belongs_to(
+  "track",
+  "RNAseqDB::Schema::Result::Track",
+  { track_id => "track_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/tzr5TY5LZikZaio6wkH2w
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iT6+wksPSS0LE1f4l96ZaQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

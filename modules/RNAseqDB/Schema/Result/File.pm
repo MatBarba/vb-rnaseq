@@ -30,6 +30,13 @@ __PACKAGE__->table("file");
   is_auto_increment: 1
   is_nullable: 0
 
+=head2 track_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
 =head2 path
 
   data_type: 'text'
@@ -75,6 +82,13 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_auto_increment => 1,
+    is_nullable => 0,
+  },
+  "track_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
     is_nullable => 0,
   },
   "path",
@@ -133,24 +147,24 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 =head1 RELATIONS
 
-=head2 analysis_files
+=head2 track
 
-Type: has_many
+Type: belongs_to
 
-Related object: L<RNAseqDB::Schema::Result::AnalysisFile>
+Related object: L<RNAseqDB::Schema::Result::Track>
 
 =cut
 
-__PACKAGE__->has_many(
-  "analysis_files",
-  "RNAseqDB::Schema::Result::AnalysisFile",
-  { "foreign.file_id" => "self.file_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+__PACKAGE__->belongs_to(
+  "track",
+  "RNAseqDB::Schema::Result::Track",
+  { track_id => "track_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:23:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EA/HoTN4WdNTNth1aO17qw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CST4qKXW/cJ5Ei5aEbwhpg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

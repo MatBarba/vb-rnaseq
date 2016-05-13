@@ -35,7 +35,7 @@ __PACKAGE__->table("strain");
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 production_name
 
@@ -84,7 +84,7 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 1,
+    is_nullable => 0,
   },
   "production_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
@@ -163,17 +163,12 @@ __PACKAGE__->belongs_to(
   "species",
   "RNAseqDB::Schema::Result::Species",
   { species_id => "species_id" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
-  },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZBYRKLPsotjD7cl4wkiVPQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3rSncgOex0m6rqnh9pGeJQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -74,12 +74,11 @@ sub get_new_runs_tracks {
   my ($species) = @_;
   
   my $track_req = $self->resultset('SraTrack')->search({
-      'track.file_id' => undef,
       'track.status'  => 'ACTIVE',
       'run.run_sra_acc' => { '!=', undef },
     },
     {
-    prefetch    => ['track', { 'run' => { 'sample' => { 'strain' => 'species' } } } ],
+    prefetch    => [ 'track', { 'run' => { 'sample' => { 'strain' => 'species' } } } ],
   });
   
   my @res_tracks = $track_req->all;
@@ -89,30 +88,68 @@ sub get_new_runs_tracks {
   if (defined $species) {
     @res_tracks = grep { $_->run->sample->strain->production_name eq $species } @res_tracks;
   }
+  $logger->debug((@res_tracks+0) . " tracks to consider as new");
   
   my %new_track = ();
   for my $track (@res_tracks) {
     my $track_id = $track->track_id;
-    my $run = $track->run;
-    my $strain = $run->sample->strain;
-    my $production_name = $strain->production_name;
-    my $taxon_id        = $strain->species->taxon_id;
+    $logger->debug("Checking track $track_id");
     
-    my $track_data = $new_track{$production_name}{$track_id};
+    # Check if this track has any usable file (bigwig and bam)
+    my $files_req = $self->resultset('File')->search({
+        'track_id' => $track_id,
+      });
+    my @files = $files_req->all;
     
-    if (defined $track_data) {
-      push @{ $track_data->{run_accs} }, $run->run_sra_acc;
-    } else {
-      my $merge_level = $self->get_track_level($track_id);
-      $track_data = {
-        run_accs => [$run->run_sra_acc],
-        merge_level => $merge_level,
-        taxon_id => $taxon_id,
-      };
+    # We do have some files, let's check which kind
+    my %type;
+    if (@files) {
+      for my $file (@files) {
+        $type{ $file->type }++;
+      }
     }
-    $new_track{$production_name}{$track_id} = $track_data;
+
+    # Check if there one and only one bigwig + one and only one bam file
+    if ($type{bigwig} and $type{bigwig} == 1
+        and $type{bam} and $type{bam} == 1) {
+      $logger->debug("The track $track_id already has files");
+    }
+    elsif (not $type{bigwig} and not $type{bam}) {
+      my @fastqs = grep { $_->type eq 'fastq' } @files;
+      # Add track!
+      $self->add_new_runs_track(\%new_track, $track, \@fastqs);
+    } else {
+      $logger->warn("WARNING: the track $track_id has incorrect number of files: " . Dumper(\%type));
+    }
   }
   return \%new_track;
+}
+   
+sub add_new_runs_track {
+  my $self = shift;
+  my ($track_list, $track, $fastqs) = @_;
+
+  my $track_id = $track->track_id;
+  $logger->debug("Generating track to add ($track_id)");
+  my $run = $track->run;
+  my $strain = $run->sample->strain;
+  my $production_name = $strain->production_name;
+  my $taxon_id        = $strain->species->taxon_id;
+
+  my $track_data = $track_list->{$production_name}->{$track_id};
+
+  if (defined $track_data) {
+    push @{ $track_data->{run_accs} }, $run->run_sra_acc;
+  } else {
+    my $merge_level = $self->get_track_level($track_id);
+    $track_data = {
+      run_accs => [$run->run_sra_acc],
+      merge_level => $merge_level,
+      taxon_id => $taxon_id,
+      fastqs => $fastqs
+    };
+  }
+  $track_list->{$production_name}->{$track_id} = $track_data;
 }
 
 sub get_track_level {

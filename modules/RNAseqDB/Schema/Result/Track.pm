@@ -30,12 +30,6 @@ __PACKAGE__->table("track");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 file_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_nullable: 1
-
 =head2 title
 
   data_type: 'text'
@@ -76,8 +70,6 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "file_id",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "title",
   { data_type => "text", is_nullable => 1 },
   "description",
@@ -112,21 +104,22 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("track_id");
 
-=head1 UNIQUE CONSTRAINTS
+=head1 RELATIONS
 
-=head2 C<file_id>
+=head2 analyses
 
-=over 4
+Type: has_many
 
-=item * L</file_id>
-
-=back
+Related object: L<RNAseqDB::Schema::Result::Analysis>
 
 =cut
 
-__PACKAGE__->add_unique_constraint("file_id", ["file_id"]);
-
-=head1 RELATIONS
+__PACKAGE__->has_many(
+  "analyses",
+  "RNAseqDB::Schema::Result::Analysis",
+  { "foreign.track_id" => "self.track_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 
 =head2 drupal_node_tracks
 
@@ -139,6 +132,21 @@ Related object: L<RNAseqDB::Schema::Result::DrupalNodeTrack>
 __PACKAGE__->has_many(
   "drupal_node_tracks",
   "RNAseqDB::Schema::Result::DrupalNodeTrack",
+  { "foreign.track_id" => "self.track_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 files
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::File>
+
+=cut
+
+__PACKAGE__->has_many(
+  "files",
+  "RNAseqDB::Schema::Result::File",
   { "foreign.track_id" => "self.track_id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -159,8 +167,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-06 14:32:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:h35xbI9XGvmgyllUjX4tWw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ofgjv1SywzQL6RvUe7wuDA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

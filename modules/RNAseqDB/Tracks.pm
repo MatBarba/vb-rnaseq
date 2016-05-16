@@ -7,6 +7,7 @@ use strict;
 use warnings;
 use Log::Log4perl qw( :easy );
 use List::MoreUtils qw(uniq);
+use File::Spec;
 
 my $logger = get_logger();
 use Data::Dumper;
@@ -222,6 +223,109 @@ sub get_track_level {
     }
   }
 
+}
+
+sub get_track_id_from_merge_id {
+  my $self = shift;
+  my ($merge_id) = @_;
+  
+  $logger->debug("Retrieve track_id for merge_id $merge_id");
+  
+  # TODO
+  
+  return 1;
+}
+
+sub add_track_results {
+  my $self = shift;
+  my ($track_id, $commands, $files) = @_;
+  
+  $logger->debug("Add data for track $track_id");
+  
+  # Add commands
+  my $cmds_ok = $self->_add_commands($track_id, $commands);
+  return if not $cmds_ok;
+  
+  # Add files
+  my $files_ok = $self->_add_files($track_id, $files);
+  return if not $files_ok;
+  
+  return 1;
+}
+
+sub _add_commands {
+  my $self = shift;
+  my ($track_id, $commands) = @_;
+  
+  # First, check that there is no command for this track already
+  my $cmd_req = $self->resultset('Analysis')->search({
+      track_id => $track_id,
+    });
+  my @cmds = $cmd_req->all;
+  
+  # Some commands: skip
+  if (@cmds) {
+    $logger->warn("WARNING: the track $track_id already has commands. Skip addition.");
+    return;
+  }
+  
+  # Add the commands!
+  for my $command (@$commands) {
+    my $program;
+    my $cmd = $self->resultset('Analysis')->create({
+        track_id => $track_id,
+        command  => $command,
+        program  => $program
+      });
+  }
+  
+  return 1;
+}
+
+sub _add_files {
+  my $self = shift;
+  my ($track_id, $paths) = @_;
+  
+  # First, check that there is no files for this track already
+  # (Except for fastq files)
+  my $file_req = $self->resultset('File')->search({
+      track_id => $track_id,
+      type     => { -not_in => ['fastq'] }
+    });
+  my @files = $file_req->all;
+  
+  # Some files: skip
+  if (@files) {
+    $logger->warn("WARNING: the track $track_id already has files. Skip addition.");
+    return;
+  }
+  
+  # Add the files!
+  for my $path (@$paths) {
+    # Only keep the filename, not the path
+    my ($vol, $dir, $file) = File::Spec->splitpath($path);
+    
+    # Determine the type of the file from its extension
+    my $type;
+    if ($file =~ /\.bw$/) {
+      $type = 'bigwig';
+    }
+    elsif ($file =~ /\.bam$/) {
+      $type = 'bam';
+      push @$paths, $path . '.bai';
+    }
+    elsif ($file =~ /\.bam.bai$/) {
+      $type = 'bai';
+    }
+    
+    my $cmd = $self->resultset('File')->create({
+        track_id => $track_id,
+        path     => $file,
+        type     => $type
+      });
+  }
+  
+  return 1;
 }
 
 sub merge_tracks_by_sra_ids {

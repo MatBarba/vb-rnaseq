@@ -139,11 +139,11 @@ sub create_command_line_start {
   #####################################################################################################
   push @main_line, "-registry $opt->{registry}";
   push @main_line, "-pipeline_dir $opt{pipeline_dir}";
-#  push @main_line, "-json_summary $opt{pipeline_dir}/summary.json";
+  push @main_line, "-results_dir $opt{results_dir}";
   #####################################################################################################
-  push @main_line, '-aligner star';
+  #push @main_line, '-aligner star';
   push @main_line, '-bigwig 1';
-  #push @main_line, '-hive_force_init 1';
+  push @main_line, '-hive_force_init 1';
   return join(" ", @main_line);
 }
 
@@ -169,6 +169,7 @@ sub usage {
     Pipeline config:
     --registry <path>     : Path a registry file for the pipeline
     --pipeline_dir <path> : Path to a directory where the pipeline will store its work files
+    --results_dir <path>  : Path to a directory where the pipeline will store its results
     
     Output:
     --output <path>   : path to the output file
@@ -196,6 +197,7 @@ sub opt_check {
     "db=s",
     "registry=s",
     "pipeline_dir=s",
+    "results_dir=s",
     "species=s",
     "output=s",
     "format=s",
@@ -215,6 +217,7 @@ sub opt_check {
   if ($opt{format} eq 'pipeline') {
     usage("Need --registry") if not $opt{registry};
     usage("Need --pipeline_dir") if not $opt{pipeline_dir};
+    usage("Need --results_dir") if not $opt{results_dir};
   }
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

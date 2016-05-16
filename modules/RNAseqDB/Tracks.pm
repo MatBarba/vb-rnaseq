@@ -1,3 +1,4 @@
+use 5.10.0;
 use utf8;
 package RNAseqDB::Tracks;
 use Moose::Role;
@@ -117,7 +118,7 @@ sub get_new_runs_tracks {
     elsif (not $type{bigwig} and not $type{bam}) {
       my @fastqs = grep { $_->type eq 'fastq' } @files;
       # Add track!
-      $self->add_new_runs_track(\%new_track, $track, \@fastqs);
+      $self->_add_new_runs_track(\%new_track, $track, \@fastqs);
     } else {
       $logger->warn("WARNING: the track $track_id has incorrect number of files: " . Dumper(\%type));
     }
@@ -125,7 +126,7 @@ sub get_new_runs_tracks {
   return \%new_track;
 }
    
-sub add_new_runs_track {
+sub _add_new_runs_track {
   my $self = shift;
   my ($track_list, $track, $fastqs) = @_;
 
@@ -141,10 +142,11 @@ sub add_new_runs_track {
   if (defined $track_data) {
     push @{ $track_data->{run_accs} }, $run->run_sra_acc;
   } else {
-    my $merge_level = $self->get_track_level($track_id);
+    my ($merge_level, $merge_id) = $self->get_track_level($track_id);
     $track_data = {
       run_accs => [$run->run_sra_acc],
       merge_level => $merge_level,
+      merge_id => $merge_id,
       taxon_id => $taxon_id,
       fastqs => $fastqs
     };
@@ -158,35 +160,68 @@ sub get_track_level {
 
   my $track_data = $self->resultset('SraToActiveTrack')->search({
       'track_id' => $track_id,
-    });
-
-  # Sample?
-  my @track_samples = uniq $track_data->get_column('sample_id')->all;
-  if (@track_samples == 1) {
-    return 'sample';
+  });
+  my $track = $track_data->first;
+  
+  if (defined $track->merge_level and defined $track->merge_id) {
+    return ($track->merge_level, $track->merge_id);
   }
+  my @track_samples = uniq sort $track_data->get_column('sample_id')->all;
+  $logger->debug('Samples: ' . Dumper(@track_samples));
 
   # Study?
   my @studies = uniq $track_data->get_column('study_id')->all;
-  if (@studies == 1) {
+  $logger->debug('studies: ' . Dumper(@studies));
+  if (@studies > 1) {
+    $logger->debug("Track $track_id has several studies: merge at taxon level");
+    my $study = $self->resultset('Study')->search({
+        study_id => \@studies,
+      });
+    my @study_accs = sort map { $_->study_sra_acc // $_->study_private_acc } $study->all;
+    my $merge_id = join '_', @study_accs;
+    return ('taxon', $merge_id);
+  }
+  elsif (@studies == 1) {
     # One study, but is it all the samples of the study?
     my $study_id = shift @studies;
     my $study_data = $self->resultset('SraToActiveTrack')->search({
         'study_id' => $study_id,
       });
-    my @study_samples = uniq $study_data->get_column('sample_id')->all;
+    my @study_samples = uniq sort $study_data->get_column('sample_id')->all;
+    
+    $logger->debug("study vs track samples for track=$track_id, study=$study_id: " . @study_samples . ' vs ' . @track_samples);
     if (@study_samples == @track_samples) {
-      return 'study';
+      $logger->debug(Dumper @studies);
+      my $study = $self->resultset('Study')->search({
+          study_id => $study_id
+        })->first;
+      my $merge_id = $study->study_sra_acc // $study->study_private_acc;
+      return ('study', $merge_id);
     }
     else {
       $logger->debug("Study $study_id has more samples than the track: can't merge at study level for track $track_id");
+      # Use the samples list as merge id
+      my $samples = $self->resultset('Sample')->search({
+          sample_id => \@track_samples,
+        });
+      my @sample_accs = sort map { $_->sample_sra_acc // $_->sample_private_acc } $samples->all;
+      my $merge_id = join '_', @sample_accs;
+      my $merge_level = @sample_accs == 1 ? 'sample' : 'taxon';
+      return ($merge_level, $merge_id);
       return;
     }
   }
   else {
-    $logger->debug("Track $track_id has several studies: can't merge at study level");
-    return;
+    # Sample?
+    if (@track_samples == 1) {
+      my $sample = $self->resultset('Sample')->search({
+          sample_id => $track_samples[0]
+        })->first;
+      my $merge_id = $sample->sample_sra_acc // $sample->sample_private_acc;
+      return ('sample', $merge_id);
+    }
   }
+
 }
 
 sub merge_tracks_by_sra_ids {

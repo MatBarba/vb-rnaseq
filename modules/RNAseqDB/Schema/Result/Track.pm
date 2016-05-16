@@ -40,6 +40,18 @@ __PACKAGE__->table("track");
   data_type: 'text'
   is_nullable: 1
 
+=head2 merge_level
+
+  data_type: 'enum'
+  extra: {list => ["taxon","study","experiment","run","sample"]}
+  is_nullable: 1
+
+=head2 merge_id
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 256
+
 =head2 metasum
 
   data_type: 'char'
@@ -74,6 +86,14 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "description",
   { data_type => "text", is_nullable => 1 },
+  "merge_level",
+  {
+    data_type => "enum",
+    extra => { list => ["taxon", "study", "experiment", "run", "sample"] },
+    is_nullable => 1,
+  },
+  "merge_id",
+  { data_type => "varchar", is_nullable => 1, size => 256 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -103,6 +123,20 @@ __PACKAGE__->add_columns(
 =cut
 
 __PACKAGE__->set_primary_key("track_id");
+
+=head1 UNIQUE CONSTRAINTS
+
+=head2 C<merge_id>
+
+=over 4
+
+=item * L</merge_id>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("merge_id", ["merge_id"]);
 
 =head1 RELATIONS
 
@@ -167,8 +201,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ofgjv1SywzQL6RvUe7wuDA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-16 11:34:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WAim73oQkKJ1+XHuuLvk7w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -112,6 +112,18 @@ __PACKAGE__->table("sra_to_track");
   extra: {list => ["ACTIVE","RETIRED","MERGED"]}
   is_nullable: 1
 
+=head2 merge_level
+
+  data_type: 'enum'
+  extra: {list => ["taxon","study","experiment","run","sample"]}
+  is_nullable: 1
+
+=head2 merge_id
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 256
+
 =head2 production_name
 
   data_type: 'varchar'
@@ -169,13 +181,21 @@ __PACKAGE__->add_columns(
     extra => { list => ["ACTIVE", "RETIRED", "MERGED"] },
     is_nullable => 1,
   },
+  "merge_level",
+  {
+    data_type => "enum",
+    extra => { list => ["taxon", "study", "experiment", "run", "sample"] },
+    is_nullable => 1,
+  },
+  "merge_id",
+  { data_type => "varchar", is_nullable => 1, size => 256 },
   "production_name",
   { data_type => "varchar", is_nullable => 1, size => 64 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gVWg7bggR4TsqfrbG29uiQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-16 11:50:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BQlb/l11mlLpzX5IoC0bDA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

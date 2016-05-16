@@ -278,6 +278,8 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 @column track_id               Track id (primary key, internal identifier).
 @column title                  Title of the track in E! genome browser.
 @column description            Description of the track in E! genome browser.
+@column merge_level            Merge level for the set of runs for the pipeline.
+@column merge_id               Merge id generated for this track.
 @column metasum                Checksum of @title + @description.
 @column date                   Entry timestamp.
 @column status                 Active (True) or retired (False) row.
@@ -288,6 +290,8 @@ CREATE TABLE track (
   track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   title                 TEXT,
   description           TEXT,
+  merge_level           ENUM('taxon', 'study', 'experiment', 'run', 'sample'),
+  merge_id              VARCHAR(256) UNIQUE,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED', 'MERGED') DEFAULT 'ACTIVE',
@@ -632,6 +636,8 @@ CREATE VIEW sra_to_track AS
     sample_private_acc,
     track_id,
     track.status AS track_status,
+    merge_level,
+    merge_id,
     production_name
   FROM
     study

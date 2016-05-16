@@ -36,7 +36,8 @@ if (keys %$data == 0) {
 
 open my $OUT, '>', $opt{output};
 if ($opt{format} eq 'json') {
-  print $OUT encode_json($data) . "\n";
+  my $json = JSON->new->allow_nonref;
+  print $OUT $json->pretty->encode($data) . "\n";
 }
 elsif ($opt{format} eq 'pipeline') {
   my $command_lines = tracks_for_pipeline($data, \%opt);
@@ -76,15 +77,15 @@ sub tracks_for_pipeline {
       
       if (@$run_accs) {
         # Push in merge_levels if any
-        if (defined $merge_level) {
+        if (defined $merge_level and $merge_level ne 'taxon') {
           push @{ $merged_runs{$merge_level} }, @$run_accs;
         } else {
           # Create a command line for this track
-          push @command_lines, create_track_command($pipeline_command, $species_line, $run_accs, 'taxon');
+          push @command_lines, create_track_command($pipeline_command, $species_line, $run_accs, 'taxon', $merge_id);
         }
       }
       elsif (@$fastqs) {
-        push @command_lines, create_track_command_private($pipeline_command, $species_line, $fastqs, 'taxon');
+        push @command_lines, create_track_command_private($pipeline_command, $species_line, $fastqs, 'taxon', $merge_id);
       }
       else {
         $logger->warn("No tracks to align for $species");
@@ -101,7 +102,7 @@ sub tracks_for_pipeline {
 }
 
 sub create_track_command {
-  my ($pipeline_command, $species_line, $run_accs, $merge_level) = @_;
+  my ($pipeline_command, $species_line, $run_accs, $merge_level, $merge_id) = @_;
   
   my @line;
   push @line, (
@@ -109,6 +110,7 @@ sub create_track_command {
     $species_line,
     "-merge_level $merge_level",
   );
+  push @line, "-merge_id $merge_id" if defined $merge_id;
   push @line, map { "-run $_" } @$run_accs;
   my $command = join ' ', @line;
   return $command;

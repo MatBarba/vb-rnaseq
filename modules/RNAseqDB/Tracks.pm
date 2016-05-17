@@ -172,7 +172,7 @@ sub get_track_level {
   }
 }
   
-sub compute_track_level {
+sub _compute_track_level {
   my $self = shift;
   my ($track_id) = @_;
   
@@ -254,7 +254,7 @@ sub regenerate_merge_ids {
   my @track_ids = $track_data->get_column('track_id')->all;
   
   for my $track_id (@track_ids) {
-    my ($merge_level, $merge_id) = $self->compute_track_level($track_id);
+    my ($merge_level, $merge_id) = $self->_compute_track_level($track_id);
     
     my $track_update = $self->resultset('Track')->search({
         track_id  => $track_id,
@@ -649,6 +649,34 @@ This module is a role to interface the tracks part of the RNAseqDB::DB object.
   usage:
     my $track_id = 1;
     my $merge_level = $rdb->get_track_level(track_id);
+    
+=item get_track_id_from_merge_id()
+
+  function       : map a merge_id to a track_id
+  arg[1]         : merge_id
+  
+  usage:
+    my $track_id = $rdb->get_track_id_from_merge_id('SRS260844_SRS260845');
+    
+=item add_track_results()
+  
+  function       : import a list of commands and files for a given track
+  arg[1]         : track_id
+  arg[2]         : array ref to a list of commands used to create the files
+  arg[3]         : array ref to a list of generated files
+  
+  Note: only the filenames will be used.
+  
+  usage:
+  $rdb->add_track_results($track_id, $commands_aref, $files_aref);
+  
+=item regenerate_merge_ids
+
+  function       : scans the tracks tables and add merge_id and merge_level to each track.
+  arg[1]         : boolean to force recreating the merge_id/level even when it already exists.
+  
+  usage:
+  $rdb->regenerate_merge_ids;
     
 =back
 

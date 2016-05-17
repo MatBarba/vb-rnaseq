@@ -167,6 +167,20 @@ sub get_track_level {
   if (defined $track->merge_level and defined $track->merge_id) {
     return ($track->merge_level, $track->merge_id);
   }
+  else {
+    return;
+  }
+}
+  
+sub compute_track_level {
+  my $self = shift;
+  my ($track_id) = @_;
+  
+  my $track_data = $self->resultset('SraToActiveTrack')->search({
+      'track_id' => $track_id,
+  });
+  my $track = $track_data->first;
+  
   my @track_samples = uniq sort $track_data->get_column('sample_id')->all;
   $logger->debug('Samples: ' . Dumper(@track_samples));
 
@@ -222,7 +236,35 @@ sub get_track_level {
       return ('sample', $merge_id);
     }
   }
+}
 
+sub regenerate_merge_ids {
+  my $self = shift;
+  my ($force) = @_;
+  
+  my $search = {
+      'status' => 'ACTIVE',
+  };
+  
+  if (not $force) {
+    $search->{merge_id} = undef;
+  }
+  
+  my $track_data = $self->resultset('Track')->search($search);
+  my @track_ids = $track_data->get_column('track_id')->all;
+  
+  for my $track_id (@track_ids) {
+    my ($merge_level, $merge_id) = $self->compute_track_level($track_id);
+    
+    my $track_update = $self->resultset('Track')->search({
+        track_id  => $track_id,
+      })->update({
+        merge_level => $merge_level,
+        merge_id => $merge_id,
+    });
+  }
+  
+  return scalar @track_ids;
 }
 
 sub get_track_id_from_merge_id {
@@ -231,9 +273,18 @@ sub get_track_id_from_merge_id {
   
   $logger->debug("Retrieve track_id for merge_id $merge_id");
   
-  # TODO
+  my $track_req = $self->resultset('Track')->search({
+      merge_id => $merge_id,
+    });
+  my $track = $track_req->first;
   
-  return 1;
+  if ($track) {
+    return  $track->track_id;
+  }
+  else {
+    $logger->warn("Can't get a track with merge_id = $merge_id");
+    return;
+  }
 }
 
 sub add_track_results {

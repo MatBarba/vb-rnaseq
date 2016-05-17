@@ -261,6 +261,35 @@ CREATE TRIGGER run_md5_upd_tr BEFORE UPDATE ON run
 CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_sra_acc, NEW.run_private_acc, NEW.title, NEW.submitter) );
 
+/**
+
+@table private_file
+@desc Stores the files used for private runs (not in SRA).
+
+@column private_file_id         Private_file id (primary key, internal identifier).
+@column run_id                  Run primary key (Foreign key).
+@column path                    File path.
+
+*/
+
+CREATE TABLE private_file (
+  private_file_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  run_id                 INT(10) UNSIGNED NOT NULL,
+  path                   TEXT,
+  metasum                CHAR(32) UNIQUE,
+  date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
+  
+  FOREIGN KEY(run_id) REFERENCES run(run_id),
+  
+  KEY private_file_id_idx              (private_file_id),
+  KEY private_file_run_id_idx          (run_id)
+) ENGINE=InnoDB;
+
+CREATE TRIGGER private_file_md5_upd_tr BEFORE UPDATE ON private_file
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_id, NEW.path) );
+CREATE TRIGGER private_file_md5_ins_tr BEFORE INSERT ON private_file
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.run_id, NEW.path) );
 
 
 /**

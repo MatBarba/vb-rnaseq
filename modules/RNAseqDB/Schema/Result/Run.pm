@@ -203,6 +203,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 private_files
+
+Type: has_many
+
+Related object: L<RNAseqDB::Schema::Result::PrivateFile>
+
+=cut
+
+__PACKAGE__->has_many(
+  "private_files",
+  "RNAseqDB::Schema::Result::PrivateFile",
+  { "foreign.run_id" => "self.run_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 sample
 
 Type: belongs_to
@@ -234,8 +249,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lM3dm9E1vkrTomiyBfXeoQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-17 16:24:51
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fk2oqJ4zgGkSS1mLb7RkJA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

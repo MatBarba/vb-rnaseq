@@ -456,32 +456,12 @@ sub add_private_study {
   
   my $num = 0;
   
-  # First, get the study
-  my $study = $study_href->{info};
-  
-  # Insert the study
-  my $insert_study = $self->resultset('Study')->create( $study );
-  my $study_id = $insert_study->id;
-  
-  # Insert the pbmed
-  my $pubmed_id = $study_href->{pubmed_id};
-  $self->_add_study_publication($study_id, $pubmed_id) if defined $pubmed_id;
-  
-  # Create an accession for this study from its id
-  if (not defined $study->{study_private_acc}) {
-    $study->{ study_private_acc } = sprintf("%s%d", $STUDY_PREFIX, $study_id);
-    
-    my $update_study = $self->resultset('Study')->search({
-        study_id => $study_id,
-      })->update( $study );
-      $logger->info("CREATED study $study->{ study_private_acc }");
-  }
-  
-  # Next, insert the samples
+  # First, insert the samples
   my $samples_aref = $study_href->{samples};
   my %samples_ids = ();
   for my $sample_href (@$samples_aref) {
     my $sample = $sample_href->{info};
+    
     # Make sure we don't insert sample without an id
     my $tax_request = $self->resultset('Taxonomy')->search({
         production_name => $study_href->{production_name},
@@ -489,7 +469,7 @@ sub add_private_study {
     my @taxons = $tax_request->all;
     my $num_tax = scalar @taxons;
     if ($num_tax != 1) {
-      $logger->warn("WARNING: not just one taxon found ($num_tax)");
+      $logger->warn("WARNING: not just one taxon found ($num_tax) for $study_href->{production_name}");
       return 0;
     }
     my $taxon = shift @taxons;
@@ -513,6 +493,25 @@ sub add_private_study {
     
     # Keep the match sample id = sample_name (to link the runs)
     $samples_ids{ $sample_href->{sample_name} } = $sample_id;
+  }
+  
+  # Next insert the study
+  my $study = $study_href->{info};
+  my $insert_study = $self->resultset('Study')->create( $study );
+  my $study_id = $insert_study->id;
+  
+  # Insert the pbmed
+  my $pubmed_id = $study_href->{pubmed_id};
+  $self->_add_study_publication($study_id, $pubmed_id) if defined $pubmed_id;
+  
+  # Create an accession for this study from its id
+  if (not defined $study->{study_private_acc}) {
+    $study->{ study_private_acc } = sprintf("%s%d", $STUDY_PREFIX, $study_id);
+    
+    my $update_study = $self->resultset('Study')->search({
+        study_id => $study_id,
+      })->update( $study );
+      $logger->info("CREATED study $study->{ study_private_acc }");
   }
   
   # Next, insert the experiments (and runs)
@@ -559,6 +558,18 @@ sub add_private_study {
           })->update( $run );
         $logger->info("CREATED run $run->{ run_private_acc }");
       }
+      
+      # Also, add the fastq files as input
+      my $files = $run_href->{files};
+      if (defined $files) {
+        for my $path (@$files) {
+          my $insert_run = $self->resultset('PrivateFile')->create({
+              run_id => $run_id,
+              path   => $path,
+            });
+        }
+      }
+      
       $num++;
     }
   }

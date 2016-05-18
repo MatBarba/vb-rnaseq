@@ -63,6 +63,7 @@ sub tracks_for_pipeline {
   
   # Create the command line for each new track
   foreach my $species (sort keys %$data) {
+    $logger->info("Export new tracks for $species");
     my $species_line = "-species $species";
     
     #  all tracks
@@ -75,17 +76,33 @@ sub tracks_for_pipeline {
       my $merge_level = $track->{merge_level};
       my $merge_id = $track->{merge_id};
       
-      if (@$run_accs) {
+      if ($run_accs) {
         # Push in merge_levels if any
         if (defined $merge_level and $merge_level ne 'taxon') {
           push @{ $merged_runs{$merge_level} }, @$run_accs;
         } else {
           # Create a command line for this track
-          push @command_lines, create_track_command($pipeline_command, $species_line, $run_accs, 'taxon', $merge_id);
+          push @command_lines, create_track_command(
+              pipeline_command => $pipeline_command,
+              species_line     => $species_line,
+              run_accs         => $run_accs,
+              merge_level      => 'taxon',
+              merge_id         => $merge_id,
+            );
         }
       }
-      elsif (@$fastqs) {
-        push @command_lines, create_track_command_private($pipeline_command, $species_line, $fastqs, 'taxon', $merge_id);
+      elsif ($fastqs) {
+        if (defined $opt{fastq_dir}) {
+          push @command_lines, create_track_command_private(
+              pipeline_command => $pipeline_command,
+              species_line     => $species_line,
+              fastqs           => $fastqs,
+              fastq_dir        => "$opt{fastq_dir}/$species",
+              merge_id         => $merge_id,
+            );
+        } else {
+          warn "Can't write private data commands without the path to the fastq dir";
+        }
       }
       else {
         $logger->warn("No tracks to align for $species");
@@ -94,7 +111,12 @@ sub tracks_for_pipeline {
     
     # Group by merge_level
     foreach my $merge_level (keys %merged_runs) {
-      push @command_lines, create_track_command($pipeline_command, $species_line, $merged_runs{$merge_level}, $merge_level);
+          push @command_lines, create_track_command(
+              pipeline_command => $pipeline_command,
+              species_line     => $species_line,
+              run_accs         => $merged_runs{$merge_level},
+              merge_level      => $merge_level,
+            );
     }
   }
   
@@ -102,30 +124,32 @@ sub tracks_for_pipeline {
 }
 
 sub create_track_command {
-  my ($pipeline_command, $species_line, $run_accs, $merge_level, $merge_id) = @_;
+  my %arg = @_;
   
   my @line;
   push @line, (
-    '$' . $pipeline_command,
-    $species_line,
-    "-merge_level $merge_level",
+    '$' . $arg{pipeline_command},
+    $arg{species_line},
+    "-merge_level $arg{merge_level}",
   );
-  push @line, "-merge_id $merge_id" if defined $merge_id;
-  push @line, map { "-run $_" } @$run_accs;
+  push @line, "-merge_id $arg{merge_id}" if defined $arg{merge_id};
+  push @line, map { "-run $_" } @{$arg{run_accs}};
   my $command = join ' ', @line;
   return $command;
 }
 
 sub create_track_command_private {
-  my ($pipeline_command, $species_line, $fastqs, $merge_level) = @_;
+  my %arg = @_;
+  $arg{merge_level} //= 'file';
   
   my @line;
   push @line, (
-    '$' . $pipeline_command,
-    $species_line,
-    "-merge_level $merge_level",
+    '$' . $arg{pipeline_command},
+    $arg{species_line},
+    "-merge_level $arg{merge_level}",
   );
-  push @line, map { "-seq_file $_" } @$fastqs;
+  push @line, "-merge_id $arg{merge_id}" if defined $arg{merge_id};
+  push @line, map { "-seq_file $arg{fastq_dir}/$_" } @{$arg{fastqs}};
   my $command = join ' ', @line;
   return $command;
 }
@@ -174,6 +198,7 @@ sub usage {
     Output:
     --output <path>   : path to the output file
     --format <str>    : output format: json (default), pipeline.
+    --fastq_dir <str> : path to the fastq dir (with one directory per production_name).
     
     Other:
     --species <str>   : only outputs tracks for a given species (production_name)
@@ -201,10 +226,11 @@ sub opt_check {
     "species=s",
     "output=s",
     "format=s",
+    "fastq_dir=s",
     "help",
     "verbose",
     "debug",
-  );
+  ) or usage();
 
   usage()                if $opt{help};
   usage("Need --host")   if not $opt{host};

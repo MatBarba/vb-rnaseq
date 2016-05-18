@@ -77,7 +77,6 @@ sub get_new_runs_tracks {
   
   my $track_req = $self->resultset('SraTrack')->search({
       'track.status'  => 'ACTIVE',
-      'run.run_sra_acc' => { '!=', undef },
     },
     {
     prefetch    => [ 'track', { 'run' => { 'sample' => { 'strain' => 'species' } } } ],
@@ -97,31 +96,29 @@ sub get_new_runs_tracks {
     my $track_id = $track->track_id;
     $logger->debug("Checking track $track_id");
     
-    # Check if this track has any usable file (bigwig and bam)
+    # Check if this track has any file already (bigwig and bam)
     my $files_req = $self->resultset('File')->search({
         'track_id' => $track_id,
       });
     my @files = $files_req->all;
     
-    # We do have some files, let's check which kind
-    my %type;
+    # We do have some files!
     if (@files) {
-      for my $file (@files) {
-        $type{ $file->type }++;
+      $logger->debug("The track $track_id already has files: no need to align");
+    }
+    else {
+      # Is this a private data? In that case, get the fastq files
+      if (defined $track->run->run_private_acc) {
+        my $fastq_req = $self->resultset('PrivateFile')->search({
+            run_id  => $track->run->run_id
+        });
+        my @fastq = $fastq_req->get_column('path')->all;
+        $self->_add_new_runs_track(\%new_track, $track, \@fastq);
       }
-    }
-
-    # Check if there one and only one bigwig + one and only one bam file
-    if ($type{bigwig} and $type{bigwig} == 1
-        and $type{bam} and $type{bam} == 1) {
-      $logger->debug("The track $track_id already has files");
-    }
-    elsif (not $type{bigwig} and not $type{bam}) {
-      my @fastqs = grep { $_->type eq 'fastq' } @files;
-      # Add track!
-      $self->_add_new_runs_track(\%new_track, $track, \@fastqs);
-    } else {
-      $logger->warn("WARNING: the track $track_id has incorrect number of files: " . Dumper(\%type));
+      # Otherwise, the SRA accessions will suffice
+      else {
+        $self->_add_new_runs_track(\%new_track, $track);
+      }
     }
   }
   return \%new_track;
@@ -140,12 +137,14 @@ sub _add_new_runs_track {
 
   my $track_data = $track_list->{$production_name}->{$track_id};
 
+  # Add several runs for the same track
   if (defined $track_data) {
-    push @{ $track_data->{run_accs} }, $run->run_sra_acc;
+    push @{ $track_data->{run_accs} }, $run->run_sra_acc if defined $run->run_sra_acc;
   } else {
     my ($merge_level, $merge_id) = $self->get_track_level($track_id);
+    my $run_accs = defined $run->run_sra_acc ? [$run->run_sra_acc] : undef;
     $track_data = {
-      run_accs => [$run->run_sra_acc],
+      run_accs => $run_accs,
       merge_level => $merge_level,
       merge_id => $merge_id,
       taxon_id => $taxon_id,

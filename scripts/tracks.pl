@@ -149,7 +149,16 @@ sub create_track_command_private {
     "-merge_level $arg{merge_level}",
   );
   push @line, "-merge_id $arg{merge_id}" if defined $arg{merge_id};
-  push @line, map { "-seq_file $arg{fastq_dir}/$_" } @{$arg{fastqs}};
+  
+  # Fastq: is it a pair? -> seq_file_pair
+  my @files = @{$arg{fastqs}};
+  if (@files == 2) {
+    push @line, "-seq_file_pair " . join(',', map { "$arg{fastq_dir}/$_" } @{$arg{fastqs}});
+  }
+  # Not a pair: simply seq_file
+  else {
+    push @line, map { "-seq_file $arg{fastq_dir}/$_" } @{$arg{fastqs}};
+  }
   my $command = join ' ', @line;
   return $command;
 }

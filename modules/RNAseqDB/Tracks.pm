@@ -8,6 +8,9 @@ use warnings;
 use Log::Log4perl qw( :easy );
 use List::MoreUtils qw(uniq);
 use File::Spec;
+use Digest::MD5::File qw(file_md5_hex);
+use Digest::MD5 qw(md5_hex);
+use Try::Tiny;
 
 my $logger = get_logger();
 use Data::Dumper;
@@ -183,6 +186,8 @@ sub _compute_track_level {
   my @track_samples = uniq sort $track_data->get_column('sample_id')->all;
   $logger->debug('Samples: ' . Dumper(@track_samples));
 
+  my ($merge_id, $merge_level);
+  
   # Study?
   my @studies = uniq $track_data->get_column('study_id')->all;
   $logger->debug('studies: ' . Dumper(@studies));
@@ -192,8 +197,8 @@ sub _compute_track_level {
         study_id => \@studies,
       });
     my @study_accs = sort map { $_->study_sra_acc // $_->study_private_acc } $study->all;
-    my $merge_id = join '_', @study_accs;
-    return ('taxon', $merge_id);
+    $merge_id = join '_', @study_accs;
+    $merge_level = 'taxon';
   }
   elsif (@studies == 1) {
     # One study, but is it all the samples of the study?
@@ -209,8 +214,8 @@ sub _compute_track_level {
       my $study = $self->resultset('Study')->search({
           study_id => $study_id
         })->first;
-      my $merge_id = $study->study_sra_acc // $study->study_private_acc;
-      return ('study', $merge_id);
+      $merge_id = $study->study_sra_acc // $study->study_private_acc;
+      $merge_level = 'study';
     }
     else {
       $logger->debug("Study $study_id has more samples than the track: can't merge at study level for track $track_id");
@@ -219,10 +224,8 @@ sub _compute_track_level {
           sample_id => \@track_samples,
         });
       my @sample_accs = sort map { $_->sample_sra_acc // $_->sample_private_acc } $samples->all;
-      my $merge_id = join '_', @sample_accs;
-      my $merge_level = @sample_accs == 1 ? 'sample' : 'taxon';
-      return ($merge_level, $merge_id);
-      return;
+      $merge_id = join '_', @sample_accs;
+      $merge_level = @sample_accs == 1 ? 'sample' : 'taxon';
     }
   }
   else {
@@ -231,10 +234,17 @@ sub _compute_track_level {
       my $sample = $self->resultset('Sample')->search({
           sample_id => $track_samples[0]
         })->first;
-      my $merge_id = $sample->sample_sra_acc // $sample->sample_private_acc;
-      return ('sample', $merge_id);
+      $merge_id = $sample->sample_sra_acc // $sample->sample_private_acc;
+      $merge_level = 'sample';
     }
   }
+  
+  # Hash the merge_id if it contains several identifiers
+  if ($merge_id =~ /_/) {
+    $merge_id = 'merged_' . md5_hex($merge_id);
+  }
+  
+  return ($merge_level, $merge_id);
 }
 
 sub regenerate_merge_ids {
@@ -340,7 +350,6 @@ sub _add_files {
   # (Except for fastq files)
   my $file_req = $self->resultset('File')->search({
       track_id => $track_id,
-      type     => { -not_in => ['fastq'] }
     });
   my @files = $file_req->all;
   
@@ -368,10 +377,20 @@ sub _add_files {
       $type = 'bai';
     }
     
+    # Get md5sum file
+    my $file_md5;
+    try {
+      $file_md5 = file_md5_hex($path);
+    }
+    catch {
+      warn "Can't find file for md5sum: $path";
+    };
+    
     my $cmd = $self->resultset('File')->create({
         track_id => $track_id,
         path     => $file,
-        type     => $type
+        type     => $type,
+        md5      => $file_md5,
       });
   }
   

@@ -140,7 +140,7 @@ sub create_track_command {
 
 sub create_track_command_private {
   my %arg = @_;
-  $arg{merge_level} //= 'file';
+  $arg{merge_level} //= 'taxon';
   
   my @line;
   push @line, (

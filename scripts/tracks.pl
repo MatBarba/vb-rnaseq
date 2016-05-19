@@ -62,6 +62,7 @@ sub tracks_for_pipeline {
   push @command_lines, "$pipeline_command=\"$commandline_start\"";
   
   # Create the command line for each new track
+  my @tracks_lines;
   foreach my $species (sort keys %$data) {
     $logger->info("Export new tracks for $species");
     my $species_line = "-species $species";
@@ -82,8 +83,7 @@ sub tracks_for_pipeline {
           push @{ $merged_runs{$merge_level} }, @$run_accs;
         } else {
           # Create a command line for this track
-          push @command_lines, create_track_command(
-              pipeline_command => $pipeline_command,
+          push @tracks_lines, create_track_command(
               species_line     => $species_line,
               run_accs         => $run_accs,
               merge_level      => 'taxon',
@@ -93,8 +93,7 @@ sub tracks_for_pipeline {
       }
       elsif ($fastqs) {
         if (defined $opt{fastq_dir}) {
-          push @command_lines, create_track_command_private(
-              pipeline_command => $pipeline_command,
+          push @tracks_lines, create_track_command_private(
               species_line     => $species_line,
               fastqs           => $fastqs,
               fastq_dir        => "$opt{fastq_dir}/$species",
@@ -111,14 +110,15 @@ sub tracks_for_pipeline {
     
     # Group by merge_level
     foreach my $merge_level (keys %merged_runs) {
-          push @command_lines, create_track_command(
-              pipeline_command => $pipeline_command,
+          push @tracks_lines, create_track_command(
               species_line     => $species_line,
               run_accs         => $merged_runs{$merge_level},
               merge_level      => $merge_level,
             );
     }
   }
+  push @command_lines, "commands=()";
+  push @command_lines, map { 'commands+=("' . $_ . '")' } @tracks_lines;
   
   return \@command_lines;
 }
@@ -128,7 +128,6 @@ sub create_track_command {
   
   my @line;
   push @line, (
-    '$' . $arg{pipeline_command},
     $arg{species_line},
     "-merge_level $arg{merge_level}",
   );
@@ -144,7 +143,6 @@ sub create_track_command_private {
   
   my @line;
   push @line, (
-    '$' . $arg{pipeline_command},
     $arg{species_line},
     "-merge_level $arg{merge_level}",
   );
@@ -174,7 +172,7 @@ sub create_command_line_start {
   push @main_line, "-pipeline_dir $opt{pipeline_dir}";
   push @main_line, "-results_dir $opt{results_dir}";
   #####################################################################################################
-  #push @main_line, '-aligner star';
+  push @main_line, '-aligner bowtie2';
   push @main_line, '-bigwig 1';
   push @main_line, '-hive_force_init 1';
   return join(" ", @main_line);

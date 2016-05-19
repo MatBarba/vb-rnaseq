@@ -222,9 +222,9 @@ sub tracks_for_pipeline {
 }
 
 sub is_already_aligned {
-  my ($species, $merge_id, $opt) = @_;
+  my ($species, $merge_id, $results_dir) = @_;
   
-  my $dir = "$opt->{results_dir{/$opt->{aligner}/$species";
+  my $dir = "$results_dir/bowtie2/$species";
   my $path = "$dir/$merge_id*.json";
   
   return glob($path);
@@ -339,11 +339,12 @@ sub create_start_cmd {
   push @main_line, '$(mysql-hive-ensrw details script)';
   #####################################################################################################
   push @main_line, "-registry $opt->{registry}";
-  push @main_line, "-pipeline_dir $opt->{pipeline_dir}";
-  push @main_line, "-results_dir $opt->{results_dir}";
+  push @main_line, "-pipeline_dir $opt{pipeline_dir}";
+  push @main_line, "-results_dir $opt{results_dir}";
   #####################################################################################################
-  push @main_line, "-aligner $opt->{aligner}";
+  push @main_line, '-aligner bowtie2';
   push @main_line, '-bigwig 1';
+  #push @main_line, '-hive_force_init 1';
   return join(" ", @main_line);
 }
 
@@ -380,8 +381,7 @@ sub usage {
     --registry <path>     : Path a registry file for the pipeline
     --pipeline_dir <path> : Path to a directory where the pipeline will store its work files
     --results_dir <path>  : Path to a directory where the pipeline will store its results
-    --fastq_dir <path>    : path to the fastq dir (with one directory per production_name).
-    --aligner <str>       : aligner to use ([bowtie2], star, bwa).
+    --fastq_dir <str>     : path to the fastq dir (with one directory per production_name).
     
     RUN PIPELINE
     --run_pipeline        : run the pipeline for all new tracks with the config defined above
@@ -408,12 +408,11 @@ sub opt_check {
     "registry=s",
     "pipeline_dir=s",
     "results_dir=s",
-    "fastq_dir=s",
-    "aligner=s",
     "species=s",
     "output=s",
     "format=s",
     "run_pipeline",
+    "fastq_dir=s",
     "help",
     "verbose",
     "debug",
@@ -424,8 +423,7 @@ sub opt_check {
   usage("Need --port")   if not $opt{port};
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
-  $opt{aligner} //= 'bowtie2';
-  $opt{password} //= '';
+  $opt{password} ||= '';
   if (defined $opt{format}) {
     usage("Need --output") if not $opt{output};
     if ($opt{format} eq 'pipeline') {

@@ -51,20 +51,37 @@ sub add_tracks_results {
   for my $merge_id (sort keys %$results_href) {
     $logger->info("Importing data for $merge_id");
     my $track_data = $results_href->{$merge_id};
-    $logger->debug("Data:" . Dumper($track_data));
     
     # First, get the track_id
     my $track_id = $db->get_track_id_from_merge_id($merge_id);
     
+    # Then, add the data
     if ($track_id) {
-      # Then, add the data
       my @files = (
         $track_data->{bw_file},
         $track_data->{bam_file},
       );
-      $db->add_track_results($track_id, $track_data->{cmds}, \@files);
+      
+      # Only keep the file names, not the whole path
+      @files   = map { remove_paths($_) } @files;
+      my @cmds = map { remove_paths($_) } @{$track_data->{cmds}};
+      
+      # Add those data to the database
+      $db->add_track_results($track_id, \@cmds, \@files);
+    }
+    else {
+      $logger->warn("Can't match the merge_id to a track_id in the database ($merge_id)");
     }
   }
+}
+
+sub remove_paths {
+  my $str = shift;
+  
+  $str =~ s{\/?\b[^ ]+\/([^\/ ]+)\b}{$1}g;
+  $str =~ s/\s+/ /g;
+  $str =~ s/\s+$//;
+  return $str;
 }
 
 ###############################################################################

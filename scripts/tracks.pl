@@ -11,6 +11,8 @@ use Getopt::Long qw(:config no_ignore_case);
 use JSON;
 use Perl6::Slurp;
 use List::Util qw( first );
+use File::Path qw(make_path);
+use File::Copy;
 use Data::Dumper;
 
 use RNAseqDB::DB;
@@ -36,7 +38,7 @@ if (keys %$data == 0) {
 }
 
 if ($opt{run_pipeline}) {
-  run_pipeline($data, \%opt);
+  run_pipeline($db, $data, \%opt);
 }
 
 if (defined $opt{output}) {
@@ -62,7 +64,7 @@ if (defined $opt{output}) {
 # SUBS
 
 sub run_pipeline {
-  my ($data, $opt) =  @_;
+  my ($db, $data, $opt) =  @_;
   
   # First, create the common init_pipeline command part
   my $start_cmd = create_start_cmd($opt);
@@ -88,7 +90,7 @@ sub run_pipeline {
     foreach my $track_cmd (@$track_cmds) {
       # Complete the init_pipeline command for this track
       my $pipeline_cmd = join ' ', ($start_cmd, $species_cmd, $track_cmd, $reinit_hivedb);
-      $logger->debug($pipeline_cmd);
+      $logger->info($pipeline_cmd);
       
       # Set the hivedb to be reinitialized on the following runs
       $reinit_hivedb = '-hive_force_init 1';
@@ -115,36 +117,102 @@ sub run_pipeline {
       $beekeeper_run =~ s/#.*$//;
       
       # First sync
-      my $sync_msg = `$beekeeper_sync 2> $pipe_log`;
+      `$beekeeper_sync &> $pipe_log`;
       
       # RUN!
-      my $run_msg = `$beekeeper_run 2> $pipe_log`;
+      `$beekeeper_run &> $pipe_log`;
       $logger->info($beekeeper_run);
       my $status = 'running';
       
       while ($status eq 'running') {
-
-        if ($run_msg =~ /FAIL/) {
-          $logger->error("PIPELINE STDERR: {\n" . (slurp $pipe_log) . "}");
-          $logger->error("PIPELINE STDOUT: {\n$init_msg}");
-          die;
+        # Get status
+        my %status;
+        my $status_line;
+        my $run_msg = slurp $pipe_log;
+        if ($run_msg =~ /(total over .+ total\))/) {
+          $status_line = $1;
+          if ($status_line =~ /total over (?<analyses>\d+) analyses :\s+(?<completeness>[0-9\.]+)% complete \(<\s+(?<cpu_hrs>[0-9\.]+)\s+CPU_hrs\) \((?<to_do>\d+) to_do \+ (?<done>\d+) done \+ (?<failed>\d+) failed = (?<total>\d+) total\)/) {
+            %status = %+;
+          }
+        } else {
+          $logger->error("FAILED!\nLast pipeline output: {\n$run_msg}");
+          die "Pipeline failed without finishing. Can't find the status line?";
         }
-        elsif ($run_msg =~ /No jobs left/
-            and not $run_msg =~ /READY/
-            and not $run_msg =~ /ALL_CLAIMED/
-            and not $run_msg =~ /LOADING/
-            and not $run_msg =~ /WORKING/
-        ) {
+        
+        if ($status{failed}) {
+          $logger->error("FAILED!\nLast pipeline output: {\n$run_msg}");
+          die "Pipeline failed without finishing. Failed jobs found.";
+        }
+        elsif ($status{completeness} == 100) {
           print STDERR "\n";
           $logger->info("Pipeline finished");
+          
           $status = 'done';
         }
         else {
           sleep 60;
-          $run_msg = `$beekeeper_run 2> $pipe_log`;
-          print STDERR ".";
+          `$beekeeper_run &> $pipe_log`;
+          $logger->info("$status_line");
         }
       }
+    }
+
+    # Finalize (copy files and import data in the database)
+    finalization($db, $species, $tracks, $opt);
+  }
+}
+
+sub finalization {
+  my ($db, $species, $tracks, $opt) = @_;
+  
+  copy_files($species, $tracks, $opt);
+}
+
+sub copy_files {
+  my ($species, $tracks, $opt) = @_;
+  
+  opendir(my $res_dir,  "$opt->{results_dir}/$opt->{aligner}/$species");
+  opendir(my $big_dir,  "$opt->{final_dir}/bigwig/$species");
+  opendir(my $bam_dir,  "$opt->{final_dir}/bam/$species");
+  opendir(my $json_dir, "$opt->{final_dir}/cmds/$species");
+  make_path $big_dir  if not -d $big_dir;
+  make_path $bam_dir  if not -d $bam_dir;
+  make_path $json_dir if not -d $json_dir;
+  
+  # Prepare the list of files to copy
+  my @big_files  = grep { /\.bw$/         } readdir $res_dir;
+  my @bam_files  = grep { /\.bam$/        } readdir $res_dir;
+  my @json_files = grep { /\.cmds\.json$/ } readdir $res_dir;
+  
+  # Copy bigwig, bam file and index, and json cmds
+  map { copy "$res_dir/$_", "$big_dir/$_" } @big_files;
+  map { copy "$res_dir/$_", "$bam_dir/$_" } @bam_files;
+  map { copy "$res_dir/$_".'bai', "$bam_dir/$_".'bai' } @bam_files;
+  map { copy "$res_dir/$_", "$json_dir/$_" } @json_files;
+  
+  return;
+}
+
+sub add_tracks_results {
+  my ($db, $results_href) = @_;
+  
+  $logger->info("Importing " . (keys %$results_href) . " tracks");
+  
+  for my $merge_id (sort keys %$results_href) {
+    $logger->info("Importing data for $merge_id");
+    my $track_data = $results_href->{$merge_id};
+    $logger->debug("Data:" . Dumper($track_data));
+    
+    # First, get the track_id
+    my $track_id = $db->get_track_id_from_merge_id($merge_id);
+    
+    if ($track_id) {
+      # Then, add the data
+      my @files = (
+        $track_data->{bw_file},
+        $track_data->{bam_file},
+      );
+      $db->add_track_results($track_id, $track_data->{cmds}, \@files);
     }
   }
 }
@@ -224,7 +292,7 @@ sub tracks_for_pipeline {
 sub is_already_aligned {
   my ($species, $merge_id, $opt) = @_;
   
-  my $dir = "$opt->{results_dir{/$opt->{aligner}/$species";
+  my $dir = "$opt->{results_dir}/$opt->{aligner}/$species";
   my $path = "$dir/$merge_id*.json";
   
   return glob($path);
@@ -246,7 +314,8 @@ sub create_track_cmds {
     my $merge_id    = $track->{merge_id};
     
     # Check if the track has already been created (json file exists)
-    if (is_already_aligned($species, $merge_id, $opt{results_dir})) {
+    if (is_already_aligned($species, $merge_id, $opt)) {
+      $logger->warn("Track $merge_id from $species is already aligned (json file exists) but it has not been imported in the database");
       next TRACK;
     }
 
@@ -385,6 +454,7 @@ sub usage {
     
     RUN PIPELINE
     --run_pipeline        : run the pipeline for all new tracks with the config defined above
+    --final_dir <path>    : path to the directory where the final files will be moved
     
     Other:
     
@@ -409,6 +479,7 @@ sub opt_check {
     "pipeline_dir=s",
     "results_dir=s",
     "fastq_dir=s",
+    "final_dir=s",
     "aligner=s",
     "species=s",
     "output=s",
@@ -428,11 +499,14 @@ sub opt_check {
   $opt{password} //= '';
   if (defined $opt{format}) {
     usage("Need --output") if not $opt{output};
-    if ($opt{format} eq 'pipeline') {
-      usage("Need --registry") if not $opt{registry};
-      usage("Need --pipeline_dir") if not $opt{pipeline_dir};
-      usage("Need --results_dir") if not $opt{results_dir};
-    }
+  }
+  if (($opt{format} and $opt{format} eq 'pipeline') or $opt{run_pipeline}) {
+    usage("Need --registry") if not $opt{registry};
+    usage("Need --pipeline_dir") if not $opt{pipeline_dir};
+    usage("Need --results_dir") if not $opt{results_dir};
+  }
+  if ($opt{run_pipeline}) {
+      usage("Need --final_dir") if not $opt{final_dir};
   }
   usage("Need --format or --run_pipeline") if not $opt{format} and not $opt{run_pipeline};
   Log::Log4perl->easy_init($INFO) if $opt{verbose};

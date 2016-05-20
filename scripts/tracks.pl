@@ -158,12 +158,12 @@ sub run_pipeline {
     }
 
     # Finalize (copy files and import data in the database)
-    finalization($db, $species, $tracks, $opt);
+    finalization($species, $tracks, $opt);
   }
 }
 
 sub finalization {
-  my ($db, $species, $tracks, $opt) = @_;
+  my ($species, $tracks, $opt) = @_;
   
   copy_files($species, $tracks, $opt);
 }
@@ -171,24 +171,28 @@ sub finalization {
 sub copy_files {
   my ($species, $tracks, $opt) = @_;
   
-  opendir(my $res_dir,  "$opt->{results_dir}/$opt->{aligner}/$species");
-  opendir(my $big_dir,  "$opt->{final_dir}/bigwig/$species");
-  opendir(my $bam_dir,  "$opt->{final_dir}/bam/$species");
-  opendir(my $json_dir, "$opt->{final_dir}/cmds/$species");
+  my $res_dir  = "$opt->{results_dir}/$opt->{aligner}/$species";
+  my $big_dir  = "$opt->{final_dir}/bigwig/$species";
+  my $bam_dir  = "$opt->{final_dir}/bam/$species";
+  my $json_dir = "$opt->{final_dir}/cmds/$species";
+  
   make_path $big_dir  if not -d $big_dir;
   make_path $bam_dir  if not -d $bam_dir;
   make_path $json_dir if not -d $json_dir;
   
   # Prepare the list of files to copy
-  my @big_files  = grep { /\.bw$/         } readdir $res_dir;
-  my @bam_files  = grep { /\.bam$/        } readdir $res_dir;
-  my @json_files = grep { /\.cmds\.json$/ } readdir $res_dir;
+  opendir(my $res_dh, $res_dir);
+  my @res_files = readdir $res_dh;
+  my @big_files  = grep { /\.bw$/         } @res_files;
+  my @bam_files  = grep { /\.bam$/        } @res_files;
+  my @json_files = grep { /\.cmds\.json$/ } @res_files;
   
-  # Copy bigwig, bam file and index, and json cmds
-  map { copy "$res_dir/$_", "$big_dir/$_" } @big_files;
-  map { copy "$res_dir/$_", "$bam_dir/$_" } @bam_files;
-  map { copy "$res_dir/$_".'bai', "$bam_dir/$_".'bai' } @bam_files;
-  map { copy "$res_dir/$_", "$json_dir/$_" } @json_files;
+  # Copy bigwig, bam file and index, and json cmds (As long as the files do not already exist!)
+  $logger->info("Copy files from $species in the final dir $opt->{final_dir}...");
+  map { copy "$res_dir/$_",       "$big_dir/$_"       if not -s "$big_dir/$_"       } @big_files;
+  map { copy "$res_dir/$_",       "$bam_dir/$_"       if not -s "$bam_dir/$_"       } @bam_files;
+  map { copy "$res_dir/$_".'bai', "$bam_dir/$_".'bai' if not -s "$bam_dir/$_".'bai' } @bam_files;
+  map { copy "$res_dir/$_",       "$json_dir/$_"      if not -s "$json_dir/$_"      } @json_files;
   
   return;
 }
@@ -230,6 +234,7 @@ sub tracks_for_pipeline {
   # Create the command line for each new track
   my @tracks_cmds;
   foreach my $species (sort keys %$data) {
+    
     $logger->info("Export new tracks for $species");
     my $species_line = "-species $species";
     
@@ -238,7 +243,7 @@ sub tracks_for_pipeline {
     #  all tracks
     my $tracks = $data->{$species};
     my %merged_runs;
-    foreach my $track_id (keys %$tracks) {
+    TRACK: foreach my $track_id (keys %$tracks) {
       my $track = $tracks->{$track_id};
       my $run_accs = $track->{run_accs};
       my $fastqs = $track->{fastqs};
@@ -292,10 +297,22 @@ sub tracks_for_pipeline {
 sub is_already_aligned {
   my ($species, $merge_id, $opt) = @_;
   
+  my $dir = "$opt->{final_dir}/cmds/$species";
+  my $path = "$dir/$merge_id*.json";
+  my @files = glob($path);
+  
+  return @files;
+}
+
+sub is_already_finished {
+  my ($species, $merge_id, $opt) = @_;
+  
   my $dir = "$opt->{results_dir}/$opt->{aligner}/$species";
   my $path = "$dir/$merge_id*.json";
+  my @files = glob($path);
+  $logger->info("Track $merge_id is already finished") if @files;
   
-  return glob($path);
+  return @files;
 }
 
 sub create_track_cmds {
@@ -315,8 +332,14 @@ sub create_track_cmds {
     
     # Check if the track has already been created (json file exists)
     if (is_already_aligned($species, $merge_id, $opt)) {
-      $logger->warn("Track $merge_id from $species is already aligned (json file exists) but it has not been imported in the database");
+      $logger->warn("Track $merge_id from $species is already aligned and copied");
       next TRACK;
+    }
+    elsif (is_already_finished($species, $merge_id, $opt)) {
+      $logger->warn("Track $merge_id from $species is already aligned, but the files were not copied");
+      next TRACK;
+    } else {
+      $logger->info("Track $merge_id from $species will be aligned");
     }
 
     # Normal track with SRA accessions

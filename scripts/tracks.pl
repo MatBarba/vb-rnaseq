@@ -127,13 +127,27 @@ sub run_pipeline {
       while ($status eq 'running') {
         # Get status
         my %status;
-        my $status_line;
+        my $status_line = '';
         my $run_msg = slurp $pipe_log;
         if ($run_msg =~ /(total over .+ total\))/) {
+          # Get status line
           $status_line = $1;
           if ($status_line =~ /total over (?<analyses>\d+) analyses :\s+(?<completeness>[0-9\.]+)% complete \(<\s+(?<cpu_hrs>[0-9\.]+)\s+CPU_hrs\) \((?<to_do>\d+) to_do \+ (?<done>\d+) done \+ (?<failed>\d+) failed = (?<total>\d+) total\)/) {
             %status = %+;
           }
+          
+          # Try to get the current running modules
+          my @lines = split /[\r\n]+/, $run_msg;
+          my (@working, @ready);
+          for my $line (@lines) {
+            if ($line =~ /^(?<module>\w+)\s*\(.+, jobs\([^\)]+(?<num_jobs>\d+)i[^\)]+\)/) {
+              push @working, "$+{module} ($+{num_jobs})";
+            }
+            if ($line =~ /^(?<module>\w+)\s*\(.+, jobs\([^\)]+(?<num_jobs>\d+)r[^\)]+\)/) {
+              push @ready, "$+{module} ($+{num_jobs})";
+            }
+          }
+          $status_line .= '    ' . join(', ', (@working ? @working : @ready));
         } else {
           $logger->error("FAILED!\nLast pipeline output: {\n$run_msg}");
           die "Pipeline failed without finishing. Can't find the status line?";
@@ -310,7 +324,6 @@ sub is_already_finished {
   my $dir = "$opt->{results_dir}/$opt->{aligner}/$species";
   my $path = "$dir/$merge_id*.json";
   my @files = glob($path);
-  $logger->info("Track $merge_id is already finished") if @files;
   
   return @files;
 }

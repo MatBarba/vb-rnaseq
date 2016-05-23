@@ -123,6 +123,7 @@ sub run_pipeline {
       `$beekeeper_run &> $pipe_log`;
       $logger->info($beekeeper_run);
       my $status = 'running';
+      my $prev_status_line = '';
       
       while ($status eq 'running') {
         # Get status
@@ -166,7 +167,12 @@ sub run_pipeline {
         else {
           sleep 60;
           `$beekeeper_run &> $pipe_log`;
-          $logger->info("$status_line");
+          
+          # Print the status, but only if the status changed
+          if ($status_line ne $prev_status_line) {
+            $logger->info("$status_line");
+            $prev_status_line = $status_line;
+          }
         }
       }
     }
@@ -202,11 +208,12 @@ sub copy_files {
   my @json_files = grep { /\.cmds\.json$/ } @res_files;
   
   # Copy bigwig, bam file and index, and json cmds (As long as the files do not already exist!)
-  $logger->info("Copy files from $species in the final dir $opt->{final_dir}...");
-  map { copy "$res_dir/$_",       "$big_dir/$_"       if not -s "$big_dir/$_"       } @big_files;
-  map { copy "$res_dir/$_",       "$bam_dir/$_"       if not -s "$bam_dir/$_"       } @bam_files;
-  map { copy "$res_dir/$_".'bai', "$bam_dir/$_".'bai' if not -s "$bam_dir/$_".'bai' } @bam_files;
-  map { copy "$res_dir/$_",       "$json_dir/$_"      if not -s "$json_dir/$_"      } @json_files;
+  $logger->info("Copy files from $species in the final dir $opt->{final_dir}... ");
+  map { copy "$res_dir/$_",        "$big_dir/$_"        if not -s "$big_dir/$_"        } @big_files;
+  map { copy "$res_dir/$_",        "$bam_dir/$_"        if not -s "$bam_dir/$_"        } @bam_files;
+  map { copy "$res_dir/$_".'.bai', "$bam_dir/$_".'.bai' if not -s "$bam_dir/$_".'.bai' } @bam_files;
+  map { copy "$res_dir/$_",        "$json_dir/$_"       if not -s "$json_dir/$_"       } @json_files;
+  $logger->info("done");
   
   return;
 }

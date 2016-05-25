@@ -241,6 +241,13 @@ sub copy_files {
   map { copy "$res_dir/$_",        "$bam_dir/$_"        if not -s "$bam_dir/$_"        } @bam_files;
   map { copy "$res_dir/$_".'.bai', "$bam_dir/$_".'.bai' if not -s "$bam_dir/$_".'.bai' } @bam_files;
   map { copy "$res_dir/$_",        "$json_dir/$_"       if not -s "$json_dir/$_"       } @json_files;
+  
+  # Make sure that the files are read-only
+  chmod 0444, glob "$big_dir/*.bw";
+  chmod 0444, glob "$bam_dir/*.bam";
+  chmod 0444, glob "$bam_dir/*.bai";
+  chmod 0444, glob "$json_dir/*.cmds.json";
+  
   $logger->info("done");
   
   return;

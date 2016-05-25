@@ -379,12 +379,12 @@ sub _add_files {
     
     # Get md5sum file
     my $file_md5;
-    try {
-      $file_md5 = file_md5_hex($path);
-    }
-    catch {
-      warn "Can't find file for md5sum: $path";
-    };
+    #try {
+    #  $file_md5 = file_md5_hex($path);
+    #}
+    #catch {
+    #  warn "Can't find file for md5sum: $path";
+    #};
     
     my $cmd = $self->resultset('File')->create({
         track_id => $track_id,

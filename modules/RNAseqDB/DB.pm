@@ -22,6 +22,7 @@ with  'RNAseqDB::Publications';
 with  'RNAseqDB::SRA';
 with  'RNAseqDB::Tracks';
 with  'RNAseqDB::DrupalNode';
+with  'RNAseqDB::File';
 
 1;
 

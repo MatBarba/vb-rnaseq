@@ -87,7 +87,7 @@ sub run_pipeline {
     my $reinit_hivedb = '';
     
     # Run the pipeline!
-    foreach my $track_cmd (@$track_cmds) {
+    SESSION: foreach my $track_cmd (@$track_cmds) {
       # Complete the init_pipeline command for this track
       my $pipeline_cmd = join ' ', ($start_cmd, $species_cmd, $track_cmd, $reinit_hivedb);
       $logger->info($pipeline_cmd);
@@ -98,30 +98,55 @@ sub run_pipeline {
       # Execute
       my $pipe_log = 'rnaseqdb_pipeline_init.log';
       my $init_msg = `$pipeline_cmd 2> $pipe_log`;
+      my $pipe_log_msg = slurp $pipe_log;
+      
+      # Prepare to get the beekeeper commands
+      my $beekeeper_cmd;
+      my $toredo = 0;
       
       # Check that the initialization happened correctly
       if ($init_msg =~ /\[Useful commands\]/) {
         $logger->debug("Init complete");
+
+        # Capture the beekeeper commands
+        my @init_lines = split /[\r\n]+/, $init_msg;
+        $beekeeper_cmd = first { /-sync/ } grep { /beekeeper.pl / } @init_lines;
+        $beekeeper_cmd =~ s/-sync//;
+        $beekeeper_cmd =~ s/#.*$//;
+      }
+      # Not complete because there is already a hive DB!
+      elsif ($pipe_log_msg =~ /Can't create database '(\w+)'; database exists/) {
+        $logger->warn("A Hive DB already exists with name $1");
+        
+        # Extract the beekeeper command
+        if ($pipe_log_msg =~ /-url (mysql:\/\/\w+:\w+@[\w\-\.]+:\d+\/\w+) -sql 'CREATE DATABASE'/) {
+          $logger->info("A Hive DB already exists: We will first finish it before continuing");
+          my $hive_url = $1;
+          
+          # Create the beekeeper commands
+          $beekeeper_cmd = "beekeeper.pl -url $hive_url -reg_conf $opt{registry}";
+          
+          # Flag to rerun the current track when the previously unfinished one is completed
+          $toredo = 1;
+        } else {
+          $logger->error("A Hive DB already exists, but I can't find its url. Aborting.");
+          $logger->error($pipe_log_msg);
+          $logger->error($init_msg);
+          die;
+        }
       }
       else {
-        $logger->error("PIPELINE STDERR: {\n" . (slurp $pipe_log) . "}");
+        $logger->error("PIPELINE STDERR: {\n$pipe_log_msg}");
         $logger->error("PIPELINE STDOUT: {\n$init_msg}");
         die "Pipeline initialization failed";
       }
       
-      # Capture the beekeeper commands
-      my @init_lines = split /[\r\n]+/, $init_msg;
-      my $beekeeper_sync = first { /-sync/ } grep { /beekeeper.pl / } @init_lines;
-      my $beekeeper_run  = first { /-run/  } grep { /beekeeper.pl / } @init_lines;
-      $beekeeper_sync =~ s/#.*$//;
-      $beekeeper_run =~ s/#.*$//;
-      
       # First sync
-      `$beekeeper_sync &> $pipe_log`;
+      `$beekeeper_cmd -sync &> $pipe_log`;
       
       # RUN!
-      `$beekeeper_run &> $pipe_log`;
-      $logger->info($beekeeper_run);
+      `$beekeeper_cmd -run &> $pipe_log`;
+      $logger->info("$beekeeper_cmd -run");
       my $status = 'running';
       my $prev_status_line = '';
       
@@ -166,7 +191,7 @@ sub run_pipeline {
         }
         else {
           sleep 60;
-          `$beekeeper_run &> $pipe_log`;
+          `$beekeeper_cmd -run &> $pipe_log`;
           
           # Print the status, but only if the status changed
           if ($status_line ne $prev_status_line) {
@@ -175,21 +200,24 @@ sub run_pipeline {
           }
         }
       }
+      # Copy the newly created files
+      copy_files($species, $opt);
+      
+      # Redo or continue
+      if ($toredo) {
+        $logger->info("Restart previously skipped track alignment");
+        redo SESSION;
+      } else {
+        next SESSION;
+      }
     }
-
-    # Finalize (copy files and import data in the database)
-    finalization($species, $tracks, $opt);
+    # Copy any uncopied files (e.g. if the pipeline had to be finished by hand)
+    copy_files($species, $opt);
   }
 }
 
-sub finalization {
-  my ($species, $tracks, $opt) = @_;
-  
-  copy_files($species, $tracks, $opt);
-}
-
 sub copy_files {
-  my ($species, $tracks, $opt) = @_;
+  my ($species, $opt) = @_;
   
   my $res_dir  = "$opt->{results_dir}/$opt->{aligner}/$species";
   my $big_dir  = "$opt->{final_dir}/bigwig/$species";

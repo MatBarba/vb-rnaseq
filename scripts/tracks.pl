@@ -70,7 +70,7 @@ sub run_pipeline {
   my $start_cmd = create_start_cmd($opt);
   
   # Align the tracks of every species in order
-  foreach my $species (sort keys %$data) {
+  SPECIES: foreach my $species (sort keys %$data) {
     my $tracks = $data->{$species};
     my @track_ids = keys %$tracks;
     $logger->info("$species has " . @track_ids . " tracks to align");
@@ -88,6 +88,7 @@ sub run_pipeline {
     
     # Run the pipeline!
     SESSION: foreach my $track_cmd (@$track_cmds) {
+      
       # Complete the init_pipeline command for this track
       my $pipeline_cmd = join ' ', ($start_cmd, $species_cmd, $track_cmd, $reinit_hivedb);
       $logger->info($pipeline_cmd);
@@ -110,8 +111,8 @@ sub run_pipeline {
 
         # Capture the beekeeper commands
         my @init_lines = split /[\r\n]+/, $init_msg;
-        $beekeeper_cmd = first { /-sync/ } grep { /beekeeper.pl / } @init_lines;
-        $beekeeper_cmd =~ s/-sync//;
+        $beekeeper_cmd = first { /-run/ } grep { /beekeeper.pl / } @init_lines;
+        $beekeeper_cmd =~ s/-run\s*//;
         $beekeeper_cmd =~ s/#.*$//;
       }
       # Not complete because there is already a hive DB!
@@ -205,8 +206,8 @@ sub run_pipeline {
       
       # Redo or continue
       if ($toredo) {
-        $logger->info("Restart previously skipped track alignment");
-        redo SESSION;
+        $logger->info("We just finished an aborted pipeline. We need to restart the command line generation to take this finished job into account.");
+        redo SPECIES;
       } else {
         next SESSION;
       }

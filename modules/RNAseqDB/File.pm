@@ -19,13 +19,21 @@ sub check_files {
   my ($dir) = @_;
   
   # Retrieve the list of all the files from the DB
-  my $big = $self->_get_all_files('bigwig');
-  my $bam = $self->_get_all_files('bam');
+  my $big   = $self->_get_all_files('bigwig');
+  my $bam   = $self->_get_all_files('bam');
+  my @bai   = map { $_->{path} = $_->{path} . '.bai'; $_ } @$bam;
   my $fastq = $self->_get_private_files;
   
   $logger->info(@$big . " bigwig files");
   $logger->info(@$bam . " bam files");
+  $logger->info(@bai . " bai files");
   $logger->info(@$fastq . " private fastq files");
+  
+  # Check each file
+  $self->_check_files_in_dir($big, "$dir/bigwig");
+  $self->_check_files_in_dir($bam, "$dir/bam");
+  $self->_check_files_in_dir(\@bai, "$dir/bam");
+  $self->_check_files_in_dir($fastq, "$dir/fastq");
 }
 
 sub _get_all_files {
@@ -41,9 +49,10 @@ sub _get_all_files {
   
   my @files;
   foreach my $file ($files_req->all) {
+    my @sra_tracks = $file->track->sra_tracks;
     my $file_obj = {
       path            => $file->path,
-      production_name => $file->track->sra_tracks->run->sample->strain->production_name,
+      production_name => $sra_tracks[0]->run->sample->strain->production_name,
     };
     push @files, $file_obj;
   }
@@ -68,6 +77,18 @@ sub _get_private_files {
     push @files, $file_obj;
   }
   return \@files;
+}
+
+sub _check_files_in_dir {
+  my $self = shift;
+  my ($files, $dir) = @_;
+  
+  for my $file (@$files) {
+    my $path = sprintf "%s/%s/%s", $dir, $file->{production_name}, $file->{path};
+    if (not -s $path and not -s "$path.gz") {
+      $logger->warn("Can't find file '$file->{path}' in '$dir' ($path)");
+    }
+  }
 }
 
 1;

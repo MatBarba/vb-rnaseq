@@ -27,7 +27,7 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-$db->check_files($opt{dir});
+$db->check_files($opt{dir}, $opt{update_md5});
 
 ###############################################################################
 # Parameters and usage
@@ -49,6 +49,7 @@ sub usage {
     --db <str>        : database name
     
     --dir <path>      : root dir for all the data files
+    --update_md5      : get the md5sum of the files and update the DB
     
     --help            : show this help message
     --verbose         : show detailed progress
@@ -68,6 +69,7 @@ sub opt_check {
     "password=s",
     "db=s",
     "dir=s",
+    "update_md5",
     "help",
     "verbose",
     "debug",

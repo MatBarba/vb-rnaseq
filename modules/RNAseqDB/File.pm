@@ -7,6 +7,7 @@ use warnings;
 #use List::Util qw( first );
 #use JSON;
 #use Perl6::Slurp;
+use Digest::MD5::File qw(file_md5_hex);
 use Log::Log4perl qw( :easy );
 
 my $logger = get_logger();
@@ -16,12 +17,17 @@ use Readonly;
 
 sub check_files {
   my $self = shift;
-  my ($dir) = @_;
+  my ($dir, $update_md5) = @_;
   
   # Retrieve the list of all the files from the DB
   my $big   = $self->_get_all_files('bigwig');
   my $bam   = $self->_get_all_files('bam');
-  my @bai   = map { $_->{path} = $_->{path} . '.bai'; $_ } @$bam;
+  my @bai   = map {
+      my $bai = {
+        path => $_->{path} . '.bai',
+        production_name => $_->{production_name}
+      }; $bai
+    } @$bam;
   my $fastq = $self->_get_private_files;
   
   $logger->info(@$big . " bigwig files");
@@ -30,10 +36,10 @@ sub check_files {
   $logger->info(@$fastq . " private fastq files");
   
   # Check each file
-  $self->_check_files_in_dir($big, "$dir/bigwig");
-  $self->_check_files_in_dir($bam, "$dir/bam");
-  $self->_check_files_in_dir(\@bai, "$dir/bam");
-  $self->_check_files_in_dir($fastq, "$dir/fastq");
+  $self->_check_files_in_dir($big,   "$dir/bigwig", $update_md5);
+  $self->_check_files_in_dir($bam,   "$dir/bam",    $update_md5);
+  $self->_check_files_in_dir(\@bai,  "$dir/bam",    $update_md5);
+  $self->_check_files_in_dir($fastq, "$dir/fastq",  $update_md5, 'private');
 }
 
 sub _get_all_files {
@@ -53,6 +59,8 @@ sub _get_all_files {
     my $file_obj = {
       path            => $file->path,
       production_name => $sra_tracks[0]->run->sample->strain->production_name,
+      file_id         => $file->file_id,
+      md5             => $file->md5,
     };
     push @files, $file_obj;
   }
@@ -73,6 +81,7 @@ sub _get_private_files {
     my $file_obj = {
       path            => $file->path,
       production_name => $file->run->sample->strain->production_name,
+      file_id         => $file->private_file_id,
     };
     push @files, $file_obj;
   }
@@ -81,12 +90,42 @@ sub _get_private_files {
 
 sub _check_files_in_dir {
   my $self = shift;
-  my ($files, $dir) = @_;
+  my ($files, $dir, $update_md5, $private) = @_;
+  
+  my $table    = $private ? 'PrivateFile' : 'File';
+  my $table_id = $private ? 'private_file_id' : 'file_id';
   
   for my $file (@$files) {
     my $path = sprintf "%s/%s/%s", $dir, $file->{production_name}, $file->{path};
-    if (not -s $path and not -s "$path.gz") {
+    if (not -s $path) {
       $logger->warn("Can't find file '$file->{path}' in '$dir' ($path)");
+    } elsif ($update_md5) {
+      if (defined $file->{file_id}) {
+        # Get md5sum for this file
+        my $digest = file_md5_hex($path);
+
+        # Update DB
+        $logger->debug("MD5SUM\t$path = $digest");
+        $self->resultset($table)->search({
+            $table_id => $file->{file_id},
+          })->update({
+            md5 => $digest,
+          });
+      } else {
+        $logger->debug("No file_id for $path");
+      }
+    } else {
+      if (defined($file->{md5})) {
+        # Get md5sum for this file
+        my $digest = file_md5_hex($path);
+        
+        # Compare it
+        if ($digest ne $file->{md5}) {
+          $logger->warn("Warning: file $file->{path} has wrong md5sum: $digest (expected: $file->{md5})");
+        }
+      } else {
+        $logger->warn("Warning: file $file->{path} has no md5sum in the database.");
+      }
     }
   }
 }

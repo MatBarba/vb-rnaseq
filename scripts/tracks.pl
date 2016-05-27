@@ -117,11 +117,11 @@ sub run_pipeline {
       }
       # Not complete because there is already a hive DB!
       elsif ($pipe_log_msg =~ /Can't create database '(\w+)'; database exists/) {
-        $logger->warn("A Hive DB already exists with name $1");
+        my $dbname = $1;
         
         # Extract the beekeeper command
         if ($pipe_log_msg =~ /-url (mysql:\/\/\w+:\w+@[\w\-\.]+:\d+\/\w+) -sql 'CREATE DATABASE'/) {
-          $logger->info("A Hive DB already exists: We will first finish it before continuing");
+          $logger->info("A Hive DB already exists ($dbname): We will first finish it before continuing");
           my $hive_url = $1;
           
           # Create the beekeeper commands
@@ -130,7 +130,7 @@ sub run_pipeline {
           # Flag to rerun the current track when the previously unfinished one is completed
           $toredo = 1;
         } else {
-          $logger->error("A Hive DB already exists, but I can't find its url. Aborting.");
+          $logger->error("A Hive DB already exists ($dbname), but I can't find its url. Aborting.");
           $logger->error($pipe_log_msg);
           $logger->error($init_msg);
           die;
@@ -492,6 +492,7 @@ sub create_start_cmd {
   #####################################################################################################
   push @main_line, "-aligner $opt->{aligner}";
   push @main_line, '-bigwig 1';
+  push @main_line, "-hive_log_dir $opt->{pipeline_dir}/hive";
   return join(" ", @main_line);
 }
 

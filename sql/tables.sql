@@ -269,6 +269,10 @@ CREATE TRIGGER run_md5_ins_tr BEFORE INSERT ON run
 @column private_file_id         Private_file id (primary key, internal identifier).
 @column run_id                  Run primary key (Foreign key).
 @column path                    File path.
+@column md5                     Md5sum of the file.
+@column metasum                 Checksum of @run_id + @path.
+@column date                    Entry timestamp.
+@column status                  Active (True) or retired (False) row.
 
 */
 
@@ -276,6 +280,7 @@ CREATE TABLE private_file (
   private_file_id        INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   run_id                 INT(10) UNSIGNED NOT NULL,
   path                   TEXT,
+  md5                    CHAR(32) UNIQUE,
   metasum                CHAR(32) UNIQUE,
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',

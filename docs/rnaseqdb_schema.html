@@ -180,6 +180,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <li><a href="#experiment" class="sql_schema_link" style="font-weight:bold">experiment</a></li>
         <li><a href="#sample" class="sql_schema_link" style="font-weight:bold">sample</a></li>
         <li><a href="#run" class="sql_schema_link" style="font-weight:bold">run</a></li>
+        <li><a href="#private_file" class="sql_schema_link" style="font-weight:bold">private_file</a></li>
 
       </ul>
     </div>
@@ -828,6 +829,87 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
     </table>
   </div>
+</div></div><div class="sql_schema_table">
+  <div id="private_file"class="sql_schema_table_header" style="border-top-color:#C70C09">
+    <div class="sql_schema_table_header_left"><span style="background-color:#C70C09"></span>private_file</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_private_file" class="help-header sql_schema_show_hide" onclick="show_hide('private_file','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Stores the files used for private runs (not in SRA).</p>
+
+  <div id="div_private_file" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>private_file_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Private_file id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>private_file_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>run_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Run primary key (Foreign key).</td>
+        <td class="bg2">key: <i>private_file_run_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>path</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">File path.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>md5</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Md5sum of the file.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @run_id + @path.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
+      </tr>
+    </table>
+  </div>
 </div></div>
 
 <div class="sql_schema_group_header" style="border-color:#3355FF">
@@ -879,6 +961,22 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
         <td class="bg1">Description of the track in E! genome browser.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>merge_level</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>taxon</li>  <li> study</li>  <li> experiment</li>  <li> run</li>  <li> sample</li></ul></td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Merge level for the set of runs for the pipeline.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>merge_id</b></td>
+        <td class="bg1">VARCHAR(256)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Merge id generated for this track.</td>
         <td class="bg1"></td>
       </tr>
 

@@ -42,6 +42,12 @@ __PACKAGE__->table("private_file");
   data_type: 'text'
   is_nullable: 1
 
+=head2 md5
+
+  data_type: 'char'
+  is_nullable: 1
+  size: 32
+
 =head2 metasum
 
   data_type: 'char'
@@ -81,6 +87,8 @@ __PACKAGE__->add_columns(
   },
   "path",
   { data_type => "text", is_nullable => 1 },
+  "md5",
+  { data_type => "char", is_nullable => 1, size => 32 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -113,6 +121,18 @@ __PACKAGE__->set_primary_key("private_file_id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<md5>
+
+=over 4
+
+=item * L</md5>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("md5", ["md5"]);
+
 =head2 C<metasum>
 
 =over 4
@@ -143,8 +163,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-17 16:24:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PWG05Tdoav7FRWhPvLKwXA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-27 13:50:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:s+WBuMqjop50wbHyxT1H9A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

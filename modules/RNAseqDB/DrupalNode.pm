@@ -132,7 +132,10 @@ sub get_track_groups {
               'sra_tracks' => {
                 run => [
                   { sample => { strain => 'species' } },
-                  { experiment => 'study' },
+                  { experiment => {
+                      study => { study_publications => 'publication' },
+                    },
+                  },
                 ]
               }, 
             }, 
@@ -142,8 +145,9 @@ sub get_track_groups {
     });
   DRU: for my $drupal ($groups->all) {
     my %group = (
-      title  => $drupal->manual_title // $drupal->autogen_title,
-      text  => $drupal->manual_text // $drupal->autogen_text,
+      title           => $drupal->manual_title // $drupal->autogen_title,
+      text            => $drupal->manual_text // $drupal->autogen_text,
+      drupal_node_id  => $drupal->drupal_node_id,
     );
     
     my $drupal_tracks = $drupal->drupal_node_tracks;
@@ -185,20 +189,33 @@ sub get_track_groups {
       
       # Get the SRA accessions
       my (%runs, %experiments, %studies, %samples);
-      my @runs = $track->sra_tracks->all;
+      my @track_runs = $track->sra_tracks->all;
       my $private = 0;
-      for my $run (@runs) {
-        if (defined $run->run->run_sra_acc) {
-          $runs{ $run->run->run_sra_acc }++;
-          $experiments{ $run->run->experiment->experiment_sra_acc }++;
-          $studies{ $run->run->experiment->study->study_sra_acc }++;
-          $samples{ $run->run->sample->sample_sra_acc }++;
-        } else {
-          $private = 0;
-          $runs{ $run->run->run_private_acc }++;
-          $experiments{ $run->run->experiment->experiment_private_acc }++;
-          $studies{ $run->run->experiment->study->study_private_acc }++;
-          $samples{ $run->run->sample->sample_private_acc }++;
+      for my $track_run (@track_runs) {
+        my $run = $track_run->run;
+        
+        # Accessions
+        my $run_acc    = $run->run_sra_acc                      // $run->run_private_acc;
+        my $exp_acc    = $run->experiment->experiment_sra_acc   // $run->experiment->experiment_private_acc;
+        my $study_acc  = $run->experiment->study->study_sra_acc // $run->experiment->study->study_private_acc;
+        my $sample_acc = $run->sample->sample_sra_acc           // $run->sample->sample_private_acc;
+        
+        $runs{        $run_acc    }++;
+        $experiments{ $exp_acc    }++;
+        $studies{     $study_acc  }++;
+        $samples{     $sample_acc }++;
+        $private = 1 if $run_acc =~ /^VB/;
+        
+        # Associated publications
+        for my $study_pub ($run->experiment->study->study_publications->all) {
+          my $pub = $study_pub->publication;
+          my %publication = (
+            authors  => $pub->authors,
+            title    => $pub->title,
+            pubmed   => $pub->pubmed_id,
+            doi      => $pub->doi,
+          );
+          $group{publications}{ $pub->pubmed_id } = \%publication;
         }
       }
       my $accession_name = $private ? 'private_accessions' : 'sra_accessions';

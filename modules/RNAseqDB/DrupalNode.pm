@@ -109,6 +109,118 @@ sub update_drupal_node {
   })->update($node_content);
 }
 
+sub get_track_groups {
+  my $self = shift;
+  my ($opt) = @_;
+  
+  my @groups;
+  
+  # First, retrieve all the groups data
+  my $search = {
+      'track.status' => 'ACTIVE',
+  };
+  $search->{'strain.production_name'} = $opt->{species} if $opt->{species};
+  my $groups = $self->resultset('DrupalNode')->search(
+    $search,
+    {
+      prefetch    => {
+        drupal_node_tracks => {
+          track => [
+            'files',
+            'analyses',
+            {
+              'sra_tracks' => {
+                run => [
+                  { sample => { strain => 'species' } },
+                  { experiment => 'study' },
+                ]
+              }, 
+            }, 
+          ],
+        }
+      }
+    });
+  DRU: for my $drupal ($groups->all) {
+    my %group = (
+      title  => $drupal->manual_title // $drupal->autogen_title,
+      text  => $drupal->manual_text // $drupal->autogen_text,
+    );
+    
+    my $drupal_tracks = $drupal->drupal_node_tracks;
+    
+    # Get the data associated with every track
+    # We only want active tracks
+    next DRU if $drupal_tracks->all == 0;
+    
+    # Get the species data
+    my $strain = $drupal_tracks->first->track->sra_tracks->first->run->sample->strain;
+    my %species = (
+      production_name => $strain->production_name,
+      strain          => $strain->strain,
+      organism        => $strain->species->binomial_name,
+    );
+    $group{taxonomy} = \%species;
+    
+    # Add the tracks data
+    foreach my $drupal_track ($drupal_tracks->all) {
+      my $track = $drupal_track->track;
+      
+      my %track_data = (
+        #title       => $track->title,
+        #description => $track->description,
+        track_id    => $track->track_id,
+      );
+      
+      foreach my $file ($track->files->all) {
+        if ($file->type eq 'bigwig' or $file->type eq 'bam') {
+          my @path = (
+            $file->type, 
+            $species{production_name},
+            $file->path
+          );
+          unshift @path, $opt->{files_dir} if defined $opt->{files_dir};
+          $track_data{files}{$file->type} = join '/', @path;
+        }
+      }
+      
+      # Get the SRA accessions
+      my (%runs, %experiments, %studies, %samples);
+      my @runs = $track->sra_tracks->all;
+      my $private = 0;
+      for my $run (@runs) {
+        if (defined $run->run->run_sra_acc) {
+          $runs{ $run->run->run_sra_acc }++;
+          $experiments{ $run->run->experiment->experiment_sra_acc }++;
+          $studies{ $run->run->experiment->study->study_sra_acc }++;
+          $samples{ $run->run->sample->sample_sra_acc }++;
+        } else {
+          $private = 0;
+          $runs{ $run->run->run_private_acc }++;
+          $experiments{ $run->run->experiment->experiment_private_acc }++;
+          $studies{ $run->run->experiment->study->study_private_acc }++;
+          $samples{ $run->run->sample->sample_private_acc }++;
+        }
+      }
+      my $accession_name = $private ? 'private_accessions' : 'sra_accessions';
+      $track_data{$accession_name} = {
+        runs => [sort keys %runs],
+        experiments => [sort keys %experiments],
+        studies => [sort keys %studies],
+        samples => [sort keys %samples],
+      };
+      
+      push @{$group{tracks}}, \%track_data;
+    }
+    
+    push @groups, \%group;
+    #########
+    #last DRU;
+    #########
+  }
+  
+  return \@groups;
+}
+
 1;
 
 __END__

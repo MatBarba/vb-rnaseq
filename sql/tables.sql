@@ -464,7 +464,7 @@ CREATE TABLE analysis (
   track_id                 INT(10) UNSIGNED NOT NULL,
   program                  TEXT,
   command                  TEXT,
-  metasum                  CHAR(32) UNIQUE,
+  metasum                  CHAR(32),
   date                     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                   ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   

@@ -132,20 +132,6 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("analysis_id");
 
-=head1 UNIQUE CONSTRAINTS
-
-=head2 C<metasum>
-
-=over 4
-
-=item * L</metasum>
-
-=back
-
-=cut
-
-__PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
-
 =head1 RELATIONS
 
 =head2 analysis_description
@@ -184,8 +170,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iT6+wksPSS0LE1f4l96ZaQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-06-01 09:49:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2l8kwNxidum3w9MmMl1nkQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

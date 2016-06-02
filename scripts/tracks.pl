@@ -145,6 +145,9 @@ sub run_pipeline {
       # First sync
       `$beekeeper_cmd -sync &> $pipe_log`;
       
+      # Keep hive logs
+      $beekeeper_cmd .= " -hive_log_dir $opt->{pipeline_dir}/hive";
+      
       # RUN!
       `$beekeeper_cmd -run &> $pipe_log`;
       $logger->info("$beekeeper_cmd -run");
@@ -492,7 +495,7 @@ sub create_start_cmd {
   #####################################################################################################
   push @main_line, "-aligner $opt->{aligner}";
   push @main_line, '-bigwig 1';
-  push @main_line, "-hive_log_dir $opt->{pipeline_dir}/hive";
+  push @main_line, '-sort_memory 40000';
   return join(" ", @main_line);
 }
 

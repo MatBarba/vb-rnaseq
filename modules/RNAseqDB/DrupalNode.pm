@@ -14,6 +14,12 @@ use Data::Dumper;
 use Readonly;
 #use Try::Tiny;
 
+Readonly my $GROUP_PREFIX,  'RNAseq_group_';
+Readonly my $TRACK_PREFIX,  'RNAseq_track_';
+Readonly my $SOLR_CHILDREN, '_childDocuments_';
+Readonly my $PUBMED_ROOT,   'http://europepmc.org/abstract/MED/';
+Readonly my $SRA_URL_ROOT,   'http://www.ebi.ac.uk/ena/data/view/';
+
 sub _add_drupal_node_from_track {
   my ($self, $track_id) = @_;
   
@@ -145,25 +151,25 @@ sub get_track_groups {
     });
   DRU: for my $drupal ($groups->all) {
     my %group = (
-      title           => $drupal->manual_title // $drupal->autogen_title,
-      text            => $drupal->manual_text // $drupal->autogen_text,
-      drupal_node_id  => $drupal->drupal_node_id,
+      site            => 'General',
+      bundle          => 'Rna seq experiment',
+      id              => $GROUP_PREFIX . $drupal->drupal_id,
+      label           => $drupal->manual_title // $drupal->autogen_title,
+      description     => $drupal->manual_text // $drupal->autogen_text,
     );
     
-    my $drupal_tracks = $drupal->drupal_node_tracks;
-    
     # Get the data associated with every track
-    # We only want active tracks
-    next DRU if $drupal_tracks->all == 0;
+    my $drupal_tracks = $drupal->drupal_node_tracks;
     
     # Get the species data
     my $strain = $drupal_tracks->first->track->sra_tracks->first->run->sample->strain;
     my %species = (
-      production_name => $strain->production_name,
-      strain          => $strain->strain,
-      organism        => $strain->species->binomial_name,
+      strain   => $strain->strain,
+      species  => $strain->species->binomial_name,
+#      assembly => $strain->assembly,
     );
-    $group{taxonomy} = \%species;
+    %group = ( %group, %species );
+    my %publications;
     
     # Add the tracks data
     foreach my $drupal_track ($drupal_tracks->all) {
@@ -172,14 +178,14 @@ sub get_track_groups {
       my %track_data = (
         #title       => $track->title,
         #description => $track->description,
-        track_id    => $track->track_id,
+        id => $TRACK_PREFIX . $track->track_id,
       );
       
       foreach my $file ($track->files->all) {
         if ($file->type eq 'bigwig' or $file->type eq 'bam') {
           my @path = (
             $file->type, 
-            $species{production_name},
+            $strain->production_name,
             $file->path
           );
           unshift @path, $opt->{files_dir} if defined $opt->{files_dir};
@@ -207,35 +213,61 @@ sub get_track_groups {
         $private = 1 if $run_acc =~ /^VB/;
         
         # Associated publications
-        for my $study_pub ($run->experiment->study->study_publications->all) {
-          my $pub = $study_pub->publication;
-          my %publication = (
-            authors  => $pub->authors,
-            title    => $pub->title,
-            pubmed   => $pub->pubmed_id,
-            doi      => $pub->doi,
-          );
-          $group{publications}{ $pub->pubmed_id } = \%publication;
-        }
+        my @study_pubs = $run->experiment->study->study_publications->all;
+        my %track_publications = _format_publications(\@study_pubs);
+        %publications = (%publications, %track_publications);
       }
       my $accession_name = $private ? 'private_accessions' : 'sra_accessions';
-      $track_data{$accession_name} = {
-        runs => [sort keys %runs],
-        experiments => [sort keys %experiments],
-        studies => [sort keys %studies],
-        samples => [sort keys %samples],
-      };
+      my %accessions = (
+        run_accessions        => [sort keys %runs],
+        experiment_accessions => [sort keys %experiments],
+        study_accessions      => [sort keys %studies],
+        sample_accessions     => [sort keys %samples],
+      );
+      %track_data = (%track_data, %accessions);
+      if (not $private) {
+        my %accessions_urls = (
+          run_accessions_urls        => [map { $SRA_URL_ROOT . $_ } sort keys %runs],
+          experiment_accessions_urls => [map { $SRA_URL_ROOT . $_ } sort keys %experiments],
+          study_accessions_urls      => [map { $SRA_URL_ROOT . $_ } sort keys %studies],
+          sample_accessions_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %samples],
+        );
+        %track_data = (%track_data, %accessions_urls);
+      }
       
-      push @{$group{tracks}}, \%track_data;
+      # Add all collected publications
+      %group = (%group, %publications);
+      
+      push @{$group{$SOLR_CHILDREN}}, \%track_data;
     }
     
     push @groups, \%group;
-    #########
-    #last DRU;
-    #########
   }
   
   return \@groups;
+}
+
+sub _format_publications {
+  my ($study_pubs_aref) = @_;
+  
+  my %pub_links;
+  for my $study_pub (@$study_pubs_aref) {
+    my $pub     = $study_pub->publication;
+    my $authors = $pub->authors;
+    my $title   = sprintf "%s, %s (%d)", $pub->title, $authors, $pub->year;
+    my $url     = $PUBMED_ROOT . $pub->pubmed_id;
+    
+    $pub_links{ $title } = $url;
+  }
+  
+  my @titles = keys %pub_links;
+  my @urls   = map { $pub_links{$_} } @titles;
+  my %publications = (
+    publications      => \@titles,
+    publications_urls => \@urls,
+  );
+  
+  return %publications;
 }
 
 1;
@@ -285,6 +317,16 @@ This module is a role to interface the drupal_node part of the RNAseqDB::DB obje
   
     my $track_ids = [1, 2];
     my $drupal_ids = $rdb->get_drupal_id_from_track_id($track_ids);
+    
+=item get_track_groups()
+
+  function       : returns an array of groups of tracks.
+  arg[1]         : hash ref with key 'species' defined [optional] to filter groups by species
+  returntype     : ref array of hashes
+  
+  Usage:
+  
+    my $groups = $rdb->get_track_groups();
     
 =back
 

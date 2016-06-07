@@ -43,8 +43,11 @@ if (@$groups == 0) {
 
 if (defined $opt{output}) {
   open my $OUT, '>', $opt{output};
-  my $json = JSON->new->allow_nonref;
-  print $OUT $json->pretty->encode($groups) . "\n";
+  my $json = JSON->new;
+  $json->allow_nonref;  # Keep undef values as null
+  $json->canonical;     # order keys
+  $json->pretty;        # Beautify
+  print $OUT $json->encode($groups) . "\n";
   close $OUT;
 }
 

@@ -68,6 +68,9 @@ sub run_pipeline {
   
   # First, create the common init_pipeline command part
   my $start_cmd = create_start_cmd($opt);
+
+  # Don't reinit hivedb on the first run, but do it on the following runs
+  my $reinit_hivedb = '';
   
   # Align the tracks of every species in order
   SPECIES: foreach my $species (sort keys %$data) {
@@ -82,9 +85,6 @@ sub run_pipeline {
     my $track_cmds = create_track_cmds($species, $tracks, $opt);
     
     $logger->info(@$track_cmds . " pipeline sessions to run for $species");
-    
-    # Don't reinit hivedb on the first run, but do it on the following runs
-    my $reinit_hivedb = '';
     
     # Run the pipeline!
     SESSION: foreach my $track_cmd (@$track_cmds) {
@@ -126,14 +126,14 @@ sub run_pipeline {
           
           # Create the beekeeper commands
           $beekeeper_cmd = "beekeeper.pl -url $hive_url -reg_conf $opt{registry}";
+          $logger->info($pipe_log_msg);
           
           # Flag to rerun the current track when the previously unfinished one is completed
           $toredo = 1;
         } else {
-          $logger->error("A Hive DB already exists ($dbname), but I can't find its url. Aborting.");
           $logger->error($pipe_log_msg);
           $logger->error($init_msg);
-          die;
+          die "A Hive DB already exists ($dbname), but I can't find its url. Aborting.";
         }
       }
       else {

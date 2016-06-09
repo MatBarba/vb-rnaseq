@@ -78,6 +78,9 @@ sub usage {
     FILES OUTPUT
     --output <path>   : path to the output file
     
+    Other parameters:
+    -files_dir        : root dir to use for the files paths
+    
     Other:
     
     --help            : show this help message
@@ -99,6 +102,7 @@ sub opt_check {
     "db=s",
     "registry=s",
     "species=s",
+    "files_dir=s",
     "output=s",
     "help",
     "verbose",

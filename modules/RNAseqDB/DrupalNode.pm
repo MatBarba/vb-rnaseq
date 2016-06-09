@@ -152,7 +152,7 @@ sub get_track_groups {
   DRU: for my $drupal ($groups->all) {
     my %group = (
       site            => 'General',
-      bundle          => 'Rna seq experiment',
+      bundle_name     => 'Rna seq experiment',
       id              => $GROUP_PREFIX . $drupal->drupal_id,
       label           => $drupal->manual_title // $drupal->autogen_title,
       description     => $drupal->manual_text // $drupal->autogen_text,
@@ -164,8 +164,8 @@ sub get_track_groups {
     # Get the species data
     my $strain = $drupal_tracks->first->track->sra_tracks->first->run->sample->strain;
     my %species = (
-      strain   => $strain->strain,
       species  => $strain->species->binomial_name,
+      strain_s => $strain->strain,
 #      assembly => $strain->assembly,
     );
     %group = ( %group, %species );
@@ -181,17 +181,17 @@ sub get_track_groups {
         id => $TRACK_PREFIX . $track->track_id,
       );
       
-      foreach my $file ($track->files->all) {
-        if ($file->type eq 'bigwig' or $file->type eq 'bam') {
-          my @path = (
-            $file->type, 
-            $strain->production_name,
-            $file->path
-          );
-          unshift @path, $opt->{files_dir} if defined $opt->{files_dir};
-          $track_data{files}{$file->type} = join '/', @path;
-        }
-      }
+#      foreach my $file ($track->files->all) {
+#        if ($file->type eq 'bigwig' or $file->type eq 'bam') {
+#          my @path = (
+#            $file->type, 
+#            $strain->production_name,
+#            $file->path
+#          );
+#          unshift @path, $opt->{files_dir} if defined $opt->{files_dir};
+#          $track_data{$file->type . '_s'} = join '/', @path;
+#        }
+#      }
       
       # Get the SRA accessions
       my (%runs, %experiments, %studies, %samples);
@@ -219,18 +219,18 @@ sub get_track_groups {
       }
       my $accession_name = $private ? 'private_accessions' : 'sra_accessions';
       my %accessions = (
-        run_accessions        => [sort keys %runs],
-        experiment_accessions => [sort keys %experiments],
-        study_accessions      => [sort keys %studies],
-        sample_accessions     => [sort keys %samples],
+        run_accessions_ss        => [sort keys %runs],
+        experiment_accessions_ss => [sort keys %experiments],
+        study_accessions_ss      => [sort keys %studies],
+        sample_accessions_ss     => [sort keys %samples],
       );
       %track_data = (%track_data, %accessions);
       if (not $private) {
         my %accessions_urls = (
-          run_accessions_urls        => [map { $SRA_URL_ROOT . $_ } sort keys %runs],
-          experiment_accessions_urls => [map { $SRA_URL_ROOT . $_ } sort keys %experiments],
-          study_accessions_urls      => [map { $SRA_URL_ROOT . $_ } sort keys %studies],
-          sample_accessions_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %samples],
+          run_accessions_ss_urls        => [map { $SRA_URL_ROOT . $_ } sort keys %runs],
+          experiment_accessions_ss_urls => [map { $SRA_URL_ROOT . $_ } sort keys %experiments],
+          study_accessions_ss_urls      => [map { $SRA_URL_ROOT . $_ } sort keys %studies],
+          sample_accessions_ss_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %samples],
         );
         %track_data = (%track_data, %accessions_urls);
       }
@@ -263,8 +263,8 @@ sub _format_publications {
   my @titles = keys %pub_links;
   my @urls   = map { $pub_links{$_} } @titles;
   my %publications = (
-    publications      => \@titles,
-    publications_urls => \@urls,
+    publications_ss      => \@titles,
+    publications_ss_urls => \@urls,
   );
   
   return %publications;

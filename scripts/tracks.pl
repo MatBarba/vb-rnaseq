@@ -224,6 +224,7 @@ sub copy_files {
   my ($species, $opt) = @_;
   
   my $res_dir  = "$opt->{results_dir}/$opt->{aligner}/$species";
+  return if not -e $res_dir;
   my $big_dir  = "$opt->{final_dir}/bigwig/$species";
   my $bam_dir  = "$opt->{final_dir}/bam/$species";
   my $json_dir = "$opt->{final_dir}/cmds/$species";
@@ -234,6 +235,7 @@ sub copy_files {
   
   # Prepare the list of files to copy
   opendir(my $res_dh, $res_dir);
+  
   my @res_files = readdir $res_dh;
   my @big_files  = grep { /\.bw$/         } @res_files;
   my @bam_files  = grep { /\.bam$/        } @res_files;
@@ -494,8 +496,9 @@ sub create_start_cmd {
   push @main_line, "-results_dir $opt->{results_dir}";
   #####################################################################################################
   push @main_line, "-aligner $opt->{aligner}";
+  push @main_line, '-run_mode local' if $opt->{aligner} eq 'bowtie2';
   push @main_line, '-bigwig 1';
-  push @main_line, '-sort_memory 40000';
+  push @main_line, '-threads 8';
   return join(" ", @main_line);
 }
 

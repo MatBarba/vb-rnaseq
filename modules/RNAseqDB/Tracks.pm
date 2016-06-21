@@ -315,7 +315,7 @@ sub add_track_results {
 
 sub _add_commands {
   my $self = shift;
-  my ($track_id, $commands) = @_;
+  my ($track_id, $commands, $version) = @_;
   
   # First, check that there is no command for this track already
   my $cmd_req = $self->resultset('Analysis')->search({
@@ -330,16 +330,32 @@ sub _add_commands {
   }
   
   # Add the commands!
+  my @commands = map { split /\s*;\s*/ } @cmds;
   for my $command (@$commands) {
-    my $program;
+    my $desc = $self->_guess_analysis_program($command);
     my $cmd = $self->resultset('Analysis')->create({
-        track_id => $track_id,
-        command  => $command,
-        program  => $program
+        track_id                => $track_id,
+        command                 => $command,
+        analysis_description_id => $desc->{analysis_description_id},
+        version                 => ($desc->{type} and $desc->{type} eq 'aligner' and defined $version) ? $version : undef
       });
   }
   
   return 1;
+}
+
+sub _guess_analysis_program {
+  my $self = shift;
+  my ($command) = @_;
+  
+  my @descriptions;
+  
+  foreach my $desc (@descriptions) {
+    if ($command =~ /$desc->{pattern}/) {
+      return $desc;
+    }
+  }
+  return;
 }
 
 sub _add_files {

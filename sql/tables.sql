@@ -420,6 +420,8 @@ CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
 @column analysis_description_id  Analysis id (primary key, internal identifier).
 @column name                     Name of the analysis.
 @column description              Description of the analysis.
+@column type                     What kind of operation is performed.
+@column pattern                  Regexp to recognize the program from the command.
 @column metasum                  Checksum of @name + @description.
 @column date                     Entry timestamp.
 @column status                   Active (True) or retired (False) row.
@@ -430,6 +432,8 @@ CREATE TABLE analysis_description (
   analysis_description_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   name                        VARCHAR(32) UNIQUE,
   description                 TEXT,
+  type                        enum('aligner', 'indexer', 'converter', 'modifier', 'analyser'),
+  pattern                     TEXT,
   metasum                     CHAR(32) UNIQUE,
   date                        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                      ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
@@ -438,10 +442,23 @@ CREATE TABLE analysis_description (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_description_md5_upd_tr BEFORE UPDATE ON analysis_description
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description, NEW.type, NEW.pattern) );
 CREATE TRIGGER analysis_description_md5_ins_tr BEFORE INSERT ON analysis_description
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description, NEW.type, NEW.pattern) );
 
+INSERT INTO analysis_description (type, name, description, pattern) VALUES
+  ('aligner',   'bowtie2',     'Bowtie2 aligner',                     '^bowtie2'),
+  ('aligner',   'bwa',         'Bwa aligner',                         '^bwa'),
+  ('aligner',   'star',        'STAR aligner',                        '^star'),
+  ('aligner',   'hisat2',      'Hisat2 aligner',                      '^hisat2'),
+  ('indexer',   'bam_index',   'Bam index with samtools',             '^samtools index'),
+  ('converter', 'sam2bam',     'Convert file from SAM to BAM format', '^samtools view -bS'),
+  ('converter', 'bam2wig',     'Convert BAM to coverage file WIG',    '^bedtools genomecov'),
+  ('converter', 'wig2bigwig',  'Convert WIG to BIGWIG',               '^wigToBigWig'),
+  ('modifier',  'bam_merge',   'Merge BAM files',                     '^samtools merge'),
+  ('modifier',  'bam_sort',    'Sort a BAM file',                     '^samtools sort')
+;
+  
 /**
 
 @table analysis
@@ -450,7 +467,7 @@ CREATE TRIGGER analysis_description_md5_ins_tr BEFORE INSERT ON analysis_descrip
 @column analysis_id              Analysis parameters id (primary key, internal identifier).
 @column analysis_description_id  Analysis description primary id (foreigh key).
 @column track_id                 Track primary id (foreign key).
-@column program                  Name of the Program used.
+@column version                  Version of the program used.
 @column command                  Complete command line parameters used.
 @column metasum                  Checksum of @program + @parameters.
 @column date                     Entry timestamp.
@@ -462,7 +479,7 @@ CREATE TABLE analysis (
   analysis_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   analysis_description_id  INT(10) UNSIGNED,
   track_id                 INT(10) UNSIGNED NOT NULL,
-  program                  TEXT,
+  version                  TEXT,
   command                  TEXT,
   metasum                  CHAR(32),
   date                     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -477,9 +494,9 @@ CREATE TABLE analysis (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.command) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.version, NEW.command) );
 CREATE TRIGGER analysis_md5_ins_tr BEFORE INSERT ON analysis
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.program, NEW.command) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.version, NEW.command) );
 
 
 /**

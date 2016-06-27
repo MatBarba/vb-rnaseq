@@ -78,16 +78,18 @@ sub get_new_runs_tracks {
   my $self = shift;
   my ($species) = @_;
   
-  my $track_req = $self->resultset('SraTrack')->search({
-      'track.status'  => 'ACTIVE',
-    },
+  my $search_href = {
+    'track.status' => 'ACTIVE',
+  };
+  $search_href->{'strain.production_name'} = $species if defined $species;
+  
+  my $track_req = $self->resultset('SraTrack')->search(
+    $search_href,
     {
     prefetch    => [ 'track', { 'run' => { 'sample' => { 'strain' => 'species' } } } ],
   });
   
   my @res_tracks = $track_req->all;
-  
-  #$track_req->result_class('DBIx::Class::ResultClass::HashRefInflator');
   
   if (defined $species) {
     @res_tracks = grep { $_->run->sample->strain->production_name eq $species } @res_tracks;
@@ -110,6 +112,7 @@ sub get_new_runs_tracks {
       $logger->debug("The track $track_id already has files: no need to align");
     }
     else {
+      $logger->debug("The track $track_id has no files: to align");
       # Is this a private data? In that case, get the fastq files
       if (defined $track->run->run_private_acc) {
         my $fastq_req = $self->resultset('PrivateFile')->search({

@@ -225,10 +225,12 @@ sub copy_files {
   
   my $res_dir  = "$opt->{results_dir}/$opt->{aligner}/$species";
   return if not -e $res_dir;
+  my $ini_dir  = "$opt->{final_dir}/ini/$species";
   my $big_dir  = "$opt->{final_dir}/bigwig/$species";
   my $bam_dir  = "$opt->{final_dir}/bam/$species";
   my $json_dir = "$opt->{final_dir}/cmds/$species";
   
+  make_path $ini_dir  if not -d $ini_dir;
   make_path $big_dir  if not -d $big_dir;
   make_path $bam_dir  if not -d $bam_dir;
   make_path $json_dir if not -d $json_dir;
@@ -237,12 +239,15 @@ sub copy_files {
   opendir(my $res_dh, $res_dir);
   
   my @res_files = readdir $res_dh;
+  closedir $res_dh;
+  my @ini_files  = grep { /\.ini$/        } @res_files;
   my @big_files  = grep { /\.bw$/         } @res_files;
   my @bam_files  = grep { /\.bam$/        } @res_files;
   my @json_files = grep { /\.cmds\.json$/ } @res_files;
   
   # Copy bigwig, bam file and index, and json cmds (As long as the files do not already exist!)
   $logger->info("Copy files from $species in the final dir $opt->{final_dir}... ");
+  map { copy "$res_dir/$_",        "$ini_dir/$_"        if not -s "$ini_dir/$_"        } @ini_files;
   map { copy "$res_dir/$_",        "$big_dir/$_"        if not -s "$big_dir/$_"        } @big_files;
   map { copy "$res_dir/$_",        "$bam_dir/$_"        if not -s "$bam_dir/$_"        } @bam_files;
   map { copy "$res_dir/$_".'.bai', "$bam_dir/$_".'.bai' if not -s "$bam_dir/$_".'.bai' } @bam_files;
@@ -253,6 +258,7 @@ sub copy_files {
   chmod 0444, glob "$bam_dir/*.bam";
   chmod 0444, glob "$bam_dir/*.bai";
   chmod 0444, glob "$json_dir/*.cmds.json";
+  chmod 0444, glob "$ini_dir/*.ini";
   
   $logger->info("done");
   

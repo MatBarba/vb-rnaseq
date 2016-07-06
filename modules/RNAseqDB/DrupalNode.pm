@@ -134,7 +134,7 @@ sub get_track_groups {
         drupal_node_tracks => {
           track => [
             'files',
-            'analyses',
+            { analyses => 'analysis_description' },
             {
               'sra_tracks' => {
                 run => [
@@ -194,6 +194,9 @@ sub get_track_groups {
           $track_data{$file->type . '_s'} = ''.$file->path;
           $track_data{type} = $file->type;
           $track_data{type} =~ s/bigwig/bigWig/;
+          
+          # Define aligner
+          $track_data{aligner} = _determine_aligner($track->analyses);
         }
       }
       
@@ -249,6 +252,20 @@ sub get_track_groups {
   }
   
   return \@groups;
+}
+
+sub _determine_aligner {
+  my ($analyses) = @_;
+  
+  my @alignments = grep { $_->analysis_description->type eq 'aligner' } @$analyses;
+  
+  if (@alignments == 1) {
+    my $aligner = $alignments[0]->analysis_description->name;
+    my $version = $alignments[0]->version;
+    return "$aligner $version";
+  } else {
+    return "(undefined aligner)";
+  }
 }
 
 sub _format_publications {

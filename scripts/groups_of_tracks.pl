@@ -70,7 +70,7 @@ if (defined $opt{output}) {
 sub create_trackhubs {
   my ($groups, $dir) = @_;
   
-  for my $group (@$groups) {
+  GROUP: for my $group (@$groups) {
     # Create the TrackHub
     my $hub = EGTH::TrackHub->new(
       id          => $group->{id},
@@ -87,7 +87,11 @@ sub create_trackhubs {
     
     # Add all tracks to the genome
     my @hub_tracks;
-    for my $track (@{ $group->{_childDocuments_} }) {
+    TRACK: for my $track (@{ $group->{_childDocuments_} }) {
+      if (not $track->{bigwig_url}) {
+        warn "No bigwig file for this track $track->{id}";
+        next TRACK;
+      }
       my $hub_track = EGTH::TrackHub::Track->new(
         track => $track->{id},
         shortLabel => $track->{id},
@@ -99,7 +103,10 @@ sub create_trackhubs {
       push @hub_tracks, $hub_track;
     }
     
-    if (@hub_tracks == 1) {
+    if (@hub_tracks == 0) {
+      carp "No track can be used for this group $group->{id}: skip";
+      next GROUP;
+    } elsif (@hub_tracks == 1) {
       $genome->add_track($hub_tracks[0]);
     } else {
       # Put all that in a supertrack

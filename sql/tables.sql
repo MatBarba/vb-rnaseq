@@ -44,6 +44,7 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 @column species_id              Species primary key (foreign key).
 @column production_name         Production name for this strain (species + strain).
 @column strain                  Name of the strain.
+@column assembly                Version of the assembly.
 @column metasum                 Checksum of @production_name + @strain.
 @column date                    Entry timestamp.
 @column status                  Active (True) or retired (False) row.
@@ -55,6 +56,7 @@ CREATE TABLE strain (
   species_id                INT(10) UNSIGNED NOT NULL,
   production_name           VARCHAR(64) NOT NULL,
   strain                    VARCHAR(32),
+  assembly                  VARCHAR(32),
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
@@ -65,9 +67,9 @@ CREATE TABLE strain (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly) );
 CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly) );
 
     
 CREATE VIEW taxonomy AS
@@ -314,6 +316,7 @@ CREATE TRIGGER private_file_md5_ins_tr BEFORE INSERT ON private_file
 @column description            Description of the track in E! genome browser.
 @column merge_level            Merge level for the set of runs for the pipeline.
 @column merge_id               Merge id generated for this track.
+@column merge_text             Merge text (text used to create the merge_id hash).
 @column metasum                Checksum of @title + @description.
 @column date                   Entry timestamp.
 @column status                 Active (True) or retired (False) row.
@@ -326,6 +329,7 @@ CREATE TABLE track (
   description           TEXT,
   merge_level           ENUM('taxon', 'study', 'experiment', 'run', 'sample'),
   merge_id              VARCHAR(256) UNIQUE,
+  merge_text            TEXT,
   metasum               CHAR(32),
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED', 'MERGED') DEFAULT 'ACTIVE',
@@ -334,9 +338,9 @@ CREATE TABLE track (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description, NEW.merge_id, NEW.merge_text) );
 CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description, NEW.merge_id, NEW.merge_text) );
 
 /**
 @table sra_track
@@ -447,11 +451,12 @@ CREATE TRIGGER analysis_description_md5_ins_tr BEFORE INSERT ON analysis_descrip
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.name, NEW.description, NEW.type, NEW.pattern) );
 
 INSERT INTO analysis_description (type, name, description, pattern) VALUES
-  ('aligner',   'bowtie2',     'Bowtie2 aligner',                     '^bowtie2'),
-  ('aligner',   'bwa',         'Bwa aligner',                         '^bwa'),
-  ('aligner',   'star',        'STAR aligner',                        '^star'),
-  ('aligner',   'hisat2',      'Hisat2 aligner',                      '^hisat2'),
+  ('aligner',   'bowtie2',     'Bowtie2 aligner',                     '^bowtie2 '),
+  ('aligner',   'bwa',         'Bwa aligner',                         '^bwa '),
+  ('aligner',   'star',        'STAR aligner',                        '^star '),
+  ('aligner',   'hisat2',      'Hisat2 aligner',                      '^hisat2 '),
   ('indexer',   'bam_index',   'Bam index with samtools',             '^samtools index'),
+  ('indexer',   'hisat2_build ',   'Hisat2 index builder',             '^hisat2-build'),
   ('converter', 'sam2bam',     'Convert file from SAM to BAM format', '^samtools view -bS'),
   ('converter', 'bam2wig',     'Convert BAM to coverage file WIG',    '^bedtools genomecov'),
   ('converter', 'wig2bigwig',  'Convert WIG to BIGWIG',               '^wigToBigWig'),
@@ -689,6 +694,7 @@ CREATE VIEW sra_to_track AS
     track.status AS track_status,
     merge_level,
     merge_id,
+    merge_text,
     production_name
   FROM
     study

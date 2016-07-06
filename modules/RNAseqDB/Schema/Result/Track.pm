@@ -52,6 +52,11 @@ __PACKAGE__->table("track");
   is_nullable: 1
   size: 256
 
+=head2 merge_text
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 metasum
 
   data_type: 'char'
@@ -94,6 +99,8 @@ __PACKAGE__->add_columns(
   },
   "merge_id",
   { data_type => "varchar", is_nullable => 1, size => 256 },
+  "merge_text",
+  { data_type => "text", is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -201,8 +208,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-16 11:34:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WAim73oQkKJ1+XHuuLvk7w
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-06 17:19:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sC7X9CigkIq4izwVwMReFw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -49,6 +49,12 @@ __PACKAGE__->table("strain");
   is_nullable: 1
   size: 32
 
+=head2 assembly
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 32
+
 =head2 metasum
 
   data_type: 'char'
@@ -89,6 +95,8 @@ __PACKAGE__->add_columns(
   "production_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "strain",
+  { data_type => "varchar", is_nullable => 1, size => 32 },
+  "assembly",
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
@@ -167,8 +175,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3rSncgOex0m6rqnh9pGeJQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-06 16:08:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ykyx4fBQZMHvVdyaC9BaPA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

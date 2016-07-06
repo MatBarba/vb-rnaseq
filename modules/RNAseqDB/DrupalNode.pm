@@ -167,7 +167,7 @@ sub get_track_groups {
     my %species = (
       species  => $strain->species->binomial_name,
       strain_s => $strain->strain,
-#      assembly => $strain->assembly,
+      assembly => $strain->assembly,
     );
     %group = ( %group, %species );
     my %publications;
@@ -255,9 +255,9 @@ sub get_track_groups {
 }
 
 sub _determine_aligner {
-  my ($analyses) = @_;
+  my @analyses = @_;
   
-  my @alignments = grep { $_->analysis_description->type eq 'aligner' } @$analyses;
+  my @alignments = grep { $_->analysis_description->type eq 'aligner' } @analyses;
   
   if (@alignments == 1) {
     my $aligner = $alignments[0]->analysis_description->name;

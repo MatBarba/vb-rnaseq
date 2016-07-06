@@ -33,6 +33,7 @@ if ($opt{production_name} and $opt{taxon_id}) {
     binomial_name   => $opt{binomial_name},
     taxon_id        => $opt{taxon_id},
     strain          => $opt{strain},
+    assembly        => $opt{assembly},
   };
   my $added = $db->add_species( $species );
   $species_added += $added;
@@ -64,7 +65,8 @@ sub get_species_from_file {
       binomial_name   => $elts[0],
       production_name => $elts[1],
       taxon_id        => $elts[2],
-      strain          => $elts[3] ? $elts[3] : '',
+      strain          => $elts[3],
+      assembly        => $elts[4],
     );
     push @species_list, \%species;
   }

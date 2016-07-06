@@ -124,6 +124,11 @@ __PACKAGE__->table("sra_to_track");
   is_nullable: 1
   size: 256
 
+=head2 merge_text
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 production_name
 
   data_type: 'varchar'
@@ -189,13 +194,15 @@ __PACKAGE__->add_columns(
   },
   "merge_id",
   { data_type => "varchar", is_nullable => 1, size => 256 },
+  "merge_text",
+  { data_type => "text", is_nullable => 1 },
   "production_name",
   { data_type => "varchar", is_nullable => 1, size => 64 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-16 11:50:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BQlb/l11mlLpzX5IoC0bDA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-06 17:19:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:91GGO9oz7Irye9709lv7tg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

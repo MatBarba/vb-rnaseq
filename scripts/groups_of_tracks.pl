@@ -80,7 +80,6 @@ sub create_trackhubs {
     $hub->root_dir( $dir );
     
     # Create the associated genome
-    $group->{assembly} = $group->{species}; # WARNING: NEED TO ACTUALLY RETRIEVE THE ASSEMBLY HERE!!!
     my $genome = EGTH::TrackHub::Genome->new(
       id      => $group->{assembly},
     );
@@ -97,7 +96,7 @@ sub create_trackhubs {
         shortLabel => $track->{id},
         longLabel => $track->{id},
         bigDataUrl  => $track->{bigwig_url},
-        visibility  => 'pack',
+        visibility  => 'all',
       );
       
       push @hub_tracks, $hub_track;

@@ -5,6 +5,7 @@ use Moose::Role;
 
 use strict;
 use warnings;
+use Carp;
 use Log::Log4perl qw( :easy );
 use List::MoreUtils qw(uniq);
 use File::Spec;
@@ -244,11 +245,12 @@ sub _compute_track_level {
   }
   
   # Hash the merge_id if it contains several identifiers
+  my $merge_text = $merge_id;
   if ($merge_id =~ /_/) {
     $merge_id = 'merged_' . md5_hex($merge_id);
   }
   
-  return ($merge_level, $merge_id);
+  return ($merge_level, $merge_id, $merge_text);
 }
 
 sub regenerate_merge_ids {
@@ -267,13 +269,14 @@ sub regenerate_merge_ids {
   my @track_ids = $track_data->get_column('track_id')->all;
   
   for my $track_id (@track_ids) {
-    my ($merge_level, $merge_id) = $self->_compute_track_level($track_id);
+    my ($merge_level, $merge_id, $merge_text) = $self->_compute_track_level($track_id);
     
     my $track_update = $self->resultset('Track')->search({
         track_id  => $track_id,
       })->update({
         merge_level => $merge_level,
-        merge_id => $merge_id,
+        merge_id    => $merge_id,
+        merge_text  => $merge_text,
     });
   }
   
@@ -337,11 +340,18 @@ sub _add_commands {
   my @commands = map { split /\s*;\s*/ } @cmds;
   for my $command (@$commands) {
     my $desc = $self->_guess_analysis_program($command);
+    my ($an_id, $an_version);
+    if (not $desc) {
+      carp "No analysis description found for command $command";
+    } else {
+      $an_id   = $desc->analysis_description_id;
+      $an_version = $version if ($desc->type eq 'aligner' and defined $version),
+    }
     my $cmd = $self->resultset('Analysis')->create({
         track_id                => $track_id,
         command                 => $command,
-        analysis_description_id => $desc->analysis_description_id,
-        version                 => ($desc and $desc->type eq 'aligner' and defined $version) ? $version : undef
+        analysis_description_id => $an_id,
+        version                 => $an_version
       });
   }
   

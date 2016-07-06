@@ -1,6 +1,6 @@
+package RNAseqDB::Tracks;
 use 5.10.0;
 use utf8;
-package RNAseqDB::Tracks;
 use Moose::Role;
 
 use strict;
@@ -11,6 +11,7 @@ use File::Spec;
 use Digest::MD5::File qw(file_md5_hex);
 use Digest::MD5 qw(md5_hex);
 use Try::Tiny;
+use Memoize;
 
 my $logger = get_logger();
 use Data::Dumper;
@@ -301,12 +302,12 @@ sub get_track_id_from_merge_id {
 
 sub add_track_results {
   my $self = shift;
-  my ($track_id, $commands, $files) = @_;
+  my ($track_id, $commands, $files, $version) = @_;
   
   $logger->debug("Add data for track $track_id");
   
   # Add commands
-  my $cmds_ok = $self->_add_commands($track_id, $commands);
+  my $cmds_ok = $self->_add_commands($track_id, $commands, $version);
   return if not $cmds_ok;
   
   # Add files
@@ -339,8 +340,8 @@ sub _add_commands {
     my $cmd = $self->resultset('Analysis')->create({
         track_id                => $track_id,
         command                 => $command,
-        analysis_description_id => $desc->{analysis_description_id},
-        version                 => ($desc->{type} and $desc->{type} eq 'aligner' and defined $version) ? $version : undef
+        analysis_description_id => $desc->analysis_description_id,
+        version                 => ($desc and $desc->type eq 'aligner' and defined $version) ? $version : undef
       });
   }
   
@@ -351,14 +352,25 @@ sub _guess_analysis_program {
   my $self = shift;
   my ($command) = @_;
   
-  my @descriptions;
+  my @descriptions = $self->_load_analysis_descriptions;
   
   foreach my $desc (@descriptions) {
-    if ($command =~ /$desc->{pattern}/) {
+    my $pattern = $desc->pattern;
+    if ($command =~ /$pattern/) {
       return $desc;
     }
   }
   return;
+}
+
+#memoize('_load_analysis_descriptions');
+sub _load_analysis_descriptions {
+  my $self = shift;
+  
+  my $req = $self->resultset('AnalysisDescription');
+  my @descriptions = $req->all;
+  
+  return @descriptions;
 }
 
 sub _add_files {

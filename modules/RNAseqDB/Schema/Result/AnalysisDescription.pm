@@ -41,6 +41,17 @@ __PACKAGE__->table("analysis_description");
   data_type: 'text'
   is_nullable: 1
 
+=head2 type
+
+  data_type: 'enum'
+  extra: {list => ["aligner","indexer","converter","modifier","analyser"]}
+  is_nullable: 1
+
+=head2 pattern
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 metasum
 
   data_type: 'char'
@@ -74,6 +85,16 @@ __PACKAGE__->add_columns(
   "name",
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "description",
+  { data_type => "text", is_nullable => 1 },
+  "type",
+  {
+    data_type => "enum",
+    extra => {
+      list => ["aligner", "indexer", "converter", "modifier", "analyser"],
+    },
+    is_nullable => 1,
+  },
+  "pattern",
   { data_type => "text", is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
@@ -151,8 +172,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-11 16:34:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NQ2J0h+0iA+2KalyxtdplQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-06 10:40:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DRJpTkew5Ay/vTmoerrJqw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

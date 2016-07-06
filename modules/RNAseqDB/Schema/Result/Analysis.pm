@@ -44,7 +44,7 @@ __PACKAGE__->table("analysis");
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 program
+=head2 version
 
   data_type: 'text'
   is_nullable: 1
@@ -98,7 +98,7 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "program",
+  "version",
   { data_type => "text", is_nullable => 1 },
   "command",
   { data_type => "text", is_nullable => 1 },
@@ -170,8 +170,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-06-01 09:49:20
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2l8kwNxidum3w9MmMl1nkQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-06 10:40:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Oe5+pm7JVHWzEY4kMzPiSg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

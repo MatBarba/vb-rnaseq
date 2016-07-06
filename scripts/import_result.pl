@@ -65,9 +65,10 @@ sub add_tracks_results {
       # Only keep the file names, not the whole path
       @files   = map { remove_paths($_) } @files;
       my @cmds = map { remove_paths($_) } @{$track_data->{cmds}};
+      my $version = $track_data->{aligner_version};
       
       # Add those data to the database
-      $db->add_track_results($track_id, \@cmds, \@files);
+      $db->add_track_results($track_id, \@cmds, \@files, $version);
     }
     else {
       $logger->warn("Can't match the merge_id to a track_id in the database ($merge_id)");

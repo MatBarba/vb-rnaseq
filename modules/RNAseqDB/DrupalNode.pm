@@ -8,6 +8,7 @@ use warnings;
 #use JSON;
 #use Perl6::Slurp;
 use Log::Log4perl qw( :easy );
+use File::Spec;
 
 my $logger = get_logger();
 use Data::Dumper;
@@ -181,17 +182,20 @@ sub get_track_groups {
         id => $TRACK_PREFIX . $track->track_id,
       );
       
-#      foreach my $file ($track->files->all) {
-#        if ($file->type eq 'bigwig' or $file->type eq 'bam') {
-#          my @path = (
-#            $file->type, 
-#            $strain->production_name,
-#            $file->path
-#          );
-#          unshift @path, $opt->{files_dir} if defined $opt->{files_dir};
-#          $track_data{$file->type . '_s'} = join '/', @path;
-#        }
-#      }
+      foreach my $file ($track->files->all) {
+        if ($file->type eq 'bigwig' or $file->type eq 'bam') {
+          my @path = (
+            $file->type, 
+            $strain->production_name,
+            $file->path
+          );
+          unshift @path, $opt->{files_dir} if defined $opt->{files_dir};
+          $track_data{$file->type . '_url'} = ''. join '/', @path;
+          $track_data{$file->type . '_s'} = ''.$file->path;
+          $track_data{type} = $file->type;
+          $track_data{type} =~ s/bigwig/bigWig/;
+        }
+      }
       
       # Get the SRA accessions
       my (%runs, %experiments, %studies, %samples);

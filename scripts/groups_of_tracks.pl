@@ -100,11 +100,12 @@ sub create_trackhubs {
       }
       
       my $hub_track = EGTH::TrackHub::Track->new(
-        track => $track->{id},
-        shortLabel => $track->{title} // $track->{id},
-        longLabel => $track->{description} // $track->{id},
+        track       => $track->{id},
+        shortLabel  => $track->{title} // $track->{id},
+        longLabel   => $track->{description} // $track->{id},
         bigDataUrl  => $bigwig->{url},
-        visibility  => 'all',
+        type        => 'bigwig',
+        visibility  => 'wiggle',
       );
       
       push @hub_tracks, $hub_track;

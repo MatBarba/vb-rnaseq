@@ -56,7 +56,7 @@ if (defined $opt{output}) {
   close $OUT;
   
 } elsif (defined $opt{hub_root}) {
-  my $groups = $db->get_track_groups_for_solr({
+  my $groups = $db->get_track_groups({
       species     => $opt{species},
       files_dir   => $opt{files_dir},
     });
@@ -78,7 +78,10 @@ sub create_trackhubs {
       shortLabel  => $group->{label} // $group->{id},
       longLabel   => $group->{description} // $group->{label} // $group->{id},
     );
-    $hub->root_dir( $dir );
+    
+    my $species_dir = $dir . '/' . $group->{production_name};
+    make_path $species_dir;
+    $hub->root_dir( $species_dir );
     
     # Create the associated genome
     my $genome = EGTH::TrackHub::Genome->new(
@@ -87,16 +90,20 @@ sub create_trackhubs {
     
     # Add all tracks to the genome
     my @hub_tracks;
-    TRACK: for my $track (@{ $group->{_childDocuments_} }) {
-      if (not $track->{bigwig_url}) {
+    TRACK: for my $track (@{ $group->{tracks} }) {
+      # Get the bigwig file
+      my $bigwig = get_bigwig($track);
+      
+      if (not $bigwig) {
         warn "No bigwig file for this track $track->{id}";
         next TRACK;
       }
+      
       my $hub_track = EGTH::TrackHub::Track->new(
         track => $track->{id},
-        shortLabel => $track->{id},
-        longLabel => $track->{id},
-        bigDataUrl  => $track->{bigwig_url},
+        shortLabel => $track->{title} // $track->{id},
+        longLabel => $track->{description} // $track->{id},
+        bigDataUrl  => $bigwig->{url},
         visibility  => 'all',
       );
       
@@ -119,6 +126,17 @@ sub create_trackhubs {
     # And create the trackhub files
     $hub->create_files;
   }
+}
+
+sub get_bigwig {
+  my ($track) = @_;
+  
+  for my $file (@{ $track->{files} }) {
+    if ($file->{type} eq 'bigwig') {
+      return $file;
+    }
+  }
+  return;
 }
 
 ###############################################################################

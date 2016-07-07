@@ -104,8 +104,8 @@ sub create_trackhubs {
         shortLabel  => $track->{title} // $track->{id},
         longLabel   => $track->{description} // $track->{id},
         bigDataUrl  => $bigwig->{url},
-        type        => 'bigwig',
-        visibility  => 'wiggle',
+        type        => 'bigWig',
+        visibility  => 'full',
       );
       
       push @hub_tracks, $hub_track;

@@ -209,9 +209,33 @@ sub get_track_groups {
     foreach my $drupal_track ($drupal_tracks->all) {
       my $track = $drupal_track->track;
       
+      # Define title
+      my $title = $track->title;
+      if (not $title) {
+        my $merge = $track->merge_text;
+        
+        if ($merge =~ /_/) {
+          my ($first) = split /_/, $merge;
+          $title = "Merged_$first-...";
+        } else {
+          $title = $merge;
+        }
+      }
+      
+      # Define description
+      my $description = $track->description;
+      if (not $description) {
+        my $merge = $track->merge_text;
+        if ($merge =~ s/_/, /g) {
+          $description = "Merged RNA-seq data from: $merge";
+        } else {
+          $description = "RNA-seq data from $merge";
+        }
+      }
+      
       my %track_data = (
-        title       => $track->title,
-        description => $track->description,
+        title       => $title,
+        description => $description,
         id          => $TRACK_PREFIX . $track->track_id,
       );
       

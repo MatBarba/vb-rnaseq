@@ -116,11 +116,181 @@ sub update_drupal_node {
   })->update($node_content);
 }
 
+sub get_track_groups_for_solr {
+  my $self = shift;
+  my ($opt) = @_;
+  
+  my $groups = $self->get_track_groups($opt);
+  
+  my @solr_groups;
+  
+  # Alter the structure and names to create a valid Solr json for indexing
+  for my $group (@$groups) {
+    my %solr_group = (
+      id                   => $group->{id},
+      label                => $group->{label},
+      description          => $group->{description},
+      species              => $group->{species},
+      strain_s             => $group->{strain},
+      assembly             => $group->{assembly},
+      site                 => 'General',
+      bundle_name          => 'Rna seq experiment',
+      publications_ss      => $group->{publications},
+      publications_ss_urls => $group->{publications_urls},
+    );
+    
+    foreach my $track (@{ $group->{tracks} }) {
+      my %solr_track = (
+        id                            => $track->{id},
+        aligner                       => $track->{aligner},
+        
+        run_accessions_ss             => $track->{runs},
+        experiment_accessions_ss      => $track->{experiments},
+        study_accessions_ss           => $track->{studies},
+        sample_accessions_ss          => $track->{samples},
+      );
+        
+      $solr_track{run_accessions_ss_urls} = $track->{runs_urls} if $track->{runs_urls};
+      $solr_track{experiment_accessions_ss_urls} = $track->{experiments_urls} if $track->{experiments_urls};
+      $solr_track{study_accessions_ss_urls} = $track->{studies_urls} if $track->{studies_urls};
+      $solr_track{sample_accessions_ss_urls} = $track->{samples_urls} if $track->{samples_urls};
+      
+      # Add associated files
+      for my $file (@{ $track->{files} }) {
+        if ($file->{type} eq 'bigwig') {
+          $solr_track{bigwig_s} = $file->{name};
+          $solr_track{bigwig_s_url} = $file->{url};
+        }
+        elsif ($file->{type} eq 'bam') {
+          $solr_track{bam_s} = $file->{name};
+          $solr_track{bam_s_url} = $file->{url};
+        }
+      }
+      
+      push @{ $solr_group{$SOLR_CHILDREN} }, \%solr_track;
+    }
+    
+    push @solr_groups, \%solr_group;
+  }
+  
+  return \@solr_groups;
+}
+ 
 sub get_track_groups {
   my $self = shift;
   my ($opt) = @_;
   
   my @groups;
+  
+  my $drupal_groups = $self->_get_drupal_groups($opt);
+  
+  DRU: for my $drupal ($drupal_groups->all) {
+    my %group = (
+      id              => $GROUP_PREFIX . $drupal->drupal_id,
+      label           => $drupal->manual_title // $drupal->autogen_title,
+      description     => $drupal->manual_text // $drupal->autogen_text,
+    );
+    
+    # Get the data associated with every track
+    my $drupal_tracks = $drupal->drupal_node_tracks;
+    
+    # Get the species data
+    my $strain = $drupal_tracks->first->track->sra_tracks->first->run->sample->strain;
+    my %species = (
+      species  => $strain->species->binomial_name,
+      strain   => $strain->strain,
+      assembly => $strain->assembly,
+    );
+    %group = ( %group, %species );
+    my %publications;
+    
+    # Add the tracks data
+    foreach my $drupal_track ($drupal_tracks->all) {
+      my $track = $drupal_track->track;
+      
+      my %track_data = (
+        title       => $track->title,
+        description => $track->description,
+        id          => $TRACK_PREFIX . $track->track_id,
+      );
+      
+      my @files;
+      foreach my $file ($track->files->all) {
+        my @url_path = (
+          $file->type eq 'bai' ? 'bam' : $file->type,
+          $strain->production_name,
+          $file->path
+        );
+        unshift @url_path, $opt->{files_dir} if defined $opt->{files_dir};
+
+        my %file_data = (
+          'name' => ''. $file->path,
+          'url'  => ''. join('/', @url_path),
+          'type' => ''. $file->type,
+        );
+        push @files, \%file_data;
+      }
+      $track_data{aligner} = _determine_aligner($track->analyses);
+      $track_data{files}   = \@files;
+      
+      # Get the SRA accessions
+      my (%runs, %experiments, %studies, %samples);
+      my @track_runs = $track->sra_tracks->all;
+      my $private = 0;
+      for my $track_run (@track_runs) {
+        my $run = $track_run->run;
+        
+        # Accessions
+        my $run_acc    = $run->run_sra_acc                      // $run->run_private_acc;
+        my $exp_acc    = $run->experiment->experiment_sra_acc   // $run->experiment->experiment_private_acc;
+        my $study_acc  = $run->experiment->study->study_sra_acc // $run->experiment->study->study_private_acc;
+        my $sample_acc = $run->sample->sample_sra_acc           // $run->sample->sample_private_acc;
+        
+        $runs{        $run_acc    }++;
+        $experiments{ $exp_acc    }++;
+        $studies{     $study_acc  }++;
+        $samples{     $sample_acc }++;
+        $private = 1 if $run_acc =~ /^VB/;
+        
+        # Associated publications
+        my @study_pubs = $run->experiment->study->study_publications->all;
+        my %track_publications = _format_publications(\@study_pubs);
+        %publications = (%publications, %track_publications);
+      }
+      
+      my $accession_name = $private ? 'private_accessions' : 'sra_accessions';
+      my %accessions = (
+        runs        => [sort keys %runs],
+        experiments => [sort keys %experiments],
+        studies     => [sort keys %studies],
+        samples     => [sort keys %samples],
+      );
+      %track_data = (%track_data, %accessions);
+      if (not $private) {
+        my %accessions_urls = (
+          runs_urls        => [map { $SRA_URL_ROOT . $_ } sort keys %runs],
+          experiments_urls => [map { $SRA_URL_ROOT . $_ } sort keys %experiments],
+          studies_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %studies],
+          samples_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %samples],
+        );
+        %track_data = (%track_data, %accessions_urls);
+      }
+      
+      # Add all collected publications
+      %group = (%group, %publications);
+      
+      push @{ $group{tracks} }, \%track_data;
+    }
+    
+    push @groups, \%group;
+  }
+  
+  return \@groups;
+}
+
+sub _get_drupal_groups {
+  my $self = shift;
+  my ($opt) = @_;
   
   # First, retrieve all the groups data
   my $search = {
@@ -149,109 +319,10 @@ sub get_track_groups {
           ],
         }
       }
-    });
-  DRU: for my $drupal ($groups->all) {
-    my %group = (
-      site            => 'General',
-      bundle_name     => 'Rna seq experiment',
-      id              => $GROUP_PREFIX . $drupal->drupal_id,
-      label           => $drupal->manual_title // $drupal->autogen_title,
-      description     => $drupal->manual_text // $drupal->autogen_text,
-    );
-    
-    # Get the data associated with every track
-    my $drupal_tracks = $drupal->drupal_node_tracks;
-    
-    # Get the species data
-    my $strain = $drupal_tracks->first->track->sra_tracks->first->run->sample->strain;
-    my %species = (
-      species  => $strain->species->binomial_name,
-      strain_s => $strain->strain,
-      assembly => $strain->assembly,
-    );
-    %group = ( %group, %species );
-    my %publications;
-    
-    # Add the tracks data
-    foreach my $drupal_track ($drupal_tracks->all) {
-      my $track = $drupal_track->track;
-      
-      my %track_data = (
-        #title       => $track->title,
-        #description => $track->description,
-        id => $TRACK_PREFIX . $track->track_id,
-      );
-      
-      foreach my $file ($track->files->all) {
-        if ($file->type eq 'bigwig' or $file->type eq 'bam') {
-          my @path = (
-            $file->type, 
-            $strain->production_name,
-            $file->path
-          );
-          unshift @path, $opt->{files_dir} if defined $opt->{files_dir};
-          $track_data{$file->type . '_url'} = ''. join '/', @path;
-          $track_data{$file->type . '_s'} = ''.$file->path;
-          $track_data{type} = $file->type;
-          $track_data{type} =~ s/bigwig/bigWig/;
-          
-          # Define aligner
-          $track_data{aligner} = _determine_aligner($track->analyses);
-        }
-      }
-      
-      # Get the SRA accessions
-      my (%runs, %experiments, %studies, %samples);
-      my @track_runs = $track->sra_tracks->all;
-      my $private = 0;
-      for my $track_run (@track_runs) {
-        my $run = $track_run->run;
-        
-        # Accessions
-        my $run_acc    = $run->run_sra_acc                      // $run->run_private_acc;
-        my $exp_acc    = $run->experiment->experiment_sra_acc   // $run->experiment->experiment_private_acc;
-        my $study_acc  = $run->experiment->study->study_sra_acc // $run->experiment->study->study_private_acc;
-        my $sample_acc = $run->sample->sample_sra_acc           // $run->sample->sample_private_acc;
-        
-        $runs{        $run_acc    }++;
-        $experiments{ $exp_acc    }++;
-        $studies{     $study_acc  }++;
-        $samples{     $sample_acc }++;
-        $private = 1 if $run_acc =~ /^VB/;
-        
-        # Associated publications
-        my @study_pubs = $run->experiment->study->study_publications->all;
-        my %track_publications = _format_publications(\@study_pubs);
-        %publications = (%publications, %track_publications);
-      }
-      my $accession_name = $private ? 'private_accessions' : 'sra_accessions';
-      my %accessions = (
-        run_accessions_ss        => [sort keys %runs],
-        experiment_accessions_ss => [sort keys %experiments],
-        study_accessions_ss      => [sort keys %studies],
-        sample_accessions_ss     => [sort keys %samples],
-      );
-      %track_data = (%track_data, %accessions);
-      if (not $private) {
-        my %accessions_urls = (
-          run_accessions_ss_urls        => [map { $SRA_URL_ROOT . $_ } sort keys %runs],
-          experiment_accessions_ss_urls => [map { $SRA_URL_ROOT . $_ } sort keys %experiments],
-          study_accessions_ss_urls      => [map { $SRA_URL_ROOT . $_ } sort keys %studies],
-          sample_accessions_ss_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %samples],
-        );
-        %track_data = (%track_data, %accessions_urls);
-      }
-      
-      # Add all collected publications
-      %group = (%group, %publications);
-      
-      push @{$group{$SOLR_CHILDREN}}, \%track_data;
     }
-    
-    push @groups, \%group;
-  }
+  );
   
-  return \@groups;
+  return $groups;
 }
 
 sub _determine_aligner {
@@ -284,8 +355,8 @@ sub _format_publications {
   my @titles = keys %pub_links;
   my @urls   = map { $pub_links{$_} } @titles;
   my %publications = (
-    publications_ss      => \@titles,
-    publications_ss_urls => \@urls,
+    publications      => \@titles,
+    publications_urls => \@urls,
   );
   
   return %publications;

@@ -37,16 +37,16 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-my $groups = $db->get_track_groups({
-    species     => $opt{species},
-    files_dir   => $opt{files_dir},
-  });
-if (@$groups == 0) {
-  die "No group to extract";
-}
-
 # Retrieve track groups
 if (defined $opt{output}) {
+  my $groups = $db->get_track_groups_for_solr({
+      species     => $opt{species},
+      files_dir   => $opt{files_dir},
+    });
+  if (@$groups == 0) {
+    die "No group to extract";
+  }
+
   open my $OUT, '>', $opt{output};
   my $json = JSON->new;
   $json->allow_nonref;  # Keep undef values as null
@@ -54,8 +54,9 @@ if (defined $opt{output}) {
   $json->pretty;        # Beautify
   print $OUT $json->encode($groups) . "\n";
   close $OUT;
+  
 } elsif (defined $opt{hub_root}) {
-  my $groups = $db->get_track_groups({
+  my $groups = $db->get_track_groups_for_solr({
       species     => $opt{species},
       files_dir   => $opt{files_dir},
     });

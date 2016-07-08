@@ -17,6 +17,7 @@ use Readonly;
 
 Readonly my $GROUP_PREFIX,  'RNAseq_group_';
 Readonly my $TRACK_PREFIX,  'RNAseq_track_';
+Readonly my $VBGROUP_PREFIX,  'VBRNAseq_';
 Readonly my $SOLR_CHILDREN, '_childDocuments_';
 Readonly my $PUBMED_ROOT,   'http://europepmc.org/abstract/MED/';
 Readonly my $SRA_URL_ROOT,   'http://www.ebi.ac.uk/ena/data/view/';
@@ -127,7 +128,7 @@ sub get_track_groups_for_solr {
   # Alter the structure and names to create a valid Solr json for indexing
   for my $group (@$groups) {
     my %solr_group = (
-      id                   => $group->{id},
+      id                   => $group->{trackhub_id},
       label                => $group->{label},
       description          => $group->{description},
       species              => $group->{species},
@@ -205,25 +206,36 @@ sub get_track_groups {
     %group = ( %group, %species );
     my %publications;
     
+    # Use a better label if possible
+    $group{trackhub_id} = $group{id};
+    if ( $drupal_tracks->all == 1 ) {
+      my ($track) = $drupal_tracks->all;
+      $group{trackhub_id} = $track->track->merge_text;
+      
+      # Simplify name if it has more than 2 elements
+      $group{trackhub_id} =~ s/^([^_]+)_.+_([^-]+)$/$1-$2/;
+      $group{trackhub_id} = $VBGROUP_PREFIX . $group{trackhub_id};
+    }
+    
     # Add the tracks data
     foreach my $drupal_track ($drupal_tracks->all) {
       my $track = $drupal_track->track;
       
       # Define title
-      my $title = $track->title;
+      my $title = $track->title_manual // $track->title_auto;
       if (not $title) {
         my $merge = $track->merge_text;
         
         if ($merge =~ /_/) {
           my ($first) = split /_/, $merge;
-          $title = "Merged_$first-...";
+          $title = "$first-...";
         } else {
           $title = $merge;
         }
       }
       
       # Define description
-      my $description = $track->description;
+      my $description = $track->description_manual // $track->description_auto;
       if (not $description) {
         my $merge = $track->merge_text;
         if ($merge =~ s/_/, /g) {
@@ -355,7 +367,7 @@ sub _determine_aligner {
   
   my @alignments = grep { $_->analysis_description->type eq 'aligner' } @analyses;
   
-  if (@alignments == 1) {
+  if (@alignments) {
     my $aligner = $alignments[0]->analysis_description->name;
     my $version = $alignments[0]->version;
     return "$aligner $version";

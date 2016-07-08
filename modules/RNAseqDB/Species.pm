@@ -60,9 +60,10 @@ sub _get_species_id {
 sub add_species {
   my ($self, $species_href) = @_;
   
-  my $nname     = $species_href->{production_name};
-  my $nstrain   = $species_href->{strain};
-  my $nassembly = $species_href->{assembly};
+  my $nname      = $species_href->{production_name};
+  my $nstrain    = $species_href->{strain};
+  my $nassembly  = $species_href->{assembly};
+  my $naccession = $species_href->{assembly_accession};
   $nstrain ||= '';
   
   my $species_id = $self->_get_species_id( $species_href );

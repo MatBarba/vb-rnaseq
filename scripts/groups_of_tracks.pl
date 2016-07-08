@@ -74,7 +74,7 @@ sub create_trackhubs {
   GROUP: for my $group (@$groups) {
     # Create the TrackHub
     my $hub = EGTH::TrackHub->new(
-      id          => $group->{id},
+      id          => $group->{trackhub_id},
       shortLabel  => $group->{label} // $group->{id},
       longLabel   => $group->{description} // $group->{label} // $group->{id},
     );
@@ -89,36 +89,56 @@ sub create_trackhubs {
     );
     
     # Add all tracks to the genome
-    my @hub_tracks;
+    my @big_tracks;
+    my @bam_tracks;
     TRACK: for my $track (@{ $group->{tracks} }) {
       # Get the bigwig file
-      my $bigwig = get_bigwig($track);
-      
+      my $bigwig = get_file($track, 'bigwig');
       if (not $bigwig) {
         warn "No bigwig file for this track $track->{id}";
         next TRACK;
       }
       
-      my $hub_track = EGTH::TrackHub::Track->new(
-        track       => $track->{id},
-        shortLabel  => $track->{title} // $track->{id},
-        longLabel   => $track->{description} // $track->{id},
+      my $big_track = EGTH::TrackHub::Track->new(
+        track       => $track->{id} . '_bigwig',
+        shortLabel  => ($track->{title} // $track->{id}),
+        longLabel   => ($track->{description} // $track->{id}),
         bigDataUrl  => $bigwig->{url},
         type        => 'bigWig',
         visibility  => 'full',
       );
       
-      push @hub_tracks, $hub_track;
+      push @big_tracks, $big_track;
+      
+      # Get the bam file
+      my $bam = get_file($track, 'bam');
+      if (not $bam) {
+        warn "No bam file for this track $track->{id}";
+        next TRACK;
+      }
+      
+      my $bam_track = EGTH::TrackHub::Track->new(
+        track       => $track->{id} . '_bam',
+        shortLabel  => ($track->{title} // $track->{id}) . " (bam)",
+        longLabel   => ($track->{description} // $track->{id}) . " (bam file)",
+        bigDataUrl  => $bam->{url},
+        type        => 'bam',
+        visibility  => 'hide',
+      );
+      
+      push @bam_tracks, $bam_track;
     }
     
-    if (@hub_tracks == 0) {
+    if (@big_tracks == 0) {
       carp "No track can be used for this group $group->{id}: skip";
       next GROUP;
-    } elsif (@hub_tracks == 1) {
-      $genome->add_track($hub_tracks[0]);
+    } elsif (@big_tracks == 1) {
+      $genome->add_track($big_tracks[0]);
+      $genome->add_track($bam_tracks[0]);
     } else {
       # Put all that in a supertrack
-      $genome->add_track($hub_tracks[0]); # Deactivated for now
+      $genome->add_track($big_tracks[0]); # Deactivated for now
+      $genome->add_track($bam_tracks[0]); # Deactivated for now
     }
     
     # Add the genome...
@@ -129,11 +149,11 @@ sub create_trackhubs {
   }
 }
 
-sub get_bigwig {
-  my ($track) = @_;
+sub get_file {
+  my ($track, $type) = @_;
   
   for my $file (@{ $track->{files} }) {
-    if ($file->{type} eq 'bigwig') {
+    if ($file->{type} eq $type) {
       return $file;
     }
   }

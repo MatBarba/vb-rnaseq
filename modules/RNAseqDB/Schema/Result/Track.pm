@@ -30,12 +30,22 @@ __PACKAGE__->table("track");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 title
+=head2 title_auto
 
   data_type: 'text'
   is_nullable: 1
 
-=head2 description
+=head2 description_auto
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 title_manual
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 description_manual
 
   data_type: 'text'
   is_nullable: 1
@@ -87,9 +97,13 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "title",
+  "title_auto",
   { data_type => "text", is_nullable => 1 },
-  "description",
+  "description_auto",
+  { data_type => "text", is_nullable => 1 },
+  "title_manual",
+  { data_type => "text", is_nullable => 1 },
+  "description_manual",
   { data_type => "text", is_nullable => 1 },
   "merge_level",
   {
@@ -208,8 +222,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-06 17:19:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sC7X9CigkIq4izwVwMReFw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-08 10:11:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Mx5QmuUJJzSVwYvTcrlRLg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

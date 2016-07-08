@@ -45,6 +45,7 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 @column production_name         Production name for this strain (species + strain).
 @column strain                  Name of the strain.
 @column assembly                Version of the assembly.
+@column assembly_accession      Version of the assembly in INSDC.
 @column metasum                 Checksum of @production_name + @strain.
 @column date                    Entry timestamp.
 @column status                  Active (True) or retired (False) row.
@@ -57,6 +58,7 @@ CREATE TABLE strain (
   production_name           VARCHAR(64) NOT NULL,
   strain                    VARCHAR(32),
   assembly                  VARCHAR(32),
+  assembly_accession        VARCHAR(32),
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
@@ -67,9 +69,9 @@ CREATE TABLE strain (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly, NEW.assembly_accession) );
 CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly, NEW.assembly_accession) );
 
     
 CREATE VIEW taxonomy AS
@@ -312,8 +314,10 @@ CREATE TRIGGER private_file_md5_ins_tr BEFORE INSERT ON private_file
 @desc Where the tracks are stored, with a link to the corresponding file.
 
 @column track_id               Track id (primary key, internal identifier).
-@column title                  Title of the track in E! genome browser.
-@column description            Description of the track in E! genome browser.
+@column title_auto             Title of the track in E! genome browser (automatically created).
+@column description_auto       Description of the track in E! genome browser (automatically created).
+@column title_manual           Title of the track in E! genome browser (manually created).
+@column description_manual     Description of the track in E! genome browser (manually created).
 @column merge_level            Merge level for the set of runs for the pipeline.
 @column merge_id               Merge id generated for this track.
 @column merge_text             Merge text (text used to create the merge_id hash).
@@ -325,8 +329,10 @@ CREATE TRIGGER private_file_md5_ins_tr BEFORE INSERT ON private_file
 
 CREATE TABLE track (
   track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  title                 TEXT,
-  description           TEXT,
+  title_auto            TEXT,
+  description_auto      TEXT,
+  title_manual          TEXT,
+  description_manual    TEXT,
   merge_level           ENUM('taxon', 'study', 'experiment', 'run', 'sample'),
   merge_id              VARCHAR(256) UNIQUE,
   merge_text            TEXT,
@@ -338,9 +344,9 @@ CREATE TABLE track (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description, NEW.merge_id, NEW.merge_text) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title_auto, NEW.description_auto, NEW.title_manual, NEW.description_manual, NEW.merge_id, NEW.merge_text) );
 CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title, NEW.description, NEW.merge_id, NEW.merge_text) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title_auto, NEW.description_auto, NEW.title_manual, NEW.description_manual, NEW.merge_id, NEW.merge_text) );
 
 /**
 @table sra_track
@@ -690,6 +696,8 @@ CREATE VIEW sra_to_track AS
     sample_id,
     sample_sra_acc,
     sample_private_acc,
+    sample.title AS sample_title,
+    sample.description AS sample_description,
     track_id,
     track.status AS track_status,
     merge_level,

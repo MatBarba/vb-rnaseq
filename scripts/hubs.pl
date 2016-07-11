@@ -45,19 +45,19 @@ my $groups = $db->get_track_groups({
 });
 
 # Create trackhub objects
-my @hubs = prepare_hubs($groups, $opt{hub_root});
+my $hubs = prepare_hubs($groups, $opt{hub_root});
 
 my $registry;
 if ($opt{reg_user} and $opt{reg_pass}) {
-  my $registry = EGTH::Registry->new(
+  $registry = EGTH::Registry->new(
     user     => $opt{reg_user},
     password => $opt{reg_pass},
   );
 }
 
 # Perform actions
-create_hubs($groups)              if $opt{create};
-list_db_hubs($groups)             if $opt{list_db};
+create_hubs($hubs)  if $opt{create};
+list_db_hubs($hubs) if $opt{list_db};
 if ($registry) {
   $registry->register_hubs($groups) if $opt{register};
   $registry->delete_hubs($groups)   if $opt{delete};
@@ -157,8 +157,8 @@ sub prepare_hubs {
     
     # And create the trackhub files
     push @hubs, $hub;
-    return @hubs;
   }
+  return \@hubs;
 }
 
 sub get_file {
@@ -175,8 +175,10 @@ sub get_file {
 sub create_hubs {
   my ($hubs) = @_;
   
-  for my $hub (@hubs) {
-    ####
+  my $num_hubs = @$hubs;
+  print STDERR "Creating files for $num_hubs track hubs\n";
+  for my $hub (@$hubs) {
+    $hub->create_files;
   }
 }
 
@@ -195,30 +197,45 @@ sub get_list_db_hubs {
   
   my @hub_ids;
   foreach my $hub (@$hubs) {
-    push @hub_ids, $hub->{trackhub_id};
+    push @hub_ids, $hub->id;
   }
   return @hub_ids;
+}
+
+sub get_list_reg_hubs {
+  my ($registry) = @_;
+  
+  my @reg_hubs = $registry->get_all_registered;
+  return @reg_hubs;
 }
 
 sub list_db_hubs {
   my ($hubs) = @_;
   
-  for my $hub_id (get_list_db_hubs($hubs)) {
+  my @db_hubs = get_list_db_hubs($hubs);
+  my $num_hubs = @db_hubs;
+  print "$num_hubs track hubs in the RNAseqDB\n";
+  for my $hub_id (@db_hubs) {
     print "$hub_id\n";
   }
 }
 
 sub list_reg_hubs {
-  my ($hubs) = @_;
+  my ($registry, $hubs) = @_;
   
-  ####
+  my @reg_hubs = get_list_reg_hubs($registry);
+  my $num_hubs = @reg_hubs;
+  print "$num_hubs track hubs registered\n";
+  for my $hub_id (@reg_hubs) {
+    print "$hub_id\n";
+  }
 }
 
 sub diff_hubs {
-  my ($hubs) = @_;
+  my ($registry, $hubs) = @_;
   
   my @db_hubs  = get_list_db_hubs($hubs);
-  my @reg_hubs = get_list_reg_hubs($hubs);
+  my @reg_hubs = get_list_reg_hubs($registry);
   
   my %db_hub_hash  = map { $_ => 1 } @db_hubs;
   my %reg_hub_hash = map { $_ => 1 } @reg_hubs;
@@ -345,6 +362,7 @@ sub opt_check {
   usage("Need --db")     if not $opt{db};
   usage("Need --hub_root") if not $opt{hub_root};
   $opt{password} //= '';
+  usage("Need registry user and password") if ($opt{register} or $opt{delete} or $opt{public_hubs} or $opt{private_hubs} or $opt{list_registry} or $opt{list_diff}) and not ($opt{reg_user} and $opt{reg_pass});
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

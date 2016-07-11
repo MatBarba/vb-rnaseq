@@ -458,6 +458,16 @@ This module is a role to interface the drupal_node part of the RNAseqDB::DB obje
   
     my $groups = $rdb->get_track_groups();
     
+=item get_track_groups_for_solr()
+
+  function       : returns groups of track in a data structure suuitable for Solr.
+  arg[1]         : hash ref with key 'species' defined [optional] to filter groups by species
+  returntype     : ref array of hashes
+  
+  Usage:
+  
+    my $groups = $rdb->get_track_groups_for_solr();
+    
 =back
 
 

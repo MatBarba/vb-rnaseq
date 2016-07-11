@@ -41,13 +41,13 @@ my $db = RNAseqDB::DB->connect(
 # Retrieve the data (but only if we need it)
 my ($groups, $hubs);
 if ($opt{register} or $opt{public_hubs} or $opt{private_hubs}) {
-$groups = $db->get_track_groups({
-    species     => $opt{species},
-    files_dir   => $opt{files_dir},
-});
+  $groups = $db->get_track_groups({
+      species     => $opt{species},
+      files_dir   => $opt{files_dir},
+    });
 
-# Create trackhub objects
-my $hubs = prepare_hubs($groups, \%opt);
+  # Create trackhub objects
+  $hubs = prepare_hubs($groups, \%opt);
 }
 
 my $registry;

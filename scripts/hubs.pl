@@ -45,7 +45,7 @@ my $groups = $db->get_track_groups({
 });
 
 # Create trackhub objects
-my $hubs = prepare_hubs($groups, $opt{hub_root});
+my $hubs = prepare_hubs($groups, \%opt);
 
 my $registry;
 if ($opt{reg_user} and $opt{reg_pass}) {
@@ -59,19 +59,20 @@ if ($opt{reg_user} and $opt{reg_pass}) {
 create_hubs($hubs)  if $opt{create};
 list_db_hubs($hubs) if $opt{list_db};
 if ($registry) {
-  $registry->register_hubs($groups) if $opt{register};
-  $registry->delete_hubs($groups)   if $opt{delete};
-  $registry->show_hubs($groups)     if $opt{public_hubs};
-  $registry->hide_hubs($groups)     if $opt{private_hubs};
-  list_reg_hubs($registry, $groups) if $opt{list_registry};
-  diff_hubs($registry, $groups)     if $opt{list_diff};
+  $registry->register_track_hubs($hubs) if $opt{register};
+  delete_hubs($registry, $hubs) if $opt{delete};
+  $registry->show_hubs($hubs)   if $opt{public_hubs};
+  $registry->hide_hubs($hubs)   if $opt{private_hubs};
+  list_reg_hubs($registry)      if $opt{list_registry};
+  diff_hubs($registry, $hubs)   if $opt{list_diff};
 }
 
 ###############################################################################
 # SUB
 # Trackhubs creation
 sub prepare_hubs {
-  my ($groups, $dir) = @_;
+  my ($groups, $opt) = @_;
+  my $dir    = $opt->{hub_root};
   
   croak "Need directory where the hubs would be placed" if not defined $dir;
   
@@ -88,6 +89,13 @@ sub prepare_hubs {
       shortLabel  => $group->{label} // $group->{id},
       longLabel   => $group->{description} // $group->{label} // $group->{id},
     );
+    
+    # Set the server for this hub to create a valid path to the hub.txt
+    my $server = $opt->{hub_server};
+    if ($server) {
+      $server .= '/' . $group->{production_name};
+      $hub->server($server);
+    }
     
     my $species_dir = $dir . '/' . $group->{production_name};
     make_path $species_dir;
@@ -180,6 +188,13 @@ sub create_hubs {
   for my $hub (@$hubs) {
     $hub->create_files;
   }
+}
+
+sub delete_hubs {
+  my ($registry , $hubs) = @_;
+  
+  my @hub_ids = map { $_->id } @$hubs;
+  $registry->delete_track_hubs(\@hub_ids);
 }
 
 sub toggle_hubs {
@@ -344,6 +359,7 @@ sub opt_check {
     "register",
     "reg_user=s",
     "reg_pass=s",
+    "hub_server=s",
     "delete",
     "public_hubs",
     "private_hubs",
@@ -363,6 +379,7 @@ sub opt_check {
   usage("Need --hub_root") if not $opt{hub_root};
   $opt{password} //= '';
   usage("Need registry user and password") if ($opt{register} or $opt{delete} or $opt{public_hubs} or $opt{private_hubs} or $opt{list_registry} or $opt{list_diff}) and not ($opt{reg_user} and $opt{reg_pass});
+  usage("Need hub server") if $opt{register} and not $opt{hub_server};
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

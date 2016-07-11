@@ -38,14 +38,17 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-# Retrieve the data
-my $groups = $db->get_track_groups({
+# Retrieve the data (but only if we need it)
+my ($groups, $hubs);
+if ($opt{register} or $opt{public_hubs} or $opt{private_hubs}) {
+$groups = $db->get_track_groups({
     species     => $opt{species},
     files_dir   => $opt{files_dir},
 });
 
 # Create trackhub objects
 my $hubs = prepare_hubs($groups, \%opt);
+}
 
 my $registry;
 if ($opt{reg_user} and $opt{reg_pass}) {
@@ -59,10 +62,13 @@ if ($opt{reg_user} and $opt{reg_pass}) {
 create_hubs($hubs)  if $opt{create};
 list_db_hubs($hubs) if $opt{list_db};
 if ($registry) {
-  $registry->register_track_hubs($hubs) if $opt{register};
-  delete_hubs($registry, $hubs) if $opt{delete};
-  $registry->show_hubs($hubs)   if $opt{public_hubs};
-  $registry->hide_hubs($hubs)   if $opt{private_hubs};
+  $registry->is_public(1) if $opt{public_hubs};
+  $registry->is_public(0) if $opt{private_hubs};
+  if ($opt{register} or $opt{public_hubs} or $opt{private_hubs}) {
+    $registry->register_track_hubs($hubs);
+  }
+  delete_hubs($registry, $hubs, \%opt) if $opt{delete};
+  
   list_reg_hubs($registry)      if $opt{list_registry};
   diff_hubs($registry, $hubs)   if $opt{list_diff};
 }
@@ -191,10 +197,16 @@ sub create_hubs {
 }
 
 sub delete_hubs {
-  my ($registry , $hubs) = @_;
+  my ($registry , $hubs, $opt) = @_;
   
-  my @hub_ids = map { $_->id } @$hubs;
-  $registry->delete_track_hubs(\@hub_ids);
+  if ($opt->{species}) {
+    $logger->info("Deleting track hubs for species $opt->{species}");
+    my @hub_ids = map { $_->id } @$hubs;
+    $registry->delete_track_hubs(\@hub_ids);
+  } else {
+    $logger->info("Deleting all track hubs in the registry");
+    $registry->delete_all_track_hubs;
+  }
 }
 
 sub toggle_hubs {
@@ -220,8 +232,8 @@ sub get_list_db_hubs {
 sub get_list_reg_hubs {
   my ($registry) = @_;
   
-  my @reg_hubs = $registry->get_all_registered;
-  return @reg_hubs;
+  my $reg_hubs = $registry->get_all_registered;
+  return @$reg_hubs;
 }
 
 sub list_db_hubs {
@@ -380,6 +392,7 @@ sub opt_check {
   $opt{password} //= '';
   usage("Need registry user and password") if ($opt{register} or $opt{delete} or $opt{public_hubs} or $opt{private_hubs} or $opt{list_registry} or $opt{list_diff}) and not ($opt{reg_user} and $opt{reg_pass});
   usage("Need hub server") if $opt{register} and not $opt{hub_server};
+  usage("Select public XOR private") if ($opt{public_hubs} and $opt{private_hubs});
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

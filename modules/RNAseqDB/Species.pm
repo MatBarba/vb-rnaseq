@@ -61,9 +61,7 @@ sub add_species {
   my ($self, $species_href) = @_;
   
   my $nname      = $species_href->{production_name};
-  my $nstrain    = $species_href->{strain};
-  my $nassembly  = $species_href->{assembly};
-  my $naccession = $species_href->{assembly_accession};
+  my $nstrain    = $species_href->{strain} // 'no strain';
   $nstrain ||= '';
   
   my $species_id = $self->_get_species_id( $species_href );
@@ -90,6 +88,8 @@ sub add_species {
     # Ok? Add it
     else {
       $self->resultset('Strain')->create( $species_href );
+      my $nassembly  = $species_href->{assembly} // 'no assembly';
+      my $naccession = $species_href->{assembly_accession} // 'no assembly accession';
       $logger->debug("NEW STRAIN added: $nname, $nstrain, $nassembly");
       return 1;
     }

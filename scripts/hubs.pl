@@ -202,7 +202,7 @@ sub delete_hubs {
   if ($opt->{species}) {
     $logger->info("Deleting track hubs for species $opt->{species}");
     my @hub_ids = map { $_->id } @$hubs;
-    $registry->delete_track_hubs(\@hub_ids);
+    $registry->delete_track_hubs(@hub_ids);
   } else {
     $logger->info("Deleting all track hubs in the registry");
     $registry->delete_all_track_hubs;

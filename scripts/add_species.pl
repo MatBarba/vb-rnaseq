@@ -29,11 +29,12 @@ my $db = RNAseqDB::DB->connect(
 my $species_added = 0;
 if ($opt{production_name} and $opt{taxon_id}) {
   my $species = {
-    production_name => $opt{production_name},
-    binomial_name   => $opt{binomial_name},
-    taxon_id        => $opt{taxon_id},
-    strain          => $opt{strain},
-    assembly        => $opt{assembly},
+    production_name    => $opt{production_name},
+    binomial_name      => $opt{binomial_name},
+    taxon_id           => $opt{taxon_id},
+    strain             => $opt{strain},
+    assembly           => $opt{assembly},
+    assembly_accession => $opt{assembly_accession},
   };
   my $added = $db->add_species( $species );
   $species_added += $added;
@@ -62,11 +63,12 @@ sub get_species_from_file {
     chomp $line;
     my @elts = split /\t/, $line;
     my %species = (
-      binomial_name   => $elts[0],
-      production_name => $elts[1],
-      taxon_id        => $elts[2],
-      strain          => $elts[3],
-      assembly        => $elts[4],
+      binomial_name      => $elts[0],
+      production_name    => $elts[1],
+      taxon_id           => $elts[2],
+      strain             => $elts[3],
+      assembly           => $elts[4],
+      assembly_accession => $elts[5],
     );
     push @species_list, \%species;
   }

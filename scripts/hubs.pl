@@ -19,6 +19,7 @@ use Data::Dumper;
 use EGTH::TrackHub;
 use EGTH::TrackHub::Genome;
 use EGTH::TrackHub::Track;
+use EGTH::Registry;
 
 use RNAseqDB::DB;
 use Log::Log4perl qw( :easy );
@@ -37,41 +38,50 @@ my $db = RNAseqDB::DB->connect(
   $opt{password}
 );
 
-# Retrieve track groups
-if (defined $opt{output}) {
-  my $groups = $db->get_track_groups_for_solr({
-      species     => $opt{species},
-      files_dir   => $opt{files_dir},
-    });
-  if (@$groups == 0) {
-    die "No group to extract";
-  }
+# Retrieve the data
+my $groups = $db->get_track_groups({
+    species     => $opt{species},
+    files_dir   => $opt{files_dir},
+});
 
-  open my $OUT, '>', $opt{output};
-  my $json = JSON->new;
-  $json->allow_nonref;  # Keep undef values as null
-  $json->canonical;     # order keys
-  $json->pretty;        # Beautify
-  print $OUT $json->encode($groups) . "\n";
-  close $OUT;
-  
-} elsif (defined $opt{hub_root}) {
-  my $groups = $db->get_track_groups({
-      species     => $opt{species},
-      files_dir   => $opt{files_dir},
-    });
-  
-  # Create a trackhub for each group
-  create_trackhubs($groups, $opt{hub_root});
+# Create trackhub objects
+my @hubs = prepare_hubs($groups, $opt{hub_root});
+
+my $registry;
+if ($opt{reg_user} and $opt{reg_pass}) {
+  my $registry = EGTH::Registry->new(
+    user     => $opt{reg_user},
+    password => $opt{reg_pass},
+  );
+}
+
+# Perform actions
+create_hubs($groups)              if $opt{create};
+list_db_hubs($groups)             if $opt{list_db};
+if ($registry) {
+  $registry->register_hubs($groups) if $opt{register};
+  $registry->delete_hubs($groups)   if $opt{delete};
+  $registry->show_hubs($groups)     if $opt{public_hubs};
+  $registry->hide_hubs($groups)     if $opt{private_hubs};
+  list_reg_hubs($registry, $groups) if $opt{list_registry};
+  diff_hubs($registry, $groups)     if $opt{list_diff};
 }
 
 ###############################################################################
 # SUB
 # Trackhubs creation
-sub create_trackhubs {
+sub prepare_hubs {
   my ($groups, $dir) = @_;
   
+  croak "Need directory where the hubs would be placed" if not defined $dir;
+  
+  my @hubs;
   GROUP: for my $group (@$groups) {
+    if (not $group->{assembly} and not $group->{assembly_accession}) {
+      print STDERR "No Assembly information for hub $group->{trackhub_id}\n";
+      next GROUP;
+    }
+    
     # Create the TrackHub
     my $hub = EGTH::TrackHub->new(
       id          => $group->{trackhub_id},
@@ -85,7 +95,8 @@ sub create_trackhubs {
     
     # Create the associated genome
     my $genome = EGTH::TrackHub::Genome->new(
-      id      => $group->{assembly},
+      id    => $group->{assembly},
+      insdc => $group->{assembly_accession},
     );
     
     # Add all tracks to the genome
@@ -145,7 +156,8 @@ sub create_trackhubs {
     $hub->add_genome($genome);
     
     # And create the trackhub files
-    $hub->create_files;
+    push @hubs, $hub;
+    return @hubs;
   }
 }
 
@@ -160,6 +172,77 @@ sub get_file {
   return;
 }
 
+sub create_hubs {
+  my ($hubs) = @_;
+  
+  for my $hub (@hubs) {
+    ####
+  }
+}
+
+sub toggle_hubs {
+  my ($hubs, $opt) = @_;
+  
+  my $public = $opt{public_hubs} ? 1 : 1;
+  for my $hub (@$hubs) {
+    $hub->public($public);
+    $hub->update($opt{user}, $opt{password});
+  }
+}
+
+sub get_list_db_hubs {
+  my ($hubs) = @_;
+  
+  my @hub_ids;
+  foreach my $hub (@$hubs) {
+    push @hub_ids, $hub->{trackhub_id};
+  }
+  return @hub_ids;
+}
+
+sub list_db_hubs {
+  my ($hubs) = @_;
+  
+  for my $hub_id (get_list_db_hubs($hubs)) {
+    print "$hub_id\n";
+  }
+}
+
+sub list_reg_hubs {
+  my ($hubs) = @_;
+  
+  ####
+}
+
+sub diff_hubs {
+  my ($hubs) = @_;
+  
+  my @db_hubs  = get_list_db_hubs($hubs);
+  my @reg_hubs = get_list_reg_hubs($hubs);
+  
+  my %db_hub_hash  = map { $_ => 1 } @db_hubs;
+  my %reg_hub_hash = map { $_ => 1 } @reg_hubs;
+  my @common;
+  for my $reg_hub_id (keys %reg_hub_hash) {
+    if (exists $db_hub_hash{$reg_hub_id}) {
+      push @common, $reg_hub_id;
+      delete $reg_hub_hash{$reg_hub_id};
+      delete $db_hub_hash{$reg_hub_id};
+    }
+  }
+  
+  # Print summary
+  my $n_common = @common;
+  print "$n_common trackhubs already registered\n";
+  
+  for my $hub_id (sort keys %db_hub_hash) {
+    print "Only in the RNAseqDB: $hub_id\n";
+  }
+  for my $hub_id (sort keys %reg_hub_hash) {
+    print "Only in the Registry: $hub_id\n";
+  }
+}
+
 ###############################################################################
 # Parameters and usage
 # Print a simple usage note
@@ -170,38 +253,58 @@ sub usage {
     $help = "[ $error ]\n";
   }
   $help .= <<'EOF';
-    This script exports groups of tracks.
+    This script creates and registers track hubs from an RNAseqDB.
 
-    Database connection:
+    RNASEQDB CONNECTION
     --host    <str>   : host name
     --port    <int>   : port
     --user    <str>   : user name
     --password <str>  : password
     --db <str>        : database name
     
-    Tracks filter:
-    --species <str>   : only outputs tracks for a given species (production_name)
-    
-    The script can output the groups in json format or create track hubs.
-    
-    JSON OUTPUT
-    --output <path>   : path to the output file in json
     
     TRACK HUBS
-    --hub_root      <path> : root where the trackhubs will be created
-    --create_hubs   : create the register files
-    
-    --registry_user <str> : Track Hub Registry user name
-    --registry_pass <str> : Track Hub Registry password
-    
-    Other parameters:
     -files_dir        : root dir to use for the files paths
+                        (used in the Trackdb.txt files)
+    --hub_root <path> : root where the trackhubs should be stored
     
-    Other:
     
+    ACTIONS (at least one of them is needed)
+    
+    Create:
+    --create          : create the hub files
+    
+    Register:
+    --register        : register the hub files
+                        (the hub files must exist)
+    --reg_user <str>  : Track Hub Registry user name
+    --reg_pass <str>  : Track Hub Registry password
+    
+    Delete:
+    --delete          : delete all trackhubs from the registry
+                        (not the files themselves)
+    
+    Show/hide:
+    --public_hubs     : set all tracks as public
+                        (can be searched in the Registry)
+    --private_hubs    : set all tracks as private
+                        (can't be searched in the Registry)
+    
+    NB: by default all track hubs are registered as private
+    
+    List:
+    --list_db         : list the trackhubs from the RNAseqDB
+    --list_registry   : list the trackhubs from the Registry
+    --list_diff       : compare the trackhubs from the RNAseqDB
+                        and from the Registry
+    
+    OTHER
+    --species <str>   : only outputs tracks for a given species
+                        (production_name)
     --help            : show this help message
     --verbose         : show detailed progress
-    --debug           : show even more information (for debugging purposes)
+    --debug           : show even more information
+                        (for debugging purposes)
 EOF
   print STDERR "$help\n";
   exit(1);
@@ -219,10 +322,17 @@ sub opt_check {
     "registry=s",
     "species=s",
     "files_dir=s",
-    "output=s",
     "hub_root=s",
-    "register_user=s",
-    "register_pass=s",
+    "create",
+    "register",
+    "reg_user=s",
+    "reg_pass=s",
+    "delete",
+    "public_hubs",
+    "private_hubs",
+    "list_db",
+    "list_registry",
+    "list_diff",
     "help",
     "verbose",
     "debug",
@@ -233,7 +343,7 @@ sub opt_check {
   usage("Need --port")   if not $opt{port};
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
-  usage("Need --output or --hub_root") if (not $opt{output} and not $opt{hub_root});
+  usage("Need --hub_root") if not $opt{hub_root};
   $opt{password} //= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

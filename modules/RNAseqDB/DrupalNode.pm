@@ -198,10 +198,11 @@ sub get_track_groups {
     # Get the species data
     my $strain = $drupal_tracks->first->track->sra_tracks->first->run->sample->strain;
     my %species = (
-      species         => $strain->species->binomial_name,
-      strain          => $strain->strain,
-      assembly        => $strain->assembly,
-      production_name => $strain->production_name,
+      species            => $strain->species->binomial_name,
+      strain             => $strain->strain,
+      assembly           => $strain->assembly,
+      assembly_accession => $strain->assembly_accession,
+      production_name    => $strain->production_name,
     );
     %group = ( %group, %species );
     my %publications;

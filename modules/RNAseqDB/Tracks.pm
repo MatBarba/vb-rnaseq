@@ -43,7 +43,10 @@ sub _add_track {
   $logger->info("ADDING track for $run_id");
   
   # Add the track itself
-  my $track_insertion = $self->resultset('Track')->create({});
+  my $track_insertion = $self->resultset('Track')->create({
+      merge_id    => $run_id,
+      merge_text  => $run_id
+    });
   
   # Add the link from the run to the track
   my $track_id = $track_insertion->id;
@@ -52,7 +55,85 @@ sub _add_track {
   # Also create a drupal node for this track
   $self->_add_drupal_node_from_track($track_id);
   
+  # Finally, try to create a title + description for the track
+  $self->guess_track_text($track_id);
+  
   return;
+}
+
+sub get_track {
+  my $self = shift;
+  my ($track_id) = @_;
+  
+  return if not defined $track_id;
+  
+  my $track_req = $self->resultset('Track')->search({
+      'track_id' => $track_id,
+  });
+  my $track = $track_req->first;
+  return $track;
+}
+
+sub get_track_ids {
+  my $self = shift;
+  my ($species) = @_;
+  
+  my %search;
+  $search{production_name} = $species if $species;
+  my $track_req = $self->resultset('SraToActiveTrack')->search(\%search);
+  my @track_ids = uniq map { $_->track_id } $track_req->all;
+  return @track_ids;
+}
+
+sub guess_track_text {
+  my $self = shift;
+  my @track_ids = @_;
+  
+  for my $track_id (@track_ids) {
+    my $req = $self->resultset('Track')->search({
+        'me.track_id' => $track_id,
+      }, 
+      {
+        prefetch  => {
+          sra_tracks => {
+            run => 'sample',
+          }
+        }
+      });
+    
+    my $track      = $req->first;
+    my @track_runs = $track->sra_tracks->all;
+    my (@titles, @descriptions);
+    for my $track_run (@track_runs) {
+      my $sample = $track_runs[0]->run->sample;
+      push @titles, $sample->title if $sample->title;
+      push @descriptions, $sample->description if $sample->description;
+    }
+
+    # Only keep one of each
+    @titles       = uniq (sort @titles);
+    @descriptions = uniq (sort @descriptions);
+    
+    # Add the composition to the description (even if it is empty)
+    unshift @descriptions, $track->merge_text // $track->merge_id;
+
+    # Next: concat titles and descriptions
+    my $title       = join(', ', @titles);
+    my $description = join('<br>', @descriptions);
+    
+    if (not $title) {
+      $title = $track->merge_text // $track->merge_id;
+    }
+
+    $self->resultset('Track')->search({
+        'track_id'  => $track_id,
+      })->update({
+        title_auto        => $title,
+        description_auto  => $description,
+      });
+  }
+  
+  return 1;
 }
 
 sub _add_sra_track {

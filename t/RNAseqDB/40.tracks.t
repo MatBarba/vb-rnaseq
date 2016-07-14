@@ -51,6 +51,16 @@ $db->add_species({
 }
 
 {
+  my $track_id = 1;
+  ok(my $track = $db->get_track($track_id), "Get track information");
+  isa_ok($track, 'RNAseqDB::Schema::Result::Track', 'Get a track object');
+  ok(my $track_id_bis = $track->track_id, "Can get track_id");
+  ok(my $desc  = $track->description_auto, "Auto text is not empty");
+  ok(my $title = $track->title_auto, "Auto title is not empty");
+
+}
+
+{
   # Add another study
   $db->add_sra('SRP003874');
 

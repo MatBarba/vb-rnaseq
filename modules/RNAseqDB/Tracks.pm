@@ -113,16 +113,13 @@ sub guess_track_text {
     # Only keep one of each
     @titles       = uniq (sort @titles);
     @descriptions = uniq (sort @descriptions);
-    
-    # Add the composition to the description (even if it is empty)
-    unshift @descriptions, $track->merge_text // $track->merge_id;
 
     # Next: concat titles and descriptions
     my $title       = join(', ', @titles);
     my $description = join('<br>', @descriptions);
     
     if (not $title) {
-      $title = $track->merge_text // $track->merge_id;
+      $title = $track->merge_text;
     }
 
     $self->resultset('Track')->search({

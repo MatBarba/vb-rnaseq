@@ -236,15 +236,17 @@ sub get_track_groups {
       }
       
       # Define description
-      my $description = $track->description_manual // $track->description_auto;
-      if (not $description) {
-        my $merge = $track->merge_text;
-        if ($merge =~ s/_/, /g) {
-          $description = "Merged RNA-seq data from: $merge";
-        } else {
-          $description = "RNA-seq data from $merge";
-        }
+      my @description_list;
+      push @description_list, ($track->description_manual // $track->description_auto);
+      
+      # Add the list of SRA ids
+      my $merge = $track->merge_text;
+      if ($merge =~ s/_/, /g) {
+        push @description_list, "Merged RNA-seq data from: $merge";
+      } else {
+        push @description_list, "RNA-seq data from $merge";
       }
+      my $description = join("<br>", @description_list);
       
       my %track_data = (
         title       => $title,

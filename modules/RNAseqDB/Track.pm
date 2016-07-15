@@ -1,4 +1,4 @@
-package RNAseqDB::Tracks;
+package RNAseqDB::Track;
 use 5.10.0;
 use utf8;
 use Moose::Role;
@@ -52,8 +52,8 @@ sub _add_track {
   my $track_id = $track_insertion->id;
   $self->_add_sra_track($run_id, $track_id);
   
-  # Also create a drupal node for this track
-  $self->_add_drupal_node_from_track($track_id);
+  # Also create a bundle for this track
+  $self->_add_bundle_from_track($track_id);
   
   # Finally, try to create a title + description for the track
   $self->guess_track_text($track_id);
@@ -72,6 +72,15 @@ sub get_track {
   });
   my $track = $track_req->first;
   return $track;
+}
+
+sub update_track {
+  my $self = shift;
+  my ($track_id, $track_data) = @_;
+  
+  $self->resultset('Track')->search({
+      'track_id'  => $track_id,
+    })->update($track_data);
 }
 
 sub get_track_ids {
@@ -557,8 +566,8 @@ sub merge_tracks_by_sra_ids {
   # Then, create a link for each run to the new merged track
   map { $self->_add_sra_track($_, $merged_track_id) } @$run_ids;
   
-  # Also create and link a drupal node to the track
-  $self->_add_drupal_node_from_track($merged_track_id);
+  # Also create and link a bundle to the track
+  $self->_add_bundle_from_track($merged_track_id);
 
   return;
 }
@@ -613,8 +622,8 @@ sub inactivate_tracks {
     status => $status,
   });
 
-  # Also inactivate corresponding drupal_nodes
-  $self->_inactivate_drupal_nodes($track_ids_aref);
+  # Also inactivate corresponding bundles
+  $self->_inactivate_bundles($track_ids_aref);
 }
 
 sub _get_tracks_for_runs {

@@ -37,6 +37,9 @@ $db->add_species({
   check_expected_track($tracks, [0,0]);
   check_tables_numbers($db, [0,0,0,0,0]);
 }
+{
+  ok((my @track_ids = $db->get_track_ids) == 0, "Get empty list of track_ids");
+}
 
 {
   # Add 1 study
@@ -51,13 +54,13 @@ $db->add_species({
 }
 
 {
-  my $track_id = 1;
+  ok(my @track_ids = $db->get_track_ids, "Get list of track_ids");
+  cmp_ok(@track_ids+0, 'gt', 0, "Several track ids in the list");
+  
+  my $track_id = shift @track_ids;
   ok(my $track = $db->get_track($track_id), "Get track information");
   isa_ok($track, 'RNAseqDB::Schema::Result::Track', 'Get a track object');
   ok(my $track_id_bis = $track->track_id, "Can get track_id");
-  ok(my $desc  = $track->description_auto, "Auto text is not empty");
-  ok(my $title = $track->title_auto, "Auto title is not empty");
-
 }
 
 {

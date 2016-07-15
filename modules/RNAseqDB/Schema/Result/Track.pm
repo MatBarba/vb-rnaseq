@@ -176,17 +176,17 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 drupal_node_tracks
+=head2 bundle_tracks
 
 Type: has_many
 
-Related object: L<RNAseqDB::Schema::Result::DrupalNodeTrack>
+Related object: L<RNAseqDB::Schema::Result::BundleTrack>
 
 =cut
 
 __PACKAGE__->has_many(
-  "drupal_node_tracks",
-  "RNAseqDB::Schema::Result::DrupalNodeTrack",
+  "bundle_tracks",
+  "RNAseqDB::Schema::Result::BundleTrack",
   { "foreign.track_id" => "self.track_id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -222,8 +222,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-08 10:11:13
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Mx5QmuUJJzSVwYvTcrlRLg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-15 16:02:06
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+t6yOuh3ADlp5ckHhp9N9w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

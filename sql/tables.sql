@@ -594,11 +594,11 @@ DRUPAL TABLES
 
 /**
 
-@table drupal_node
-@desc Contains data that will be displayed in drupal nodes.
+@table bundle
+@desc Contains data that will be displayed in bundles.
 
-@column drupal_id              Drupal node id (primary key, internal identifier).
-@column drupal_node_id         Website drupal node id (currently).
+@column bundle_id              Bundle id (primary key, internal identifier).
+@column bundle_id              Website bundle id (currently).
 @column autogen_text           Programmatically generated text.
 @column manual_text            Manually curated text.
 @column autogen_title          Programmatically generated title.
@@ -609,8 +609,8 @@ DRUPAL TABLES
 
 */
 
-CREATE TABLE drupal_node (
-  drupal_id             INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE bundle (
+  bundle_id             INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   drupal_node_id        INT(10) UNSIGNED UNIQUE,
   autogen_text          TEXT,
   manual_text           TEXT,
@@ -620,39 +620,39 @@ CREATE TABLE drupal_node (
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  KEY drupal_id_idx             (drupal_id),
-  KEY drupal_node_id_idx        (drupal_node_id)
+  KEY bundle_id_idx             (bundle_id),
+  KEY drupal_node_id_idx             (drupal_node_id)
 ) ENGINE=InnoDB;
 
-CREATE TRIGGER drupal_node_md5_upd_tr BEFORE UPDATE ON drupal_node
+CREATE TRIGGER bundle_md5_upd_tr BEFORE UPDATE ON bundle
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
-CREATE TRIGGER drupal_node_md5_ins_tr BEFORE INSERT ON drupal_node
+CREATE TRIGGER bundle_md5_ins_tr BEFORE INSERT ON bundle
   FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
 
 
 /**
-@table drupal_node_track
-@desc Links tracks to drupal_nodes.
+@table bundle_track
+@desc Links tracks to bundles.
 
-@column drupal_node_track_id   DrupalNode-Track id (primary key, internal identifier).
-@column drupal_id              Drupal_node primary id (foreign key).
+@column bundle_track_id        Bundle-Track id (primary key, internal identifier).
+@column bundle_id              Bundle primary id (foreign key).
 @column track_id               Track table primary id (foreign key).
 @column date                   Entry timestamp.
 
 */
 
-CREATE TABLE drupal_node_track (
-  drupal_node_track_id  INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  drupal_id             INT(10) UNSIGNED NOT NULL,
+CREATE TABLE bundle_track (
+  bundle_track_id  INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  bundle_id             INT(10) UNSIGNED NOT NULL,
   track_id              INT(10) UNSIGNED NOT NULL,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
-  FOREIGN KEY(drupal_id) REFERENCES drupal_node(drupal_id),
+  FOREIGN KEY(bundle_id) REFERENCES bundle(bundle_id),
   FOREIGN KEY(track_id) REFERENCES track(track_id),
   
-  KEY drupal_node_track_id_idx                 (drupal_node_track_id),
-  KEY drupal_node_track_drupal_id_idx          (drupal_id),
-  KEY drupal_node_track_track_id_idx           (track_id)
+  KEY bundle_track_id_idx                 (bundle_track_id),
+  KEY bundle_track_bundle_id_idx          (bundle_id),
+  KEY bundle_track_track_id_idx           (track_id)
 ) ENGINE=InnoDB;
 
 

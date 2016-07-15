@@ -31,14 +31,14 @@ my $db = RNAseqDB::DB->connect(
 
 # Get the drupal nodes data
 $logger->debug("Extract drupal data");
-my $drupal = decode_json(slurp $opt{input});
+my $drupal = decode_json("" . slurp $opt{input});
 $logger->debug($drupal);
 
 # Match the drupal nodes to the tracks
 match_drupal_tracks($db, $drupal);
 
 # Update the drupal nodes informations
-update_drupal_nodes($db, $drupal);
+update_tracks($db, $drupal);
 
 # Write the updated json file
 if (defined $opt{output}) {
@@ -84,9 +84,9 @@ sub match_drupal_tracks {
   }
 }
 
-sub update_drupal_nodes {
+sub update_tracks {
   my ($db, $drupal) = @_;
-  $logger->debug("Update all drupal nodes linked to tracks...");
+  $logger->debug("Update tracks with drupal node information...");
   
   NODE: for my $node (@$drupal) {
     my $node_id = $node->{node_id};
@@ -96,26 +96,33 @@ sub update_drupal_nodes {
       next NODE;
     }
     
-    # Get the drupal node_id to update
-    my $node_ids_aref = $db->get_drupal_id_from_track_id($track_id);
-    my $n_nodes = scalar @$node_ids_aref;
-    if ($n_nodes == 0) {
-      $logger->warn("No drupal node found associated with track $track_id (for node $node_id)");
+    # First: update tracks
+    my $track_content = {
+      description_manual => $node->{text},
+      title_manual       => $node->{title},
+    };
+    $db->update_track($track_id, $track_content);
+    
+    # Second: update bundles (if they are 1 track = 1 bundle)
+    my $bundle_ids_aref = $db->get_bundle_id_from_track_id($track_id);
+    my $n_bundles = scalar @$bundle_ids_aref;
+    if ($n_bundles == 0) {
+      $logger->warn("No bundle found associated with track $track_id (for node $node_id)");
       next NODE;
     }
-    elsif ($n_nodes > 1) {
+    elsif ($n_bundles > 1) {
       $logger->warn("More than one active drupal node found associated with track $track_id (for node $node_id)");
       next NODE;
     }
     
-    # One drupal node, one track: let's update the drupal_node
-    my $drupal_id = $node_ids_aref->[0];
-    my $node_content = {
+    # One bundle, one track: let's update the bundle too
+    my $bundle_id = $bundle_ids_aref->[0];
+    my $bundle_content = {
       manual_text    => $node->{text},
       manual_title   => $node->{title},
       drupal_node_id => $node_id,
     };
-    $db->update_drupal_node($drupal_id, $node_content);
+    $db->update_bundle($bundle_id, $bundle_content);
   }
 }
 

@@ -40,8 +40,15 @@ my $db = RNAseqDB::DB->connect(
 
 # Retrieve the data (but only if we need it)
 my ($groups, $hubs);
-if ($opt{register} or $opt{public_hubs} or $opt{private_hubs}) {
-  $groups = $db->get_track_groups({
+if ($opt{create}
+    or $opt{register}
+    or $opt{public_hubs}
+    or $opt{private_hubs}
+    or $opt{list_db}
+    or $opt{list_diff}
+) {
+  $logger->info("Retrieving the track bundles...");
+  $groups = $db->get_bundles({
       species     => $opt{species},
       files_dir   => $opt{files_dir},
     });
@@ -190,7 +197,7 @@ sub create_hubs {
   my ($hubs) = @_;
   
   my $num_hubs = @$hubs;
-  print STDERR "Creating files for $num_hubs track hubs\n";
+  $logger->info("Creating files for $num_hubs track hubs");
   for my $hub (@$hubs) {
     $hub->create_files;
   }
@@ -276,13 +283,16 @@ sub diff_hubs {
   }
   
   # Print summary
-  my $n_common = @common;
-  print "$n_common trackhubs already registered\n";
+  my @db_only  = sort keys %db_hub_hash;
+  my @reg_only = sort keys %reg_hub_hash;
+  print sprintf "%d trackhubs from the RNAseq DB are registered\n", ''.@common;
+  print sprintf "%d trackhubs are only in the RNAseq DB\n", ''.@db_only if @db_only > 0;
+  print sprintf "%d trackhubs are only in the Registry\n", ''.@reg_only if @reg_only > 0;
   
-  for my $hub_id (sort keys %db_hub_hash) {
+  for my $hub_id (@db_only) {
     print "Only in the RNAseqDB: $hub_id\n";
   }
-  for my $hub_id (sort keys %reg_hub_hash) {
+  for my $hub_id (@reg_only) {
     print "Only in the Registry: $hub_id\n";
   }
 }
@@ -321,6 +331,7 @@ sub usage {
     Register:
     --register        : register the hub files
                         (the hub files must exist)
+    --hub_server <str>: http/ftp address to the root of the hub files
     --reg_user <str>  : Track Hub Registry user name
     --reg_pass <str>  : Track Hub Registry password
     

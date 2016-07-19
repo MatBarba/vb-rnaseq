@@ -43,10 +43,7 @@ sub _add_track {
   $logger->info("ADDING track for $run_id");
   
   # Add the track itself
-  my $track_insertion = $self->resultset('Track')->create({
-      merge_id    => $run_id,
-      merge_text  => $run_id
-    });
+  my $track_insertion = $self->resultset('Track')->create({});
   
   # Add the link from the run to the track
   my $track_id = $track_insertion->id;
@@ -712,12 +709,12 @@ __END__
 
 =head1 NAME
 
-RNAseqDB::Tracks - Tracks role for the RNAseq DB
+RNAseqDB::Track - Track role for the RNAseq DB
 
 
 =head1 VERSION
 
-This document describes RNAseqDB::Tracks version 0.0.1
+This document describes RNAseqDB::Track version 0.0.1
 
 
 =head1 SYNOPSIS

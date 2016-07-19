@@ -685,7 +685,7 @@ CREATE TABLE vocabulary (
 
 
 /**
-@table voccabulary_track
+@table vocabulary_track
 @desc Links tracks to vocabulary terms.
 
 @column vocabulary_track_id    Vocabulary-Track id (primary key, internal identifier).

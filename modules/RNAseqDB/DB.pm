@@ -23,6 +23,7 @@ with  'RNAseqDB::SRA';
 with  'RNAseqDB::Track';
 with  'RNAseqDB::Bundle';
 with  'RNAseqDB::File';
+with  'RNAseqDB::Vocabulary';
 
 1;
 

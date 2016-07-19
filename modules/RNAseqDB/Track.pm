@@ -80,6 +80,18 @@ sub update_track {
     })->update($track_data);
 }
 
+sub get_active_tracks {
+  my $self = shift;
+  my ($species) = @_;
+  
+  my %search = (
+    status  => 'ACTIVE',
+  );
+  my $track_req = $self->resultset('Track')->search(\%search);
+  my @tracks = $track_req->all;
+  return @tracks;
+}
+
 sub get_track_ids {
   my $self = shift;
   my ($species) = @_;

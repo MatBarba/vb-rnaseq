@@ -588,7 +588,7 @@ CREATE TABLE study_publication (
 
 /**
 
-DRUPAL TABLES
+BUNDLE TABLES
 
 */
 
@@ -653,6 +653,58 @@ CREATE TABLE bundle_track (
   KEY bundle_track_id_idx                 (bundle_track_id),
   KEY bundle_track_bundle_id_idx          (bundle_id),
   KEY bundle_track_track_id_idx           (track_id)
+) ENGINE=InnoDB;
+
+/**
+
+VOCABULARY TABLES
+
+*/
+
+/**
+
+@table vocabulary
+@desc Contains controlled vocabulary to describe tracks.
+
+@column voc_id                 Vocabulary id (primary key, internal identifier).
+@column voc_name               Vocabulary name (displayed text).
+@column voc_type               Vocabulary type (e.g. tissue).
+
+*/
+
+CREATE TABLE vocabulary (
+  vocabulary_id  INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  voc_name       VARCHAR(128),
+  voc_type       VARCHAR(128),
+  
+  KEY vocabulary_id_idx           (vocabulary_id),
+  KEY voc_name_id_idx             (voc_name),
+  KEY voc_type_id_idx             (voc_type)
+) ENGINE=InnoDB;
+
+
+
+/**
+@table voccabulary_track
+@desc Links tracks to vocabulary terms.
+
+@column vocabulary_track_id    Vocabulary-Track id (primary key, internal identifier).
+@column vocabulary_id          Vocabulary primary id (foreign key).
+@column track_id               Track table primary id (foreign key).
+
+*/
+
+CREATE TABLE vocabulary_track (
+  vocabulary_track_id   INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  vocabulary_id         INT(10) UNSIGNED NOT NULL,
+  track_id              INT(10) UNSIGNED NOT NULL,
+  
+  FOREIGN KEY(vocabulary_id) REFERENCES vocabulary(vocabulary_id),
+  FOREIGN KEY(track_id)      REFERENCES track(track_id),
+  
+  KEY vocabulary_track_id_idx                 (vocabulary_track_id),
+  KEY vocabulary_track_vocabulary_id_idx      (vocabulary_id),
+  KEY vocabulary_track_track_id_idx           (track_id)
 ) ENGINE=InnoDB;
 
 

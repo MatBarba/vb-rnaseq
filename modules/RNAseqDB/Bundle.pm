@@ -237,9 +237,17 @@ sub get_bundles {
       
       # Define description
       my @description_list;
-      push @description_list, ($track->description_manual // $track->description_auto);
+      my $track_description = $track->description_manual // $track->description_auto;
       
-      # Add the list of SRA ids
+      # warn if no default description for this track
+      if (defined $track_description) {
+        push @description_list, $track_description;
+      } else {
+        my $track_name = $TRACK_PREFIX . $track->id;
+        $logger->warn("WARNING: Track '$track_name' with title '$title' has no description");
+      }
+      
+      # Add the list of SRA ids to the description anyway
       my $merge = $track->merge_text;
       if ($merge =~ s/_/, /g) {
         push @description_list, "Merged RNA-seq data from: $merge";
@@ -340,6 +348,7 @@ sub _get_bundles {
   my $bundles = $self->resultset('Bundle')->search(
     $search,
     {
+      order_by    => { -asc => 'bundle_id' },
       prefetch    => {
         bundle_tracks => {
           track => [

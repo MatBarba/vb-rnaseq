@@ -11,6 +11,107 @@ use Data::Dumper;
 use Readonly;
 use Try::Tiny;
 
+has vocabulary => (
+  is  => 'rw',
+  isa => 'HashRef[HashRef[Str]]',
+);
+
+has formatted_voc => (
+  is      => 'rw',
+  isa     => 'ArrayRef[HashRef[Str]]',
+  lazy    => 1,
+  builder => '_format_voc',
+);
+
+sub _format_voc {
+  my $self = shift;
+  my $voc = $self->vocabulary;
+  
+  my @formatted_voc;
+  
+  for my $type (keys %$voc) {
+    my $type_href = $voc->{$type};
+    
+    for my $name (keys %$type_href) {
+      my $pattern = $type_href->{$name};
+      
+      my %synonym_group = (
+        pattern   => $pattern,
+        type      => $type,
+        name      => $name
+      );
+      push @formatted_voc, \%synonym_group;
+    }
+  }
+  $logger->debug(Dumper \@formatted_voc);
+  
+  return \@formatted_voc;
+}
+
+sub analyze_tracks_vocabulary {
+  my ($self, $species) = shift;
+  
+  my @tracks = $self->get_active_tracks($species);
+  my $vocabulary = $self->formatted_voc;
+  
+  my %tracks_vocabulary;
+  foreach my $track (@tracks) {
+    my $title0 = $track->title_manual // $track->title_auto;
+    next if not $title0;
+    my $title = $title0;
+    $title =~ s/\([^\)]*\)//g;
+    my %track_voc;
+    
+    # Check patterns
+    for my $voc (@$vocabulary) {
+      my $pattern = $voc->{pattern};
+      if ($title =~ s/([^-]|^)\b($pattern)\b([^-]|$)/$1$3/i) {
+        $track_voc{$pattern} = {
+          type  => $voc->{type},
+          name  => $voc->{name},
+        };
+      }
+    }
+    
+    # Store keywords
+    $tracks_vocabulary{$track->track_id} = [values %track_voc];
+    $logger->debug($track->merge_id . "\n\t" . $title0  . "\n\t" . $title ."\n\t". Dumper(\%track_voc));
+    
+    # Logging...
+    if ($title =~ /[^ ]/) {
+      $logger->info("Incomplete: $title");
+    }
+  }
+  
+  return \%tracks_vocabulary;
+}
+
+sub purge_vocabulary {
+  my $self = shift;
+  
+  my $delete_link = $self->resultset('VocabularyTrack')->delete_all;
+  my $delete_voc  = $self->resultset('Vocabulary')->delete_all;
+}
+
+sub add_vocabulary_to_tracks {
+  my $self = shift;
+  my ($tracks_voc) = @_;
+  
+  # We don't want doubles: purge
+  $self->purge_vocabulary;
+  
+  for my $track_id (sort keys %$tracks_voc) {
+    my $voc_aref = $tracks_voc->{$track_id};
+    foreach my $voc (@$voc_aref) {
+      $self->add_vocabulary_to_track(
+        track_id  => $track_id,
+        name      => $voc->{name},
+        type      => $voc->{type},
+      );
+    }
+  }
+}
+
 sub add_vocabulary_to_track {
   my $self = shift;
   my %track_voc = @_;

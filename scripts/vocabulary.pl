@@ -18,57 +18,50 @@ my $logger = get_logger();
 # using regexp when possible
 my $base_vocabulary = {
   'dev' => {
-    'embryos'   => ['embryos?'],
-    'pupae'     => ['pupae?'],
-    'larvae'    => ['larvae?'],
-    'adults'    => ['adults?'],
-    '1st instar'  => ['1st instar'],
-    '2nd instar'  => ['2nd instar'],
-    '3rd instar'  => ['3rd instar'],
-    '4th instar'  => ['4th instar'],
-    'post-emergence'  => ['post[ -]emergence'],
+    'embryos'   =>'embryos?',
+    'pupae'     =>'pupae?',
+    'larvae'    =>'larvae?',
+    'adults'    =>'adults?',
+    '1st instar'  =>'1st instar',
+    '2nd instar'  =>'2nd instar',
+    '3rd instar'  =>'3rd instar',
+    '4th instar'  =>'4th instar',
+    'post-emergence'  =>'post[ -]emergence',
   },
   'tissue'  => {
-    'antennae'  => [qw/antennae antenna/],
-    'ovaries'   => [qw/ovaries ovary/],
-    'brains'    => ['brains?'],
-    'terminal genitalia' => ['terminal genitalia'],
-    'anterior midgut' => ['anterior midgut'],
-    'whole body'  => ['whole body', 'carcass'],
-    'posterior midgut'  => ['posterior midgut'],
-    'rectum'  => ['rectum'],
-    'malpighian tubules'  => ['malpighian tubules'],
-    'fat body'  => ['fat body'],
-    'testes'  => ['testes'],
-    'maxillary palps'  => ['maxillary palps'],
-    'midlegs'  => ['midlegs'],
-    'hindlegs'  => ['hindlegs'],
-    'forelegs'  => ['forelegs'],
-    'proboscis'  => ['proboscis'],
-    'rostrums'  => ['rostrums'],
-    'cell line' => ['cell line'],
-    'abdominal tips' => ['abdominal tips'],
+    'antennae'  =>'antennae?',
+    'ovaries'   =>'ovar(?:y|ies)',
+    'brains'    =>'brains?',
+    'terminal genitalia' =>'terminal genitalia',
+    'anterior midgut' =>'anterior midgut',
+    'whole body'  =>'whole body|carcass',
+    'posterior midgut'  =>'posterior midgut',
+    'rectum'  =>'rectum',
+    'malpighian tubules'  =>'malpighian tubules',
+    'fat body'  =>'fat body',
+    'testes'  =>'testes',
+    'maxillary palps'  =>'maxillary palps',
+    'midlegs'  =>'midlegs',
+    'hindlegs'  =>'hindlegs',
+    'forelegs'  =>'forelegs',
+    'proboscis'  =>'proboscis',
+    'rostrums'  =>'rostrums',
+    'cell line' =>'cell line',
+    'abdominal tips' =>'abdominal tips',
   },
   'sex' => {
-    'male'  => [qw/males male/],
-    'female'  => [qw/females female/],
-    'mixed sex' => ['mixed sex'],
+    'male'  =>'males?',
+    'female'  =>'females?',
+    'mixed sex' =>'mixed sex',
   },
   'feeding' => {
-    'non-blood-fed' => [
-    'non-blood[ -]fee?d',
-    ],
-    'blood-fed' => [
-    '(?:post[ -])?blood[ -](?:fee?d|meal)',
-    ],
-    'sugar-fed' => [
-    '(?:post[ -])?sugar[ -](?:fee?d|meal)',
-    'sugar diet',
-    ],
+    'non-blood-fed' =>'non-blood[ -]fee?d',
+    'blood-fed' =>'(?:post[ -])?blood[ -](?:fee?d|meal)',
+    'sugar-fed' =>'(?:post[ -])?sugar[ -](?:fee?d|meal|diet)',
   },
   'condition' => {
-    'resistant' => ['resistant', 'resistance'],
-    'post-infection'  => ['post[ -]infect(?:ion|ed)'],
+    'resistant' =>'resistan(?:t|ce)',
+    'post-infection'  =>'post[ -]infect(?:ion|ed)',
   },
 };
 
@@ -109,11 +102,10 @@ sub format_voc {
     my $type_href = $voc->{$type};
     
     for my $name (keys %$type_href) {
-      my $synonyms_aref = $type_href->{$name};
+      my $pattern = $type_href->{$name};
       
-      my $synonyms_regex = join '|', @$synonyms_aref;
       my %synonym_group = (
-        pattern   => $synonyms_regex,
+        pattern   => $pattern,
         type      => $type,
         name      => $name
       );

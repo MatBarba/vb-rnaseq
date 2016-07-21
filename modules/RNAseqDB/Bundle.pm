@@ -143,6 +143,8 @@ sub get_bundles_for_solr {
     foreach my $track (@{ $group->{tracks} }) {
       my %solr_track = (
         id                            => $track->{id},
+        label                         => $track->{title},
+        description                   => $track->{description},
         aligner                       => $track->{aligner},
         
         run_accessions_ss             => $track->{runs},

@@ -168,6 +168,14 @@ sub get_bundles_for_solr {
         }
       }
       
+      # Add keywords
+      my @keywords;
+      for my $type (keys %{ $track->{keywords} }) {
+        my $list = $track->{keywords}->{$type};
+        push @keywords, @$list;
+      }
+      $solr_track{keywords_ss} = \@keywords;
+      
       push @{ $solr_group{$SOLR_CHILDREN} }, \%solr_track;
     }
     
@@ -219,8 +227,9 @@ sub get_bundles {
     }
     
     # Add the tracks data
-    foreach my $bundle_track ($bundle_tracks->all) {
+    TRACK: foreach my $bundle_track ($bundle_tracks->all) {
       my $track = $bundle_track->track;
+      my $track_id = $track->track_id;
       
       # Define title
       my $title = $track->title_manual // $track->title_auto;
@@ -263,7 +272,7 @@ sub get_bundles {
       );
       
       my @files;
-      foreach my $file ($track->files->all) {
+      FILE: foreach my $file ($track->files->all) {
         my @url_path = (
           $file->type eq 'bai' ? 'bam' : $file->type,
           $strain->production_name,
@@ -324,10 +333,15 @@ sub get_bundles {
         %track_data = (%track_data, %accessions_urls);
       }
       
+      # Finally, get the keywords
+      my $keywords = $self->get_vocabulary_for_track_id($track_id);
+      $track_data{keywords} = $keywords;
+      
+      # Save the track in the bundle
+      push @{ $group{tracks} }, \%track_data;
+      
       # Add all collected publications
       %group = (%group, %publications);
-      
-      push @{ $group{tracks} }, \%track_data;
     }
     
     push @groups, \%group;
@@ -348,12 +362,13 @@ sub _get_bundles {
   my $bundles = $self->resultset('Bundle')->search(
     $search,
     {
-      order_by    => { -asc => 'bundle_id' },
+      order_by    => { -asc => 'me.bundle_id' },
       prefetch    => {
         bundle_tracks => {
           track => [
             'files',
             { analyses => 'analysis_description' },
+            { vocabulary_tracks => 'vocabulary' },
             {
               'sra_tracks' => {
                 run => [

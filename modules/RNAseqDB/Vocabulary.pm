@@ -163,6 +163,28 @@ sub _get_vocabulary_id {
   return $voc_id;
 }
 
+sub get_vocabulary_for_track_id {
+  my $self = shift;
+  my ($track_id) = @_;
+  
+  my $voc_req = $self->resultset('VocabularyTrack')->search({
+      track_id  => $track_id,
+    },
+    {
+      prefetch  => 'vocabulary',
+    });
+  
+  # Put data in a hash[array]
+  my %vocabulary;
+  for my $voc ($voc_req->all) {
+    my $type = $voc->vocabulary->voc_type;
+    my $name = $voc->vocabulary->voc_name;
+    push @{ $vocabulary{$type} }, $name;
+  }
+  
+  return \%vocabulary;
+}
+
 1;
 
 

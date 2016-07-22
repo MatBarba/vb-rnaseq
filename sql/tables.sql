@@ -315,13 +315,13 @@ CREATE TRIGGER private_file_md5_ins_tr BEFORE INSERT ON private_file
 
 @column track_id               Track id (primary key, internal identifier).
 @column title_auto             Title of the track in E! genome browser (automatically created).
-@column description_auto       Description of the track in E! genome browser (automatically created).
+@column text_auto              Description of the track in E! genome browser (automatically created).
 @column title_manual           Title of the track in E! genome browser (manually created).
-@column description_manual     Description of the track in E! genome browser (manually created).
+@column text_manual            Description of the track in E! genome browser (manually created).
 @column merge_level            Merge level for the set of runs for the pipeline.
 @column merge_id               Merge id generated for this track.
 @column merge_text             Merge text (text used to create the merge_id hash).
-@column metasum                Checksum of @title + @description.
+@column metasum                Checksum of @title/text_auto/manual.
 @column date                   Entry timestamp.
 @column status                 Active (True) or retired (False) row.
 
@@ -330,9 +330,9 @@ CREATE TRIGGER private_file_md5_ins_tr BEFORE INSERT ON private_file
 CREATE TABLE track (
   track_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   title_auto            TEXT,
-  description_auto      TEXT,
+  text_auto             TEXT,
   title_manual          TEXT,
-  description_manual    TEXT,
+  text_manual           TEXT,
   merge_level           ENUM('taxon', 'study', 'experiment', 'run', 'sample'),
   merge_id              VARCHAR(256) UNIQUE,
   merge_text            TEXT,
@@ -344,9 +344,9 @@ CREATE TABLE track (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER track_md5_upd_tr BEFORE UPDATE ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title_auto, NEW.description_auto, NEW.title_manual, NEW.description_manual, NEW.merge_id, NEW.merge_text) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title_auto, NEW.text_auto, NEW.title_manual, NEW.text_manual, NEW.merge_id, NEW.merge_text) );
 CREATE TRIGGER track_md5_ins_tr BEFORE INSERT ON track
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title_auto, NEW.description_auto, NEW.title_manual, NEW.description_manual, NEW.merge_id, NEW.merge_text) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.track_id, NEW.title_auto, NEW.text_auto, NEW.title_manual, NEW.text_manual, NEW.merge_id, NEW.merge_text) );
 
 /**
 @table sra_track
@@ -598,12 +598,12 @@ BUNDLE TABLES
 @desc Contains data that will be displayed in bundles.
 
 @column bundle_id              Bundle id (primary key, internal identifier).
-@column bundle_id              Website bundle id (currently).
-@column autogen_text           Programmatically generated text.
-@column manual_text            Manually curated text.
-@column autogen_title          Programmatically generated title.
-@column manual_title           Manually curated title.
-@column metasum                Checksum of @autogen_txt + @manual_txt.
+@column drupal_node_id         Corresponding website drupal node id (currently).
+@column title_auto             Programmatically generated title.
+@column text_auto              Programmatically generated text.
+@column title_manual           Manually curated title.
+@column text_manual            Manually curated text.
+@column metasum                Checksum of @title/text_manual/auto + drupal_node_id.
 @column date                   Entry timestamp.
 @column status                 Active (True) or retired (False) row.
 
@@ -612,11 +612,11 @@ BUNDLE TABLES
 CREATE TABLE bundle (
   bundle_id             INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   drupal_node_id        INT(10) UNSIGNED UNIQUE,
-  autogen_text          TEXT,
-  manual_text           TEXT,
+  title_auto            TEXT,
+  text_auto             TEXT,
+  text_manual           TEXT,
+  title_manual          TEXT,
   metasum               CHAR(32),
-  autogen_title         TEXT,
-  manual_title          TEXT,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
@@ -625,9 +625,9 @@ CREATE TABLE bundle (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER bundle_md5_upd_tr BEFORE UPDATE ON bundle
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.title_auto, NEW.text_auto, NEW.title_manual, NEW.text_manual) );
 CREATE TRIGGER bundle_md5_ins_tr BEFORE INSERT ON bundle
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.autogen_text, NEW.manual_text, NEW.autogen_title, NEW.manual_title) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.drupal_node_id, NEW.title_auto, NEW.text_auto, NEW.title_manual, NEW.text_manual) );
 
 
 /**
@@ -666,7 +666,7 @@ VOCABULARY TABLES
 @table vocabulary
 @desc Contains controlled vocabulary to describe tracks.
 
-@column voc_id                 Vocabulary id (primary key, internal identifier).
+@column vocabulary_id          Vocabulary id (primary key, internal identifier).
 @column voc_name               Vocabulary name (displayed text).
 @column voc_type               Vocabulary type (e.g. tissue).
 

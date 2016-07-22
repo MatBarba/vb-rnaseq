@@ -143,8 +143,8 @@ sub guess_track_text {
     $self->resultset('Track')->search({
         'track_id'  => $track_id,
       })->update({
-        title_auto        => $title,
-        description_auto  => $description,
+        title_auto  => $title,
+        text_auto   => $description,
       });
   }
   

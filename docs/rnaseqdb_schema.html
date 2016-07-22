@@ -221,8 +221,10 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       <ul class="sql_schema_table_list">
         <li><a href="#publication" class="sql_schema_link" style="font-weight:bold">publication</a></li>
         <li><a href="#study_publication" class="sql_schema_link" style="font-weight:bold">study_publication</a></li>
-        <li><a href="#drupal_node" class="sql_schema_link" style="font-weight:bold">drupal_node</a></li>
-        <li><a href="#drupal_node_track" class="sql_schema_link" style="font-weight:bold">drupal_node_track</a></li>
+        <li><a href="#bundle" class="sql_schema_link" style="font-weight:bold">bundle</a></li>
+        <li><a href="#bundle_track" class="sql_schema_link" style="font-weight:bold">bundle_track</a></li>
+        <li><a href="#vocabulary" class="sql_schema_link" style="font-weight:bold">vocabulary</a></li>
+        <li><a href="#vocabulary_track" class="sql_schema_link" style="font-weight:bold">vocabulary_track</a></li>
 
       </ul>
     </div>
@@ -375,6 +377,22 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2">VARCHAR(32)</td>
         <td class="bg2">NULL</td>
         <td class="bg2">Name of the strain.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>assembly</b></td>
+        <td class="bg1">VARCHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Version of the assembly.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>assembly_accession</b></td>
+        <td class="bg2">VARCHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Version of the assembly in INSDC.</td>
         <td class="bg2"></td>
       </tr>
 
@@ -949,18 +967,34 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>title</b></td>
+        <td class="bg2"><b>title_auto</b></td>
         <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Title of the track in E! genome browser.</td>
+        <td class="bg2">Title of the track in E! genome browser (automatically created).</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>description</b></td>
+        <td class="bg1"><b>text_auto</b></td>
         <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Description of the track in E! genome browser.</td>
+        <td class="bg1">Description of the track in E! genome browser (automatically created).</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>title_manual</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Title of the track in E! genome browser (manually created).</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>text_manual</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Description of the track in E! genome browser (manually created).</td>
         <td class="bg1"></td>
       </tr>
 
@@ -981,27 +1015,35 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>metasum</b></td>
-        <td class="bg2">CHAR(32)</td>
+        <td class="bg2"><b>merge_text</b></td>
+        <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Checksum of @title + @description.</td>
+        <td class="bg2">Merge text (text used to create the merge_id hash).</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>date</b></td>
-        <td class="bg1">TIMESTAMP</td>
-        <td class="bg1">CURRENT_TIMESTAMP</td>
-        <td class="bg1">Entry timestamp.</td>
+        <td class="bg1"><b>metasum</b></td>
+        <td class="bg1">CHAR(32)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Checksum of @title/text_auto/manual.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>status</b></td>
-        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li>  <li> MERGED</li></ul></td>
-        <td class="bg2">'ACTIVE'</td>
-        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"><b>date</b></td>
+        <td class="bg2">TIMESTAMP</td>
+        <td class="bg2">CURRENT_TIMESTAMP</td>
+        <td class="bg2">Entry timestamp.</td>
         <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>status</b></td>
+        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li>  <li> MERGED</li></ul></td>
+        <td class="bg1">'ACTIVE'</td>
+        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"></td>
       </tr>
     </table>
   </div>
@@ -1206,6 +1248,22 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
+        <td class="bg2"><b>type</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>aligner</li>  <li> indexer</li>  <li> converter</li>  <li> modifier</li>  <li> analyser</li></ul></td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">What kind of operation is performed.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>pattern</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Regexp to recognize the program from the command.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
         <td class="bg2"><b>metasum</b></td>
         <td class="bg2">CHAR(32)</td>
         <td class="bg2">NULL</td>
@@ -1279,10 +1337,10 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>program</b></td>
+        <td class="bg2"><b>version</b></td>
         <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Name of the Program used.</td>
+        <td class="bg2">Version of the program used.</td>
         <td class="bg2"></td>
       </tr>
 
@@ -1480,20 +1538,20 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </table>
   </div>
 </div></div><div class="sql_schema_table">
-  <div id="drupal_node"class="sql_schema_table_header" style="border-top-color:#55FF33">
-    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>drupal_node</div>
+  <div id="bundle"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>bundle</div>
     <div class="sql_schema_table_header_right">
   
-  <a id="a_drupal_node" class="help-header sql_schema_show_hide" onclick="show_hide('drupal_node','columns')">
+  <a id="a_bundle" class="help-header sql_schema_show_hide" onclick="show_hide('bundle','columns')">
     <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
   </a>
       <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data that will be displayed in drupal nodes.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains data that will be displayed in bundles.</p>
 
-  <div id="div_drupal_node" style="display:none">
+  <div id="div_bundle" style="display:none">
     <table class="ss sql_schema_table_column">
       <tr class="center">
         <th>Column</th>
@@ -1504,39 +1562,23 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>drupal_id</b></td>
+        <td class="bg1"><b>bundle_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
-        <td class="bg1">Drupal node id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>drupal_id_idx</i></td>
+        <td class="bg1">Bundle id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>bundle_id_idx</i></td>
       </tr>
 
       <tr>
         <td class="bg2"><b>drupal_node_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Website drupal node id (currently).</td>
+        <td class="bg2">Corresponding website drupal node id (currently).</td>
         <td class="bg2">key: <i>drupal_node_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>autogen_text</b></td>
-        <td class="bg1">TEXT</td>
-        <td class="bg1">NULL</td>
-        <td class="bg1">Programmatically generated text.</td>
-        <td class="bg1"></td>
-      </tr>
-
-      <tr>
-        <td class="bg2"><b>manual_text</b></td>
-        <td class="bg2">TEXT</td>
-        <td class="bg2">NULL</td>
-        <td class="bg2">Manually curated text.</td>
-        <td class="bg2"></td>
-      </tr>
-
-      <tr>
-        <td class="bg1"><b>autogen_title</b></td>
+        <td class="bg1"><b>title_auto</b></td>
         <td class="bg1">TEXT</td>
         <td class="bg1">NULL</td>
         <td class="bg1">Programmatically generated title.</td>
@@ -1544,10 +1586,26 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg2"><b>manual_title</b></td>
+        <td class="bg2"><b>text_auto</b></td>
         <td class="bg2">TEXT</td>
         <td class="bg2">NULL</td>
-        <td class="bg2">Manually curated title.</td>
+        <td class="bg2">Programmatically generated text.</td>
+        <td class="bg2"></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>title_manual</b></td>
+        <td class="bg1">TEXT</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Manually curated title.</td>
+        <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>text_manual</b></td>
+        <td class="bg2">TEXT</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Manually curated text.</td>
         <td class="bg2"></td>
       </tr>
 
@@ -1555,7 +1613,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg1"><b>metasum</b></td>
         <td class="bg1">CHAR(32)</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @autogen_txt + @manual_txt.</td>
+        <td class="bg1">Checksum of @title/text_manual/auto + drupal_node_id.</td>
         <td class="bg1"></td>
       </tr>
 
@@ -1577,20 +1635,20 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
     </table>
   </div>
 </div></div><div class="sql_schema_table">
-  <div id="drupal_node_track"class="sql_schema_table_header" style="border-top-color:#55FF33">
-    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>drupal_node_track</div>
+  <div id="bundle_track"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>bundle_track</div>
     <div class="sql_schema_table_header_right">
   
-  <a id="a_drupal_node_track" class="help-header sql_schema_show_hide" onclick="show_hide('drupal_node_track','columns')">
+  <a id="a_bundle_track" class="help-header sql_schema_show_hide" onclick="show_hide('bundle_track','columns')">
     <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
   </a>
       <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
     </div>
     <div style="clear:both"></div>
   </div>
-<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Links tracks to drupal_nodes.</p>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Links tracks to bundles.</p>
 
-  <div id="div_drupal_node_track" style="display:none">
+  <div id="div_bundle_track" style="display:none">
     <table class="ss sql_schema_table_column">
       <tr class="center">
         <th>Column</th>
@@ -1601,19 +1659,19 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>drupal_node_track_id</b></td>
+        <td class="bg1"><b>bundle_track_id</b></td>
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
-        <td class="bg1">DrupalNode-Track id (primary key, internal identifier).</td>
-        <td class="bg1">key: <i>drupal_node_track_id_idx</i></td>
+        <td class="bg1">Bundle-Track id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>bundle_track_id_idx</i></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>drupal_id</b></td>
+        <td class="bg2"><b>bundle_id</b></td>
         <td class="bg2">INT(10)</td>
         <td class="bg2">-</td>
-        <td class="bg2">Drupal_node primary id (foreign key).</td>
-        <td class="bg2">key: <i>drupal_node_track_drupal_id_idx</i></td>
+        <td class="bg2">Bundle primary id (foreign key).</td>
+        <td class="bg2">key: <i>bundle_track_bundle_id_idx</i></td>
       </tr>
 
       <tr>
@@ -1621,7 +1679,7 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg1">INT(10)</td>
         <td class="bg1">-</td>
         <td class="bg1">Track table primary id (foreign key).</td>
-        <td class="bg1">key: <i>drupal_node_track_track_id_idx</i></td>
+        <td class="bg1">key: <i>bundle_track_track_id_idx</i></td>
       </tr>
 
       <tr>
@@ -1630,6 +1688,104 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
         <td class="bg2">CURRENT_TIMESTAMP</td>
         <td class="bg2">Entry timestamp.</td>
         <td class="bg2"></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="vocabulary"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>vocabulary</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_vocabulary" class="help-header sql_schema_show_hide" onclick="show_hide('vocabulary','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Contains controlled vocabulary to describe tracks.</p>
+
+  <div id="div_vocabulary" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>vocabulary_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Vocabulary id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>vocabulary_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>voc_name</b></td>
+        <td class="bg2">VARCHAR(128)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Vocabulary name (displayed text).</td>
+        <td class="bg2">key: <i>voc_name_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>voc_type</b></td>
+        <td class="bg1">VARCHAR(128)</td>
+        <td class="bg1">NULL</td>
+        <td class="bg1">Vocabulary type (e.g. tissue).</td>
+        <td class="bg1">key: <i>voc_type_id_idx</i></td>
+      </tr>
+    </table>
+  </div>
+</div></div><div class="sql_schema_table">
+  <div id="vocabulary_track"class="sql_schema_table_header" style="border-top-color:#55FF33">
+    <div class="sql_schema_table_header_left"><span style="background-color:#55FF33"></span>vocabulary_track</div>
+    <div class="sql_schema_table_header_right">
+  
+  <a id="a_vocabulary_track" class="help-header sql_schema_show_hide" onclick="show_hide('vocabulary_track','columns')">
+    <img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/> Show columns
+  </a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+<div class="sql_schema_table_content">  <p class="sql_schema_table_desc">Links tracks to vocabulary terms.</p>
+
+  <div id="div_vocabulary_track" style="display:none">
+    <table class="ss sql_schema_table_column">
+      <tr class="center">
+        <th>Column</th>
+        <th>Type</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>vocabulary_track_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Vocabulary-Track id (primary key, internal identifier).</td>
+        <td class="bg1">key: <i>vocabulary_track_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>vocabulary_id</b></td>
+        <td class="bg2">INT(10)</td>
+        <td class="bg2">-</td>
+        <td class="bg2">Vocabulary primary id (foreign key).</td>
+        <td class="bg2">key: <i>vocabulary_track_vocabulary_id_idx</i></td>
+      </tr>
+
+      <tr>
+        <td class="bg1"><b>track_id</b></td>
+        <td class="bg1">INT(10)</td>
+        <td class="bg1">-</td>
+        <td class="bg1">Track table primary id (foreign key).</td>
+        <td class="bg1">key: <i>vocabulary_track_track_id_idx</i></td>
       </tr>
     </table>
   </div>

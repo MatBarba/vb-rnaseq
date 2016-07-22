@@ -198,8 +198,8 @@ sub get_bundles {
   DRU: for my $bundle ($bundles->all) {
     my %group = (
       id              => $GROUP_PREFIX . $bundle->bundle_id,
-      label           => $bundle->manual_title // $bundle->autogen_title,
-      description     => $bundle->manual_text // $bundle->autogen_text,
+      label           => $bundle->title_manual // $bundle->title_auto,
+      description     => $bundle->text_manual  // $bundle->text_auto,
     );
     
     # Get the data associated with every track
@@ -248,7 +248,7 @@ sub get_bundles {
       
       # Define description
       my @description_list;
-      my $track_description = $track->description_manual // $track->description_auto;
+      my $track_description = $track->text_manual // $track->text_auto;
       
       # warn if no default description for this track
       if (defined $track_description) {

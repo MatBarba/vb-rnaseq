@@ -36,12 +36,22 @@ __PACKAGE__->table("bundle");
   extra: {unsigned => 1}
   is_nullable: 1
 
-=head2 autogen_text
+=head2 title_auto
 
   data_type: 'text'
   is_nullable: 1
 
-=head2 manual_text
+=head2 text_auto
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 text_manual
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 title_manual
 
   data_type: 'text'
   is_nullable: 1
@@ -51,16 +61,6 @@ __PACKAGE__->table("bundle");
   data_type: 'char'
   is_nullable: 1
   size: 32
-
-=head2 autogen_title
-
-  data_type: 'text'
-  is_nullable: 1
-
-=head2 manual_title
-
-  data_type: 'text'
-  is_nullable: 1
 
 =head2 date
 
@@ -88,16 +88,16 @@ __PACKAGE__->add_columns(
   },
   "drupal_node_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
-  "autogen_text",
+  "title_auto",
   { data_type => "text", is_nullable => 1 },
-  "manual_text",
+  "text_auto",
+  { data_type => "text", is_nullable => 1 },
+  "text_manual",
+  { data_type => "text", is_nullable => 1 },
+  "title_manual",
   { data_type => "text", is_nullable => 1 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
-  "autogen_title",
-  { data_type => "text", is_nullable => 1 },
-  "manual_title",
-  { data_type => "text", is_nullable => 1 },
   "date",
   {
     data_type => "timestamp",
@@ -158,8 +158,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-15 16:02:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:z8hIGiDF2u1SctscrRbhYg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-22 12:01:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Il/yur3JtoWGZJgTRWsJqw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -98,8 +98,8 @@ sub update_tracks {
     
     # First: update tracks
     my $track_content = {
-      description_manual => $node->{text},
-      title_manual       => $node->{title},
+      text_manual   => $node->{text},
+      title_manual  => $node->{title},
     };
     $db->update_track($track_id, $track_content);
     
@@ -118,8 +118,8 @@ sub update_tracks {
     # One bundle, one track: let's update the bundle too
     my $bundle_id = $bundle_ids_aref->[0];
     my $bundle_content = {
-      manual_text    => $node->{text},
-      manual_title   => $node->{title},
+      text_manual    => $node->{text},
+      title_manual   => $node->{title},
       drupal_node_id => $node_id,
     };
     $db->update_bundle($bundle_id, $bundle_content);

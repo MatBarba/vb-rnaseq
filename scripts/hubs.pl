@@ -40,8 +40,10 @@ my $db = RNAseqDB::DB->connect(
 
 # Retrieve the data (but only if we need it)
 my ($groups, $hubs);
-if ($opt{create}
+if (
+       $opt{create}
     or $opt{register}
+    or $opt{delete}
     or $opt{public_hubs}
     or $opt{private_hubs}
     or $opt{list_db}
@@ -204,10 +206,11 @@ sub create_hubs {
 }
 
 sub delete_hubs {
-  my ($registry , $hubs, $opt) = @_;
+  my ($registry, $hubs, $opt) = @_;
   
   if ($opt->{species}) {
-    $logger->info("Deleting track hubs for species $opt->{species}");
+    my $n = @$hubs;
+    $logger->info("Deleting $n track hubs for species $opt->{species}");
     my @hub_ids = map { $_->id } @$hubs;
     $registry->delete_track_hubs(@hub_ids);
   } else {

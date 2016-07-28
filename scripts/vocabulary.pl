@@ -60,7 +60,7 @@ my $base_vocabulary = {
     'sugar-fed' =>'(?:post[ -])?sugar[ -](?:fee?d|meal|diet)',
   },
   'condition' => {
-    'resistant' =>'resistan(?:t|ce)',
+    'resistance' =>'resistan(?:t|ce)',
     'post-infection'  =>'post[ -]infect(?:ion|ed)',
   },
 };

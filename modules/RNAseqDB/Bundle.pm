@@ -41,15 +41,7 @@ sub _add_bundle_from_track {
   }
   
   # Insert a new bundle and a link bundle_tracks
-  $logger->info("ADDING bundle for $track_id");
-  
-  # Add the bundle itself
-  my $bundle_insertion = $self->resultset('Bundle')->create({});
-  
-  # Add the link from the bundle to the track
-  my $bundle_id = $bundle_insertion->id;
-  $self->_add_bundle_track($track_id, $bundle_id);
-  $logger->debug("ADDED bundle $bundle_id");
+  $self->create_bundle_from_track_ids($track_id);
   
   return;
 }
@@ -70,18 +62,53 @@ sub _add_bundle_track {
   }
   
   my $bundle_track_insertion = $self->resultset('BundleTrack')->create({
-      bundle_id => $bundle_id,
-      track_id  => $track_id,
+      bundle_id  => $bundle_id,
+      track_id   => $track_id,
   });
   $logger->debug("ADDED bundle_track " . $bundle_track_insertion->id);
   return;
+}
+
+sub create_bundle_from_track_ids {
+  my $self = shift;
+  my @track_ids = @_;
+  
+  my $bundle_data = {};
+  
+  if (@track_ids == 1)  {
+    $logger->debug("Bundle: copy data from track " . $track_ids[0]);
+    # Retrieve the tracks data to copy to the bundle (auto fields)
+    my $tracks = $self->resultset('Track')->search({
+        track_id  => $track_ids[0],
+      });
+    my $track = $tracks->first;
+    $bundle_data = {
+      title_auto => $track->title_manual // $track->title_auto,
+      text_auto  => $track->text_manual  // $track->text_auto,
+    };
+    $logger->debug("Bundle title = $bundle_data->{title_auto}") if $bundle_data and $bundle_data->{title_auto};
+  }
+  
+  # Add the bundle itself
+  my $bundle_insertion = $self->resultset('Bundle')->create($bundle_data);
+  
+  my $bundle_id = $bundle_insertion->id;
+  
+  # Add the link from the bundle to the tracks
+  for my $track_id (@track_ids) {
+    $self->_add_bundle_track($bundle_id, $track_id);
+  }
+  $logger->debug("ADDED bundle $bundle_id");
 }
 
 sub _get_bundle_tracks_links {
   my ($self, $conditions) = @_;
   $conditions ||= {};
   
-  my $bundle_track_search = $self->resultset('BundleTrack')->search($conditions);
+  my $bundle_track_search = $self->resultset('BundleTrack')->search($conditions,
+    {
+      prefetch  => 'bundle'
+    });
   my @links = $bundle_track_search->all;
   return \@links;
 }
@@ -94,16 +121,31 @@ sub _inactivate_bundles {
   my $links = $self->_get_bundle_tracks_links(\@conditions);
   
   # 2) Inactivate the corresponding bundles
-  my @bundle_ids = map { { 'bundle_id' => $_->bundle_id } } @$links;
-  my $tracks_update = $self->resultset('Bundle')->search(\@bundle_ids)->update({
-    status => 'RETIRED',
-  });
+  my @bundle_ids = map { $_->bundle_id } @$links;
+  $logger->debug("Inactivate the bundles: " . join(',', @bundle_ids));
+  $self->inactivate_bundles(@bundle_ids);
+}
+
+sub inactivate_bundles {
+  my $self = shift;
+  my @bundle_ids = @_;
+  
+  $logger->debug("Inactivate the bundles: " . join(',', @bundle_ids));
+  my @bundle_searches = map { { bundle_id => $_ } } @bundle_ids;
+  my $tracks_update = $self->resultset('Bundle')->search(
+      \@bundle_searches
+    )->update({
+      status => 'RETIRED',
+    });
 }
 
 sub get_bundle_id_from_track_id {
   my ($self, $track_id) = @_;
   
-  my $links = $self->_get_bundle_tracks_links({ track_id => $track_id });
+  my $links = $self->_get_bundle_tracks_links({
+      track_id => $track_id,
+      'bundle.status' => 'ACTIVE'
+    });
   my @bundle_ids = map { $_->bundle_id } @$links;
   return \@bundle_ids;
 }
@@ -115,6 +157,32 @@ sub update_bundle {
   my $bundle_update = $self->resultset('Bundle')->search({
       bundle_id => $bundle_id,
   })->update($node_content);
+}
+
+sub merge_bundles {
+  my $self = shift;
+  my @bundle_ids = @_;
+  
+  # Get the track_ids associated with the bundles
+  my @track_ids;
+  for my $bundle_id (@bundle_ids) {
+    $logger->debug("Merge bundle $bundle_id");
+    push @track_ids, $self->get_bundle_tracks($bundle_id);
+  }
+  $self->create_bundle_from_track_ids(@track_ids);
+  $self->inactivate_bundles(@bundle_ids);
+}
+
+sub get_bundle_tracks {
+  my $self = shift;
+  my ($bundle_id) = @_;
+  
+  my $req = $self->resultset('BundleTrack')->search({
+      bundle_id => $bundle_id,
+  });
+  
+  my @track_ids = map { $_->track_id } $req->all;
+  return @track_ids;
 }
 
 sub get_bundles_for_solr {

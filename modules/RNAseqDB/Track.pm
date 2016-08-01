@@ -49,7 +49,7 @@ sub _add_track {
   my $track_id = $track_insertion->id;
   $self->_add_sra_track($run_id, $track_id);
   
-  # Also create a bundle for this track
+  # Also create a gundle for this track
   $self->_add_bundle_from_track($track_id);
   
   # Finally, try to create a title + description for the track
@@ -559,7 +559,7 @@ sub merge_tracks_by_sra_ids {
     return;
   }
   elsif ($n_tracks == 1) {
-    $logger->warn("Trying to merge tracks, but there is only one track to merge");
+    $logger->warn("Trying to merge tracks, but there is only one track to merge ($old_track_ids->[0])");
     return;
   } else {
     $logger->debug(sprintf "Can merge %d tracks", scalar @$old_track_ids);
@@ -578,7 +578,7 @@ sub merge_tracks_by_sra_ids {
   # Also create and link a bundle to the track
   $self->_add_bundle_from_track($merged_track_id);
 
-  return;
+  return $merged_track_id;
 }
 
 sub _merge_sample_tracks {

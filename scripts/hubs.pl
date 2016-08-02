@@ -19,6 +19,7 @@ use Data::Dumper;
 use EGTH::TrackHub;
 use EGTH::TrackHub::Genome;
 use EGTH::TrackHub::Track;
+use EGTH::TrackHub::SuperTrack;
 use EGTH::Registry;
 
 use RNAseqDB::DB;
@@ -153,8 +154,8 @@ sub prepare_hubs {
       
       my $bam_track = EGTH::TrackHub::Track->new(
         track       => $track->{id} . '_bam',
-        shortLabel  => ($track->{title} // $track->{id}) . " (bam)",
-        longLabel   => ($track->{description} // $track->{id}) . " (bam file)",
+        shortLabel  => ($track->{title} // $track->{id}),
+        longLabel   => ($track->{description} // $track->{id}),
         bigDataUrl  => $bam->{url},
         type        => 'bam',
         visibility  => 'hide',
@@ -170,9 +171,30 @@ sub prepare_hubs {
       $genome->add_track($big_tracks[0]);
       $genome->add_track($bam_tracks[0]);
     } else {
+      my $superbig = EGTH::TrackHub::SuperTrack->new(
+        track      => $hub->{id} . '_bigwig',
+        shortLabel => 'Coverage (bigwig)',
+        type       => 'bigWig',
+        show       => 1,
+      );
+      my $superbam = EGTH::TrackHub::SuperTrack->new(
+        track      => $hub->{id} . '_bam',
+        shortLabel => 'Reads (bam)',
+        type       => 'bam',
+        show       => 0,
+      );
       # Put all that in a supertrack
-      $genome->add_track($big_tracks[0]); # Deactivated for now
-      $genome->add_track($bam_tracks[0]); # Deactivated for now
+      my $n = 0;
+      for my $big (@big_tracks) {
+        $big->visibility('hide') if $n > 10;
+        $superbig->add_sub_track($big);
+        $n++;
+      }
+      for my $bam (@bam_tracks) {
+        $superbam->add_sub_track($bam);
+      }
+      $genome->add_track($superbig);
+      $genome->add_track($superbam);
     }
     
     # Add the genome...

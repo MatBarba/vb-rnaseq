@@ -103,7 +103,9 @@ sub create_bundle_from_track_ids {
 
 sub _get_bundle_tracks_links {
   my ($self, $conditions) = @_;
-  $conditions ||= {};
+  $conditions //= {
+    'bundle.status' => 'ACTIVE',
+  };
   
   my $bundle_track_search = $self->resultset('BundleTrack')->search($conditions,
     {
@@ -113,7 +115,7 @@ sub _get_bundle_tracks_links {
   return \@links;
 }
 
-sub _inactivate_bundles {
+sub _inactivate_bundles_for_tracks {
   my ($self, $track_ids_aref) = @_;
   
   # 1) Get the tracks-bundles links
@@ -122,7 +124,6 @@ sub _inactivate_bundles {
   
   # 2) Inactivate the corresponding bundles
   my @bundle_ids = map { $_->bundle_id } @$links;
-  $logger->debug("Inactivate the bundles: " . join(',', @bundle_ids));
   $self->inactivate_bundles(@bundle_ids);
 }
 
@@ -130,6 +131,8 @@ sub inactivate_bundles {
   my $self = shift;
   my @bundle_ids = @_;
   
+  my %bundles_hash = map { $_ => 1 } @bundle_ids;
+  @bundle_ids = sort keys %bundles_hash;
   $logger->debug("Inactivate the bundles: " . join(',', @bundle_ids));
   my @bundle_searches = map { { bundle_id => $_ } } @bundle_ids;
   my $tracks_update = $self->resultset('Bundle')->search(
@@ -269,6 +272,13 @@ sub get_bundles {
       label           => $bundle->title_manual // $bundle->title_auto,
       description     => $bundle->text_manual  // $bundle->text_auto,
     );
+    if (not defined $group{label}) {
+      $logger->warn("WARNING: bundle $group{id} has no label (no auto or manual title). Using the id as label.");
+      $group{label} = $group{id};
+    }
+    if (not defined $group{description}) {
+      $logger->warn("WARNING: bundle $group{id} has no description.");
+    }
     
     # Get the data associated with every track
     my $bundle_tracks = $bundle->bundle_tracks;
@@ -328,6 +338,7 @@ sub get_bundles {
       
       # Add the list of SRA ids to the description anyway
       my $merge = $track->merge_text;
+      $merge =~ s/(.R[PXRS]\d{6,8})/<a href="http:\/\/www.ebi.ac.uk\/ena\/data\/view\/$1">$1<\/a>/g;
       if ($merge =~ s/_/, /g) {
         push @description_list, "Merged RNA-seq data from: $merge";
       } else {
@@ -426,7 +437,8 @@ sub _get_bundles {
   
   # First, retrieve all the groups data
   my $search = {
-      'track.status' => 'ACTIVE',
+      'me.status' => 'ACTIVE',
+      'track.status'  => 'ACTIVE',
   };
   $search->{'strain.production_name'} = $opt->{species} if $opt->{species};
   my $bundles = $self->resultset('Bundle')->search(

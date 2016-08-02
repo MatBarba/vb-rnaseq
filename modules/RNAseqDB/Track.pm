@@ -632,7 +632,7 @@ sub inactivate_tracks {
   });
 
   # Also inactivate corresponding bundles
-  $self->_inactivate_bundles($track_ids_aref);
+  $self->_inactivate_bundles_for_tracks($track_ids_aref);
 }
 
 sub _get_tracks_for_runs {

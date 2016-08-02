@@ -88,7 +88,7 @@ sub update_tracks {
   # Stats
   my @to_merge = grep { @{ $_->{tracks} } > 1 } @$matched_entries;
   my @unique = grep { @{ $_->{tracks} } == 1 } @$matched_entries;
-  $logger->info( sprintf("%d total entries\n", @$entries+0) );
+  $logger->info( sprintf("%d total entries\n", @$matched_entries+0) );
   $logger->info( sprintf("%d Tracks to merge\n", @to_merge+0) );
   $logger->info( sprintf("%d unique tracks\n", @unique+0) );
   
@@ -96,7 +96,7 @@ sub update_tracks {
   merge_tracks($db, \@to_merge) if $opt->{merge_tracks};
   
   # 3) Annotate tracks
-  annotate_tracks($db, $entries) if $opt->{annotate_tracks};
+  annotate_tracks($db, $matched_entries) if $opt->{annotate_tracks};
 }
 
 sub match_tracks {
@@ -175,7 +175,7 @@ sub update_bundles {
   # Stats
   my @to_merge = grep { @{ $_->{bundles} } > 1 } @$matched_entries;
   my @unique = grep { @{ $_->{bundles} } == 1 } @$matched_entries;
-  $logger->info( sprintf("%d total entries\n", @$entries+0) );
+  $logger->info( sprintf("%d total entries\n", @$matched_entries+0) );
   $logger->info( sprintf("%d Bundles to merge\n", @to_merge+0) );
   $logger->info( sprintf("%d unique tracks\n", @unique+0) );
   
@@ -183,7 +183,7 @@ sub update_bundles {
   merge_bundles($db, \@to_merge) if $opt->{merge_bundles};
   
   # 3) Annotate tracks
-  annotate_bundles($db, $entries) if $opt->{annotate_bundles};
+  annotate_bundles($db, $matched_entries) if $opt->{annotate_bundles};
 }
 
 sub match_bundles {
@@ -247,7 +247,7 @@ sub annotate_bundles {
   
   $logger->info("Annotate bundles");
   for my $entry (@$entries) {
-    next if @{$entry->{bundles}} > 0;
+    next if @{$entry->{bundles}} > 1;
     my $bundle_id = $entry->{bundles}->[0];
     next if not $bundle_id;
     $logger->debug("Annotate bundle $bundle_id");

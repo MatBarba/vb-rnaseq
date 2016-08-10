@@ -91,6 +91,7 @@ sub prepare_hubs {
   my $dir    = $opt->{hub_root};
   
   croak "Need directory where the hubs would be placed" if not defined $dir;
+  croak "Email needed" if not $opt->{email};
   
   my @hubs;
   GROUP: for my $group (@$groups) {
@@ -104,6 +105,7 @@ sub prepare_hubs {
       id          => $group->{trackhub_id},
       shortLabel  => $group->{label} // $group->{id},
       longLabel   => $group->{description} // $group->{label} // $group->{id},
+      email       => $opt{email},
     );
     
     # Set the server for this hub to create a valid path to the hub.txt
@@ -167,26 +169,28 @@ sub prepare_hubs {
     if (@big_tracks == 0) {
       carp "No track can be used for this group $group->{id}: skip";
       next GROUP;
-    } elsif (@big_tracks == 1) {
-      $genome->add_track($big_tracks[0]);
-      $genome->add_track($bam_tracks[0]);
+      #} elsif (@big_tracks == 1) {
+      #$genome->add_track($big_tracks[0]);
+      #$genome->add_track($bam_tracks[0]);
     } else {
       my $superbig = EGTH::TrackHub::SuperTrack->new(
         track      => $hub->{id} . '_bigwig',
-        shortLabel => 'Coverage (bigwig)',
+        shortLabel => 'Signal density (bigwig)',
+        longLabel  => 'Signal density (bigwig)',
         type       => 'bigWig',
         show       => 1,
       );
       my $superbam = EGTH::TrackHub::SuperTrack->new(
         track      => $hub->{id} . '_bam',
         shortLabel => 'Reads (bam)',
+        longLabel  => 'Reads (bam)',
         type       => 'bam',
         show       => 0,
       );
       # Put all that in a supertrack
       my $n = 0;
       for my $big (@big_tracks) {
-        $big->visibility('hide') if $n > 10;
+        $big->visibility('hide') if $n >= 10;
         $superbig->add_sub_track($big);
         $n++;
       }
@@ -403,6 +407,7 @@ sub opt_check {
     "species=s",
     "files_dir=s",
     "hub_root=s",
+    "email=s",
     "create",
     "register",
     "reg_user=s",

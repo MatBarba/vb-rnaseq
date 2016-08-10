@@ -15,10 +15,10 @@ use Data::Dumper;
 use Readonly;
 #use Try::Tiny;
 
-Readonly my $GROUP_PREFIX,  'RNAseq_group_';
-Readonly my $TRACK_PREFIX,  'RNAseq_track_';
-Readonly my $VBGROUP_PREFIX,  'VBRNAseq_';
+Readonly my $GROUP_PREFIX,  'VBRNAseq_group_';
+Readonly my $TRACK_PREFIX,  'VBRNAseq_track_';
 Readonly my $SOLR_CHILDREN, '_childDocuments_';
+Readonly my $SEARCH_ROOT,   '/vbsearch/details/';
 Readonly my $PUBMED_ROOT,   'http://europepmc.org/abstract/MED/';
 Readonly my $SRA_URL_ROOT,   'http://www.ebi.ac.uk/ena/data/view/';
 
@@ -205,25 +205,32 @@ sub get_bundles_for_solr {
       species              => $group->{species},
       strain_s             => $group->{strain},
       assembly             => $group->{assembly},
-      site                 => 'General',
-      bundle_name          => 'Rna seq experiment',
+      site                 => 'Expression',
+      #bundle_name          => 'Rna seq experiment',
+      bundle_name          => 'RNA-seq track groups',
       publications_ss      => $group->{publications},
       publications_ss_urls => $group->{publications_urls},
+      hash                 => 'parentDocument',
     );
     
     foreach my $track (@{ $group->{tracks} }) {
       my %solr_track = (
         id                            => $track->{id},
+        site                          => 'Expression',
+        bundle_name                   => 'RNA-seq tracks',
+        species                       => $group->{species},
         label                         => $track->{title},
         description                   => $track->{description},
-        aligner                       => $track->{aligner},
+        url                           => $SEARCH_ROOT . $group->{trackhub_id},
         
         run_accessions_ss             => $track->{runs},
         experiment_accessions_ss      => $track->{experiments},
         study_accessions_ss           => $track->{studies},
         sample_accessions_ss          => $track->{samples},
-      );
         
+        aligner_s                     => $track->{aligner},
+      );
+      
       $solr_track{run_accessions_ss_urls} = $track->{runs_urls} if $track->{runs_urls};
       $solr_track{experiment_accessions_ss_urls} = $track->{experiments_urls} if $track->{experiments_urls};
       $solr_track{study_accessions_ss_urls} = $track->{studies_urls} if $track->{studies_urls};
@@ -303,7 +310,7 @@ sub get_bundles {
       
       # Simplify name if it has more than 2 elements
       $group{trackhub_id} =~ s/^([^_]+)_.+_([^-]+)$/$1-$2/;
-      $group{trackhub_id} = $VBGROUP_PREFIX . $group{trackhub_id};
+      $group{trackhub_id} = $GROUP_PREFIX . $group{trackhub_id};
     }
     
     # Add the tracks data
@@ -424,9 +431,11 @@ sub get_bundles {
       # Add all collected publications
       %group = (%group, %publications);
     }
+    @{ $group{tracks} } = sort { $a->{title} cmp $b->{title} } @{ $group{tracks} };
     
     push @groups, \%group;
   }
+  @groups = sort { $a->{species} cmp $b->{species} } @groups;
   
   return \@groups;
 }
@@ -437,8 +446,8 @@ sub _get_bundles {
   
   # First, retrieve all the groups data
   my $search = {
-      'me.status' => 'ACTIVE',
-      'track.status'  => 'ACTIVE',
+      'me.status'    => 'ACTIVE',
+      'track.status' => 'ACTIVE',
   };
   $search->{'strain.production_name'} = $opt->{species} if $opt->{species};
   my $bundles = $self->resultset('Bundle')->search(

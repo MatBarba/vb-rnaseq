@@ -35,6 +35,7 @@ if ($opt{production_name} and $opt{taxon_id}) {
     strain             => $opt{strain},
     assembly           => $opt{assembly},
     assembly_accession => $opt{assembly_accession},
+    sample_location    => $opt{sample_location},
   };
   my $added = $db->add_species( $species );
   $species_added += $added;
@@ -69,6 +70,7 @@ sub get_species_from_file {
       strain             => $elts[3],
       assembly           => $elts[4],
       assembly_accession => $elts[5],
+      sample_location    => $elts[6],
     );
     push @species_list, \%species;
   }
@@ -100,6 +102,7 @@ sub usage {
     --binomial_name <str>   : Binomial name
     --taxon_id <str>        : NCBI taxonomic id
     --strain <str>          : Strain name (optional)
+    --sample_location <str> : Sample location (optional)
     or
     --file <path>     : path to a file with a list of SRA run accessions
     
@@ -125,6 +128,7 @@ sub opt_check {
     "binomial_name=s",
     "taxon_id=s",
     "strain=s",
+    "sample_location=s",
     "file=s",
     "help",
     "verbose",

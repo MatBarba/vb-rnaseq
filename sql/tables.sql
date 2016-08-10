@@ -46,6 +46,7 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 @column strain                  Name of the strain.
 @column assembly                Version of the assembly.
 @column assembly_accession      Version of the assembly in INSDC.
+@column sample_location         Sample location to be used for this strain.
 @column metasum                 Checksum of @production_name + @strain.
 @column date                    Entry timestamp.
 @column status                  Active (True) or retired (False) row.
@@ -59,6 +60,7 @@ CREATE TABLE strain (
   strain                    VARCHAR(32),
   assembly                  VARCHAR(32),
   assembly_accession        VARCHAR(32),
+  sample_location           VARCHAR(128),
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',

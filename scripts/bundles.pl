@@ -49,6 +49,7 @@ if (not defined $opt{format}) {
   $bundles = $db->get_bundles_for_solr({
       species     => $opt{species},
       files_dir   => $opt{files_dir},
+      hubs_url    => $opt{hubs_url}
     });
   
 } elsif ($opt{format} eq 'webapollo') {
@@ -104,6 +105,7 @@ sub usage {
     --output <path>   : path to the output file in json
     --format <str>    : possible json formats (solr, webapollo)
                         If empty, defaults to a standard json with whole bundle data
+    --hubs_url <path> : root url for the hubs files (needed for solr activation links)
     
     Other:
     --help            : show this help message
@@ -126,6 +128,7 @@ sub opt_check {
     "registry=s",
     "species=s",
     "files_dir=s",
+    "hubs_url=s",
     "output=s",
     "format=s",
     "help",
@@ -139,6 +142,7 @@ sub opt_check {
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
   usage("Need --output") if not $opt{output};
+  usage ("--hubs_url needed for solr output") if $opt{format} and $opt{format} eq 'solr' and not $opt{hubs_url};
   $opt{password} //= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

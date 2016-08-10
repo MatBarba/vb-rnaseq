@@ -188,11 +188,55 @@ sub get_bundle_tracks {
   return @track_ids;
 }
 
+sub get_samples {
+  my $self = shift;
+  
+  my %samples;
+  my $strains_req = $self->resultset('Strain');
+  for my $strain ($strains_req->all) {
+    my $name   = $strain->production_name;
+    my $sample = $strain->sample_location;
+    $samples{$name} = $sample;
+  }
+  return \%samples;
+}
+
+sub _prepare_hub_activation_link {
+  my $self = shift;
+  my ($hubs_root, $group) = @_;
+  my $samples = $self->get_samples();
+  if ($hubs_root and $group) {
+    my $hub_url = $hubs_root . '/' . $group->{production_name} . '/' . $group->{trackhub_id} . '/hub.txt';
+    my $activation_url = '/' . ucfirst($group->{production_name}) . '/Location/View?'
+    . 'r=' . $samples->{$group->{production_name}} . ';'
+    . 'contigviewbottom=url:' . $hub_url . ';'
+    . 'format=TRACKHUB;'
+    . 'menu=' . $group->{label} . ';'
+    ;
+    return $activation_url;
+  }
+  return;
+}
+
+sub _prepare_track_activation_link {
+  my $self = shift;
+  my ($hubs_root, $group, $file) = @_;
+  my $samples = $self->get_samples();
+  if ($hubs_root and $group and $file) {
+    my $activation_url = '/' . ucfirst($group->{production_name}) . '/Location/View?'
+    . 'r=' . $samples->{$group->{production_name}} . ';'
+    . 'contigviewbottom=url:' . $file->{url} . ';'
+    ;
+    return $activation_url;
+  }
+  return;
+}
+
 sub get_bundles_for_solr {
   my $self = shift;
   my ($opt) = @_;
   
-  my $groups = $self->get_bundles($opt);
+  my $groups  = $self->get_bundles($opt);
   
   my @solr_groups;
   
@@ -212,6 +256,15 @@ sub get_bundles_for_solr {
       publications_ss_urls => $group->{publications_urls},
       hash                 => 'parentDocument',
     );
+    
+    # Create the activation url
+    my $activation_link = $self->_prepare_hub_activation_link($opt->{hubs_url}, $group);
+    if ($activation_link) {
+      $solr_group{activation_link_s_url} = $activation_link;
+      $solr_group{activation_link_s} = 'Load in Genome Browser';
+    } else {
+      $logger->warn("No hubs_url defined: can't create activation");
+    }
     
     foreach my $track (@{ $group->{tracks} }) {
       my %solr_track = (
@@ -245,6 +298,17 @@ sub get_bundles_for_solr {
         elsif ($file->{type} eq 'bam') {
           $solr_track{bam_s} = $file->{name};
           $solr_track{bam_s_url} = $file->{url};
+        }
+        
+        # Create the activation url
+        if ($file->{type} eq 'bam' or $file->{type} eq 'bigwig') {
+          my $activation_link = $self->_prepare_track_activation_link($opt->{hubs_url}, $group, $file);
+          if ($activation_link) {
+            $solr_track{'activation_link_'. $file->{type} .'_s_url'} = $activation_link;
+            $solr_track{'activation_link_'. $file->{type} .'_s'} = 'Load '. $file->{type} .' in Genome Browser';
+          } else {
+            $logger->warn("Can't create activation link for track");
+          }
         }
       }
       

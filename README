@@ -7,3 +7,25 @@ This module is used to build and maintain a database of RNAseq tracks.
   - Add RNA-seq from SRA or from local files
   - Retrieve tracks
 
+To bulid the MANIFEST easily:
+perl -MExtUtils::Manifest -e 'ExtUtils::Manifest::mkmanifest()'
+
+Special prerequisite:
+EGTH from https://github.com/MatBarba/EGTrackHub
+
+Needed cpan modules:
+Digest::MD5::File
+JSON
+List::MoreUtils
+Log::Log4perl
+LWP::Simple
+Moose
+Moose::Role
+MooseX::FollowPBP
+Perl6::Slurp
+Readonly
+Test::Exception
+Test::Pod::Coverage
+Test::Warnings
+Try::Tiny
+

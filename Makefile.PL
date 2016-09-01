@@ -4,8 +4,8 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
-    NAME         => 'RNAseqDB',
-    VERSION_FROM => 'lib/RNAseqDB.pm',
+    NAME         => 'Bio::EnsEMBL::RNAseqDB',
+    VERSION_FROM => 'lib/Bio/EnsEMBL/RNAseqDB.pm',
     PREREQ_PM    => {
         'Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor' => 0,
         'Bio::EnsEMBL::TrackHub' => '1',
@@ -30,7 +30,7 @@ WriteMakefile(
         'Try::Tiny'              => '0',
     },
     test => {TESTS => 't/*.t t/*/*.t'},
-    #ABSTRACT_FROM => 'lib/RNAseqDB.pm',
+    #ABSTRACT_FROM => 'lib/Bio/EnsEMBL/RNAseqDB.pm',
     AUTHOR        => 'mbarba <mbarba@ebi.ac.uk>',
     LICENSE       => 'apache',
 );

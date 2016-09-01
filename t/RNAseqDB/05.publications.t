@@ -14,13 +14,13 @@ use lib $FindBin::Bin;
 use lib $FindBin::Bin . '/../../lib';
 
 BEGIN : {
-    use RNAseqDB::Publications;
+    use Bio::EnsEMBL::RNAseqDB::Publications;
 }
 
 # Try to retrieve data from pubmed (REST)
 my $pubmed_id = 21276245;
 $logger->debug("Publication: $pubmed_id");
-my $data = RNAseqDB::Publications::_get_pubmed_data( $pubmed_id );
+my $data = Bio::EnsEMBL::RNAseqDB::Publications::_get_pubmed_data( $pubmed_id );
 
 ok( keys(%$data) > 0, 'Got some data' );
 

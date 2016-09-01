@@ -8,7 +8,7 @@ use autodie;
 use English qw( -no_match_vars );
 use Getopt::Long qw(:config no_ignore_case);
 
-use RNAseqDB::DB;
+use Bio::EnsEMBL::RNAseqDB;
 use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
@@ -19,7 +19,7 @@ my $logger = get_logger();
 my %opt = %{ opt_check() };
 
 # Connect to the database schema
-my $db = RNAseqDB::DB->connect(
+my $db = Bio::EnsEMBL::RNAseqDB->connect(
   "dbi:mysql:host=$opt{host}:port=$opt{port}:database=$opt{db}",
   $opt{user},
   $opt{password}

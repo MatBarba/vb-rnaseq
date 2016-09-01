@@ -15,7 +15,7 @@ use Perl6::Slurp;
 use Data::Dumper;
 
 
-use RNAseqDB::DB;
+use Bio::EnsEMBL::RNAseqDB;
 use Log::Log4perl qw( :easy );
 my $logger = get_logger();
 
@@ -68,7 +68,7 @@ sub create_mock_db {
   system "$mysql_command $dbconf{dbname} < $schema_path";
 
   # Actual tests
-  $db_connected = (my $db = RNAseqDB::DB->connect(
+  $db_connected = (my $db = Bio::EnsEMBL::RNAseqDB->connect(
       "dbi:mysql:host=$dbconf{host}:port=$dbconf{port}:database=$dbconf{dbname}",
       $dbconf{user},
       $dbconf{pass},
@@ -94,7 +94,7 @@ sub drop_mock_db {
   my ($db) = shift;
   
   if (defined $dbconf{dbname}
-      and ref($db) eq 'RNAseqDB::DB'
+      and ref($db) eq 'Bio::EnsEMBL::RNAseqDB'
       and $db_connected) {
     $logger->info("Dropping temp database $dbconf{dbname}");
     my $mysql_command = make_mysql_command(%dbconf);

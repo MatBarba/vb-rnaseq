@@ -4,11 +4,11 @@ use FindBin;
 use lib $FindBin::Bin . '/../../lib';
 
 BEGIN : {
-    use RNAseqDB::DB;
+    use Bio::EnsEMBL::RNAseqDB;
 }
 
-ok defined(my $rdb = RNAseqDB::DB->connect()), "Constructor";
-isa_ok($rdb, "RNAseqDB::DB", "RNAseqDB::DB constructor");
+ok defined(my $rdb = Bio::EnsEMBL::RNAseqDB->connect()), "Constructor";
+isa_ok($rdb, "Bio::EnsEMBL::RNAseqDB", "Bio::EnsEMBL::RNAseqDB constructor");
 
 my @methods = qw(
   connect

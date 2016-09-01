@@ -3,6 +3,6 @@ use FindBin;
 use lib $FindBin::Bin . '/../../lib';
 
 BEGIN {
-use_ok( 'RNAseqDB::DB', "Testing RNAseqDB::DB");
+use_ok( 'Bio::EnsEMBL::RNAseqDB', "Testing Bio::EnsEMBL::RNAseqDB");
 }
 

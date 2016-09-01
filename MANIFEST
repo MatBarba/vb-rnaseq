@@ -37,6 +37,7 @@ lib/Bio/EnsEMBL/RNAseqDB/Species.pm
 lib/Bio/EnsEMBL/RNAseqDB/SRA.pm
 lib/Bio/EnsEMBL/RNAseqDB/Track.pm
 lib/Bio/EnsEMBL/RNAseqDB/Vocabulary.pm
+LICENSE.md
 README
 regenerate_dbix.sh
 scripts/add_private_study.pl

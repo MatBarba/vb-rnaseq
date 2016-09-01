@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 use Test::More;
+use FindBin;
+use lib $FindBin::Bin . '/../../lib';
 
 BEGIN : {
     use RNAseqDB::DB;

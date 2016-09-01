@@ -16,8 +16,10 @@ use Data::Dumper;
 use RNAseqDB::DB;
 use Log::Log4perl qw( :easy );
 my $logger = get_logger();
-use File::Basename;
-use lib dirname($0);
+
+use FindBin;
+use lib $FindBin::Bin;
+use lib $FindBin::Bin . '/../../lib';
 
 our $db_connected;
 our %dbconf;

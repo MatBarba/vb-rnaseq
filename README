@@ -1,7 +1,7 @@
 This module is used to build and maintain a database of RNAseq tracks.
 
 - The Mysql schema is in sql/tables.sql and documented in docs/rnaseqdb_doc.html
-- The modules are in modules/
+- The modules are in lib/
 - Various scripts are in the scripts folder to:
   - Add species
   - Add RNA-seq from SRA or from local files

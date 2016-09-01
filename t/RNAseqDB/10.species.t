@@ -8,6 +8,8 @@ use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
+use FindBin;
+use lib $FindBin::Bin . '/../../lib';
 use File::Basename;
 use lib dirname($0);
 use MockRNAseqDB qw( create_mock_db drop_mock_db );

@@ -10,8 +10,9 @@ use Log::Log4perl qw( :easy );
 #Log::Log4perl->easy_init($DEBUG);
 my $logger = get_logger();
 
-use File::Basename;
-use lib dirname($0);
+use FindBin;
+use lib $FindBin::Bin;
+use lib $FindBin::Bin . '/../../lib';
 use MockRNAseqDB qw( create_mock_db drop_mock_db );
 
 # Get a mock DB (RNAseqBD::DB), create with the proper schema

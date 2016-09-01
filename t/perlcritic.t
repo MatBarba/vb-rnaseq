@@ -8,4 +8,4 @@ if (!require Test::Perl::Critic) {
 }
 
 #use Test::Perl::Critic ( -severity => 4 );
-Test::Perl::Critic::all_critic_ok('modules');
+Test::Perl::Critic::all_critic_ok('lib');

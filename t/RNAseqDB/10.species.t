@@ -5,7 +5,7 @@ use autodie qw( :all );
 use Test::More;
 use Test::Exception;
 use Log::Log4perl qw( :easy );
-Log::Log4perl->easy_init($WARN);
+#Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
 use FindBin;

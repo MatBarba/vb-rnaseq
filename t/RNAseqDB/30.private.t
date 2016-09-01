@@ -5,7 +5,7 @@ use autodie qw( :all );
 use Test::More;
 use Test::Exception;
 use Log::Log4perl qw( :easy );
-Log::Log4perl->easy_init($WARN);
+#Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
 use FindBin;
@@ -29,7 +29,7 @@ $db->add_species({
 check_tables_numbers($db, [0,0,0,0,0,0,0 ]);
 
 # Define a mock private rnaseq data
-my $rnaseq_study_json_path = dirname($0) . '/private1.json';
+my $rnaseq_study_json_path = $FindBin::Bin . '/private1.json';
 my $rnaseq_study = {
   info => {
     title           => 'Species xxx RNAseq study',

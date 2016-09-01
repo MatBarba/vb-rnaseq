@@ -68,8 +68,6 @@ t/RNAseqDB/10.species.t
 t/RNAseqDB/20.sra.t
 t/RNAseqDB/30.private.t
 t/RNAseqDB/40.tracks.t
-t/RNAseqDB/db_conf.json
 t/RNAseqDB/db_conf.json.example
 t/RNAseqDB/MockRNAseqDB.pm
 t/RNAseqDB/private1.json
-t/RNAseqDB/test_db.json

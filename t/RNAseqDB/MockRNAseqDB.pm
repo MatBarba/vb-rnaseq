@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 package MockRNAseqDB;
+use Carp;
+
 use Exporter 'import';
 our @EXPORT_OK = qw( create_mock_db drop_mock_db );
 
@@ -25,23 +27,23 @@ our $db_connected;
 our %dbconf;
 
 # File where the test database name is stored for later use
-my $db_file = dirname($0) . "/test_db.json";
+my $db_file = $FindBin::Bin . "/test_db.json";
 
 sub create_mock_db {
   # Load database schema
-  my $schema_path = dirname($0).'/../../sql/tables.sql';
-  my $dbconf_path = dirname($0).'/db_conf.json';
+  my $schema_path = $FindBin::Bin . '/../../sql/tables.sql';
+  my $dbconf_path = $FindBin::Bin . '/db_conf.json';
 
-  die "Can't access schema\n" if not -e $schema_path;
-  die "Can't find configuration file: make sure to copy the template db_conf.json.example to db_conf.json and change the parameters\n" if not -e $dbconf_path;
+  croak "Can't access schema\n" if not -e $schema_path;
+  croak "Can't find configuration file: make sure to copy the template db_conf.json.example to db_conf.json and change the parameters\n" if not -e $dbconf_path;
 
   # Get database parameters
   die "Can't access DB conf file" if not -e $dbconf_path;
   my $dbconf_json = slurp $dbconf_path;
   %dbconf = %{ decode_json( $dbconf_json ) };
-  die "Missing host for DB\n" unless $dbconf{host};
-  die "Missing user for DB\n" unless $dbconf{user};
-  die "Missing dbname for DB\n" unless $dbconf{dbname};
+  croak "Missing host for DB\n" unless $dbconf{host};
+  croak "Missing user for DB\n" unless $dbconf{user};
+  croak "Missing dbname for DB\n" unless $dbconf{dbname};
 
   # Retrieve an existing database name to reuse
   if (-s $db_file) {
@@ -57,10 +59,11 @@ sub create_mock_db {
     print $DB_FILE encode_json(\%dbconf);
     close $DB_FILE;
   }
-
+  
   # Create temp database
-  my $mysql_command = "mysql --host=$dbconf{host} --port=$dbconf{port} --user=$dbconf{user} --password=$dbconf{pass}";
+  my $mysql_command = make_mysql_command(%dbconf);
   system "$mysql_command -e ". '"DROP DATABASE IF EXISTS ' . $dbconf{dbname} . '; CREATE DATABASE ' . $dbconf{dbname} . ';"';
+
   # Load the schema
   system "$mysql_command $dbconf{dbname} < $schema_path";
 
@@ -75,6 +78,18 @@ sub create_mock_db {
   return $db;
 }
 
+sub make_mysql_command {
+  my %dbconf = @_;
+  
+  my $command = "mysql";
+  $command .= " --host=$dbconf{host}" if $dbconf{host};
+  $command .= " --port=$dbconf{port}" if $dbconf{port};
+  $command .= " --user=$dbconf{user}" if $dbconf{user};
+  $command .= " --password=$dbconf{pass}" if $dbconf{pass};
+  
+  return $command;
+}
+
 sub drop_mock_db {
   my ($db) = shift;
   
@@ -82,7 +97,8 @@ sub drop_mock_db {
       and ref($db) eq 'RNAseqDB::DB'
       and $db_connected) {
     $logger->info("Dropping temp database $dbconf{dbname}");
-    system "mysql --host=$dbconf{host} --port=$dbconf{port} --user=$dbconf{user} --password=$dbconf{pass} -e ". '"DROP DATABASE ' . $dbconf{dbname} . ';"';
+    my $mysql_command = make_mysql_command(%dbconf);
+    system "$mysql_command -e ". '"DROP DATABASE ' . $dbconf{dbname} . ';"';
   }
   else {
     $logger->warn("Failed to drop database: was it actually created? ");

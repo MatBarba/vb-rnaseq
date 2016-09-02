@@ -41,9 +41,9 @@ sub _add_bundle_from_track {
   }
   
   # Insert a new bundle and a link bundle_tracks
-  $self->create_bundle_from_track_ids($track_id);
+  my $bundle_id = $self->create_bundle_from_track_ids($track_id);
   
-  return;
+  return $bundle_id;
 }
 
 sub _add_bundle_track {
@@ -99,6 +99,7 @@ sub create_bundle_from_track_ids {
     $self->_add_bundle_track($bundle_id, $track_id);
   }
   $logger->debug("ADDED bundle $bundle_id");
+  return $bundle_id;
 }
 
 sub _get_bundle_tracks_links {
@@ -169,11 +170,17 @@ sub merge_bundles {
   # Get the track_ids associated with the bundles
   my @track_ids;
   for my $bundle_id (@bundle_ids) {
-    $logger->debug("Merge bundle $bundle_id");
     push @track_ids, $self->get_bundle_tracks($bundle_id);
   }
-  $self->create_bundle_from_track_ids(@track_ids);
+  
+  # Make a new bundle from the tracks of all the bundles
+  $logger->debug("Merge bundles : " . join(",", @bundle_ids));
+  my $new_bundle_id = $self->create_bundle_from_track_ids(@track_ids);
+  
+  # Inactivate the merged bundles, leaving only the merged result
   $self->inactivate_bundles(@bundle_ids);
+  
+  return $new_bundle_id;
 }
 
 sub get_bundle_tracks {

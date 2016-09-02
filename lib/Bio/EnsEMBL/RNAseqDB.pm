@@ -109,3 +109,5 @@ The module logs with Log4perl (easy mode).
 
 Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
 
+=cut
+

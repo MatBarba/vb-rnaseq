@@ -84,7 +84,6 @@
   .sql_schema_legend { width:25px;height:15px;}
 </style>  
   
-<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
 <script language="Javascript" type="text/javascript">
   var img_plus   = '<img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/>';
   var img_minus  = '<img src="/i/16/minus-button.png" class="sql_schema_icon" alt="hide"/>';
@@ -397,27 +396,35 @@ This document describes the tables that make up the RNAseqDB schema. Tables are 
       </tr>
 
       <tr>
-        <td class="bg1"><b>metasum</b></td>
-        <td class="bg1">CHAR(32)</td>
+        <td class="bg1"><b>sample_location</b></td>
+        <td class="bg1">VARCHAR(128)</td>
         <td class="bg1">NULL</td>
-        <td class="bg1">Checksum of @production_name + @strain.</td>
+        <td class="bg1">Sample location to be used for this strain.</td>
         <td class="bg1"></td>
       </tr>
 
       <tr>
-        <td class="bg2"><b>date</b></td>
-        <td class="bg2">TIMESTAMP</td>
-        <td class="bg2">CURRENT_TIMESTAMP</td>
-        <td class="bg2">Entry timestamp.</td>
+        <td class="bg2"><b>metasum</b></td>
+        <td class="bg2">CHAR(32)</td>
+        <td class="bg2">NULL</td>
+        <td class="bg2">Checksum of @production_name + @strain.</td>
         <td class="bg2"></td>
       </tr>
 
       <tr>
-        <td class="bg1"><b>status</b></td>
-        <td class="bg1">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
-        <td class="bg1">'ACTIVE'</td>
-        <td class="bg1">Active (True) or retired (False) row.</td>
+        <td class="bg1"><b>date</b></td>
+        <td class="bg1">TIMESTAMP</td>
+        <td class="bg1">CURRENT_TIMESTAMP</td>
+        <td class="bg1">Entry timestamp.</td>
         <td class="bg1"></td>
+      </tr>
+
+      <tr>
+        <td class="bg2"><b>status</b></td>
+        <td class="bg2">ENUM:<ul class="sql_schema_table_column_type">  <li>ACTIVE</li>  <li> RETIRED</li></ul></td>
+        <td class="bg2">'ACTIVE'</td>
+        <td class="bg2">Active (True) or retired (False) row.</td>
+        <td class="bg2"></td>
       </tr>
     </table>
   </div>

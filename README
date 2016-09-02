@@ -5,27 +5,40 @@ This module is used to build and maintain a database of RNAseq tracks.
 - Various scripts are in the scripts folder to:
   - Add species
   - Add RNA-seq from SRA or from local files
+  - Annotate the metadata (e.g. create groups of tracks)
   - Retrieve tracks
 
-To bulid the MANIFEST easily:
-perl -MExtUtils::Manifest -e 'ExtUtils::Manifest::mkmanifest()'
-
 Special prerequisite:
-EGTH from https://github.com/MatBarba/EGTrackHub
+* Bio::EnsEMBL::TrackHub from https://github.com/MatBarba/EGTrackHub
+* Bio::EnsEMBL::ENA
 
-Needed cpan modules:
-Digest::MD5::File
-JSON
-List::MoreUtils
-Log::Log4perl
-LWP::Simple
-Moose
-Moose::Role
-MooseX::FollowPBP
-Perl6::Slurp
-Readonly
-Test::Exception
-Test::Pod::Coverage
-Test::Warnings
-Try::Tiny
 
+INSTALL
+
+Either put script in a dedicated dir and update PERL5LIB (lib/) and PATH (scripts/), or
+install the package:
+
+# Prepare and test
+perl makeFile.PL
+make
+make test
+
+# Install
+make install
+
+# Cleanup
+make veryclean
+
+NOTE1: even if you do not install the package, it is best to perform the 3 first
+steps to check for dependencies and run the tests.
+
+NOTE2: The tests mainly rely on an access to a database: rename
+t/RNAseqDB/db_conf.example
+to
+t/RNAseqDB/db_conf
+and change its content appropriately to be able to test properly.
+
+
+
+To build the MANIFEST easily:
+perl -MExtUtils::Manifest -e 'ExtUtils::Manifest::mkmanifest()'

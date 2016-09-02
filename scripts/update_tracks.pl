@@ -93,7 +93,7 @@ sub update_tracks {
   $logger->info( sprintf("%d unique tracks\n", @unique+0) );
   
   # 2) Merge the tracks if asked to
-  merge_tracks($db, \@to_merge) if $opt->{merge_tracks};
+  $matched_entries = merge_tracks($db, $matched_entries) if $opt->{merge_tracks};
   
   # 3) Annotate tracks
   annotate_tracks($db, $matched_entries) if $opt->{annotate_tracks};
@@ -130,16 +130,16 @@ sub match_tracks {
 sub merge_tracks {
   my ($db, $entries) = @_;
   
-  if (@$entries == 0) {
-    $logger->info("No tracks to merge");
-    return;
-  }
-  
   $logger->info("Merging tracks...");
+  my @merged_entries;
   for my $entry (@$entries) {
-    my $track_id = $db->merge_tracks_by_sra_ids($entry->{sra_ids});
-    $entry->{tracks} = [$track_id];
+    if (@{$entry->{tracks}} > 1) {
+      my $track_id = $db->merge_tracks_by_sra_ids($entry->{sra_ids});
+      $entry->{tracks} = [$track_id];
+    }
+    push @merged_entries, $entry;
   }
+  return \@merged_entries;
 }
 
 sub annotate_tracks {
@@ -180,7 +180,7 @@ sub update_bundles {
   $logger->info( sprintf("%d unique tracks\n", @unique+0) );
   
   # 2) Merge the bundles if asked to
-  merge_bundles($db, \@to_merge) if $opt->{merge_bundles};
+  $matched_entries = merge_bundles($db, $matched_entries) if $opt->{merge_bundles};
   
   # 3) Annotate tracks
   annotate_bundles($db, $matched_entries) if $opt->{annotate_bundles};
@@ -231,27 +231,46 @@ sub merge_bundles {
   }
   
   $logger->info("Merging bundles");
+  my @merged_entries;
+  my $n_merged = 0;
   for my $entry (@$entries) {
-    my $bundle_id = $db->merge_bundles(@{ $entry->{bundles} });
-    $entry->{bundles} = [$bundle_id];
+    if (@{$entry->{bundles}} > 1) {
+      my $bundle_id = $db->merge_bundles(@{ $entry->{bundles} });
+      $logger->debug("New bundle: $bundle_id");
+      $entry->{bundles} = [$bundle_id];
+      $n_merged++;
+    }
+    push @merged_entries, $entry;
   }
+  $logger->info("$n_merged merged bundles were created");
+  return \@merged_entries;
 }
 
 sub annotate_bundles {
   my ($db, $entries) = @_;
   
-  if (@$entries == 0) {
-    $logger->info("No bundle to annotate");
-    return;
-  }
+  # Check number
+  my $n = @$entries;
+  $logger->info("$n to bundles");
+  return if $n == 0;
   
-  $logger->info("Annotate bundles");
+  # Annotate each entry
   for my $entry (@$entries) {
-    next if @{$entry->{bundles}} > 1;
+    # Check that the bundle is merged
+    if (@{$entry->{bundles}} > 1) {
+      $logger->debug('Skip annotation (needs merging)');
+      next;
+    }
+    
+    # Check that the bundle has an id
     my $bundle_id = $entry->{bundles}->[0];
-    next if not $bundle_id;
+    if (not $bundle_id) {
+      $logger->debug("Warning: bundle without id, can't annotate");
+      next;
+    }
+    
+    # Can annotate the bundle
     $logger->debug("Annotate bundle $bundle_id");
-
     my $bundle_content = {
       text_manual   => $entry->{text},
       title_manual  => $entry->{title},

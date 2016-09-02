@@ -16,11 +16,11 @@ use File::Path qw(make_path);
 use File::Copy;
 use Data::Dumper;
 
-use EGTH::TrackHub;
-use EGTH::TrackHub::Genome;
-use EGTH::TrackHub::Track;
-use EGTH::TrackHub::SuperTrack;
-use EGTH::Registry;
+use aliased 'Bio::EnsEMBL::TrackHub::Hub';
+use aliased 'Bio::EnsEMBL::TrackHub::Hub::Genome';
+use aliased 'Bio::EnsEMBL::TrackHub::Hub::Track';
+use aliased 'Bio::EnsEMBL::TrackHub::Hub::SuperTrack';
+use aliased 'Bio::EnsEMBL::TrackHub::Registry';
 
 use Bio::EnsEMBL::RNAseqDB;
 use Log::Log4perl qw( :easy );
@@ -62,7 +62,7 @@ if (
 
 my $registry;
 if ($opt{reg_user} and $opt{reg_pass}) {
-  $registry = EGTH::Registry->new(
+  $registry = Registry->new(
     user     => $opt{reg_user},
     password => $opt{reg_pass},
   );
@@ -101,7 +101,7 @@ sub prepare_hubs {
     }
     
     # Create the TrackHub
-    my $hub = EGTH::TrackHub->new(
+    my $hub = Hub->new(
       id          => $group->{trackhub_id},
       shortLabel  => $group->{label} // $group->{id},
       longLabel   => $group->{description} // $group->{label} // $group->{id},
@@ -120,7 +120,7 @@ sub prepare_hubs {
     $hub->root_dir( $species_dir );
     
     # Create the associated genome
-    my $genome = EGTH::TrackHub::Genome->new(
+    my $genome = Genome->new(
       id    => $group->{assembly},
       insdc => $group->{assembly_accession},
     );
@@ -136,7 +136,7 @@ sub prepare_hubs {
         next TRACK;
       }
       
-      my $big_track = EGTH::TrackHub::Track->new(
+      my $big_track = Track->new(
         track       => $track->{id} . '_bigwig',
         shortLabel  => ($track->{title} // $track->{id}),
         longLabel   => ($track->{description} // $track->{id}),
@@ -154,7 +154,7 @@ sub prepare_hubs {
         next TRACK;
       }
       
-      my $bam_track = EGTH::TrackHub::Track->new(
+      my $bam_track = Track->new(
         track       => $track->{id} . '_bam',
         shortLabel  => ($track->{title} // $track->{id}),
         longLabel   => ($track->{description} // $track->{id}),
@@ -173,14 +173,14 @@ sub prepare_hubs {
       #$genome->add_track($big_tracks[0]);
       #$genome->add_track($bam_tracks[0]);
     } else {
-      my $superbig = EGTH::TrackHub::SuperTrack->new(
+      my $superbig = SuperTrack->new(
         track      => $hub->{id} . '_bigwig',
         shortLabel => 'Signal density (bigwig)',
         longLabel  => 'Signal density (bigwig)',
         type       => 'bigWig',
         show       => 1,
       );
-      my $superbam = EGTH::TrackHub::SuperTrack->new(
+      my $superbam = SuperTrack->new(
         track      => $hub->{id} . '_bam',
         shortLabel => 'Reads (bam)',
         longLabel  => 'Reads (bam)',

@@ -7,6 +7,7 @@ WriteMakefile(
     NAME         => 'Bio::EnsEMBL::RNAseqDB',
     VERSION_FROM => 'lib/Bio/EnsEMBL/RNAseqDB.pm',
     PREREQ_PM    => {
+        'aliased'                 => 0,
         'Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor' => 0,
         'Bio::EnsEMBL::TrackHub' => '1',
         'Digest::MD5'            => '0',

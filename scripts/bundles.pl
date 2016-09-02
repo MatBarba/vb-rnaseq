@@ -16,11 +16,12 @@ use File::Path qw(make_path);
 use File::Copy;
 use Data::Dumper;
 
-use EGTH::TrackHub;
-use EGTH::TrackHub::Genome;
-use EGTH::TrackHub::Track;
+use aliased 'Bio::EnsEMBL::TrackHub::Hub';
+use aliased 'Bio::EnsEMBL::TrackHub::Hub::Genome';
+use aliased 'Bio::EnsEMBL::TrackHub::Hub::Track';
 
-use Bio::EnsEMBL::RNAseqDB;
+use aliased 'Bio::EnsEMBL::RNAseqDB';
+
 use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
@@ -31,7 +32,7 @@ my $logger = get_logger();
 my %opt = %{ opt_check() };
 
 # Connect to the database schema
-my $db = Bio::EnsEMBL::RNAseqDB->connect(
+my $db = RNAseqDB->connect(
   "dbi:mysql:host=$opt{host}:port=$opt{port}:database=$opt{db}",
   $opt{user},
   $opt{password}

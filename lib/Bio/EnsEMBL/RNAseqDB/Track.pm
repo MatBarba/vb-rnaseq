@@ -58,17 +58,81 @@ sub _add_track {
   return;
 }
 
-sub get_track {
+sub get_tracks {
+  my $self = shift;
+  my %pars = @_;
+  
+  my %filter;
+  my $me = 'me';
+  
+  # Return active tracks by default
+  # (To get all tracks: status='')
+  $filter{$me.'.status'} = uc($pars{status}) if $pars{status};
+  
+  # Species
+  $filter{'strain.production_name'} = $pars{species} if $pars{species};
+
+  # Already aligned (with files) or not
+  if (defined $pars{aligned}) {
+    if ($pars{aligned}) {
+      $filter{'files.file_id'} = { '!=', undef };
+    } else {
+      $filter{'files.file_id'} = undef;
+    }
+  }
+
+  # List of possibilities
+  my @or;
+  if ($pars{merge_ids}) {
+    push @or, map { { merge_id => $_ } } @{$pars{merge_ids}};
+  }
+  if ($pars{track_ids}) {
+    push @or, map { { $me.'.track_id' => $_ } } @{$pars{track_ids}};
+  }
+  if ($pars{sra_ids}) {
+    push @or, $self->_format_sras_for_search(@{$pars{sra_ids}});
+  }
+  
+  my %search;
+  
+  if (@or) {
+    $search{'-or'}  = \@or;
+    $search{'-and'} = \%filter if %filter;
+  } else {
+    %search = %filter if %filter;
+  }
+  use Data::Dumper;
+  #$logger->debug(Dumper \%pars);
+  #$logger->debug(Dumper \%search);
+  
+  croak "Search has no constraint" if not %search;
+  
+  # Actual request with filters
+  my $track_req = $self->resultset('Track')->search(\%search,
+    {
+      prefetch => [
+        'files',
+        { 'sra_tracks' =>
+          { 'run' => [
+              { 'sample' => 'strain' },
+              { 'experiment' => 'study' }
+            ]
+          }
+        }
+      ],
+    }
+  );
+  my @tracks = $track_req->all;
+  
+  return @tracks;
+}
+
+sub get_track_from_track_id {
   my $self = shift;
   my ($track_id) = @_;
   
-  return if not defined $track_id;
-  
-  my $track_req = $self->resultset('Track')->search({
-      'track_id' => $track_id,
-  });
-  my $track = $track_req->first;
-  return $track;
+  my @tracks = $self->get_tracks(track_ids => [$track_id]);
+  return $tracks[0];
 }
 
 sub update_track {
@@ -107,9 +171,11 @@ sub guess_track_text {
   my $self = shift;
   my @track_ids = @_;
   
+  my $me = 'me';
+  
   for my $track_id (@track_ids) {
     my $req = $self->resultset('Track')->search({
-        'me.track_id' => $track_id,
+        $me.'.track_id' => $track_id,
       }, 
       {
         prefetch  => {
@@ -227,7 +293,7 @@ sub get_new_runs_tracks {
   }
   return \%new_track;
 }
-   
+
 sub _add_new_runs_track {
   my $self = shift;
   my ($track_list, $track, $fastqs) = @_;
@@ -664,10 +730,16 @@ sub _get_active_tracks {
 }
 
 sub get_tracks_from_sra {
-  my ($self, $sras_aref) = @_;
+  my $self = shift;
+  my @sras_list = @_;
   
+  return $self->get_tracks(sra_ids => \@sras_list);
+}
+
+sub old_get_tracks_from_sra {
+  my ($self, $sras_aref) = @_;
   # Format sra ids
-  my $sras_search = $self->_format_sras_for_search($sras_aref);
+  my $sras_search = $self->_format_sras_for_search(@$sras_aref);
   
   $logger->debug("Get tracks for " . join( ',',  @$sras_aref));
   my $tracks_get = $self->resultset('SraToActiveTrack')->search($sras_search);
@@ -679,39 +751,40 @@ sub get_tracks_from_sra {
 }
 
 sub _format_sras_for_search {
-  my ($self, $sras_aref) = @_;
+  my $self = shift;
+  my @sras_list = @_;
   
   my @sras;
-  for my $sra_acc (@$sras_aref) {
+  for my $sra_acc (@sras_list) {
     if ($sra_acc =~ /$sra_regex->{vb_study}/) {
-      push @sras, { study_private_acc => $sra_acc };
+      push @sras, { 'study.study_private_acc' => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{vb_experiment}/) {
-      push @sras, { experiment_private_acc => $sra_acc };
+      push @sras, { 'experiment.experiment_private_acc' => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{vb_run}/) {
-      push @sras, { run_private_acc => $sra_acc };
+      push @sras, { 'run.run_private_acc' => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{vb_sample}/) {
-      push @sras, { 'sample_private_acc' => $sra_acc };
+      push @sras, { 'sample.sample_private_acc' => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{study}/) {
-      push @sras, { study_sra_acc => $sra_acc };
+      push @sras, { 'study.study_sra_acc' => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{experiment}/) {
-      push @sras, { experiment_sra_acc => $sra_acc };
+      push @sras, { 'experiment.experiment_sra_acc' => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{run}/) {
-      push @sras, { run_sra_acc => $sra_acc };
+      push @sras, { 'run.run_sra_acc' => $sra_acc };
     }
     elsif ($sra_acc =~ /$sra_regex->{sample}/) {
-      push @sras, { 'sample_sra_acc' => $sra_acc };
+      push @sras, { 'sample.sample_sra_acc' => $sra_acc };
     }
      else {
        $logger->warn("Can't identify SRA accession: $sra_acc");
      }
   }
-  return \@sras;
+  return @sras;
 }
 
 1;

@@ -105,23 +105,24 @@ sub match_tracks {
   my @ok_entries;
   ENTRY: for my $entry (@$entries) {
     # For this entry, get the list of tracks
-    my $tracks = $db->get_tracks_from_sra($entry->{sra_ids});
+    my @tracks = $db->get_tracks_from_sra(@{$entry->{sra_ids}});
     my $sra_list = join(',', @{ $entry->{sra_ids} });
     
     # Check number of tracks found
-    if (@$tracks == 0) {
+    if (@tracks == 0) {
       $logger->warn("No track found for SRA: $sra_list");
       next ENTRY;
     }
-    elsif (@$tracks > 1) {
+    elsif (@tracks > 1) {
       $logger->warn("More than 1 track found for SRA: $sra_list");
     }
     else {
-      $logger->debug("One track found for SRA: $sra_list = track_id $tracks->[0]");
+      $logger->debug("One track found for SRA: $sra_list = track_id $tracks[0]");
     }
     
     # Store the list of tracks
-    $entry->{tracks} = $tracks;
+    my @track_ids = map { $_->track_id } @tracks;
+    $entry->{tracks} = \@track_ids;
     push @ok_entries, $entry;
   }
   return \@ok_entries;
@@ -192,13 +193,13 @@ sub match_bundles {
   my @ok_entries;
   ENTRY: for my $entry (@$entries) {
     # For this entry, get the list of bundles
-    my $tracks = $db->get_tracks_from_sra($entry->{sra_ids});
+    my @tracks = $db->get_tracks_from_sra(@{ $entry->{sra_ids} });
     my $sra_list = join(',', @{ $entry->{sra_ids} });
     
     # Get the corresponding bundles
     my @bundles;
-    for my $track_id (@$tracks) {
-      push @bundles, @{ $db->get_bundle_id_from_track_id($track_id) };
+    for my $track (@tracks) {
+      push @bundles, @{ $db->get_bundle_id_from_track_id($track->track_id) };
     }
     my %bundles_hash = map { $_ => 1 } @bundles;
     @bundles = sort keys %bundles_hash;

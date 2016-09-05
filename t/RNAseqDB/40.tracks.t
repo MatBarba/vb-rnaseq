@@ -59,7 +59,7 @@ $db->add_species({
   cmp_ok(@track_ids+0, 'gt', 0, "Several track ids in the list");
   
   my $track_id = shift @track_ids;
-  ok(my $track = $db->get_track($track_id), "Get track information");
+  ok(my $track = $db->get_track_from_track_id($track_id), "Get track information");
   isa_ok($track, 'Bio::EnsEMBL::RNAseqDB::Schema::Result::Track', 'Get a track object');
   ok(my $track_id_bis = $track->track_id, "Can get track_id");
 }

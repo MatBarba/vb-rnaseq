@@ -437,7 +437,7 @@ sub get_bundles {
           $strain->production_name,
           $file->path
         );
-        unshift @url_path, $opt->{files_dir} if defined $opt->{files_dir};
+        unshift @url_path, $opt->{files_url} if defined $opt->{files_url};
 
         my %file_data = (
           'name' => ''. $file->path,

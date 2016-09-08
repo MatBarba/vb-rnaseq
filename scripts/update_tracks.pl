@@ -115,9 +115,10 @@ sub match_tracks {
     }
     elsif (@tracks > 1) {
       $logger->warn("More than 1 track found for SRA: $sra_list");
+      $logger->warn(join(',', map { $_->track_id . $_->status } @tracks));
     }
     else {
-      $logger->debug("One track found for SRA: $sra_list = track_id $tracks[0]");
+      $logger->debug("One track found for SRA: $sra_list = track_id " . $tracks[0]->track_id);
     }
     
     # Store the list of tracks
@@ -130,6 +131,11 @@ sub match_tracks {
 
 sub merge_tracks {
   my ($db, $entries) = @_;
+  
+  if (@$entries == 0) {
+    $logger->info("No tracks to merge");
+    return;
+  }
   
   $logger->info("Merging tracks...");
   my @merged_entries;

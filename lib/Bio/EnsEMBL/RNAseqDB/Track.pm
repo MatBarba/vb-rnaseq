@@ -67,6 +67,7 @@ sub get_tracks {
   
   # Return active tracks by default
   # (To get all tracks: status='')
+  $pars{status} //= 'ACTIVE';
   $filter{$me.'.status'} = uc($pars{status}) if $pars{status};
   
   # Species

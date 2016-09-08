@@ -75,7 +75,7 @@ if ($registry) {
   $registry->is_public(1) if $opt{public_hubs};
   $registry->is_public(0) if $opt{private_hubs};
   if ($opt{register} or $opt{public_hubs} or $opt{private_hubs}) {
-    $registry->register_track_hubs($hubs);
+    $registry->register_track_hubs(@$hubs);
   }
   delete_hubs($registry, $hubs, \%opt) if $opt{delete};
   
@@ -112,7 +112,7 @@ sub prepare_hubs {
     my $server = $opt->{hub_server};
     if ($server) {
       $server .= '/' . $group->{production_name};
-      $hub->server($server);
+      $hub->server_dir($server);
     }
     
     my $species_dir = $dir . '/' . $group->{production_name};
@@ -128,7 +128,7 @@ sub prepare_hubs {
     # Add all tracks to the genome
     my @big_tracks;
     my @bam_tracks;
-    TRACK: for my $track (@{ $group->{tracks} }) {
+    TRACK: for my $track (sort { $a->{id} cmp $b->{id} } @{ $group->{tracks} }) {
       # Get the bigwig file
       my $bigwig = get_file($track, 'bigwig');
       if (not $bigwig) {
@@ -237,8 +237,7 @@ sub delete_hubs {
   if ($opt->{species}) {
     my $n = @$hubs;
     $logger->info("Deleting $n track hubs for species $opt->{species}");
-    my @hub_ids = map { $_->id } @$hubs;
-    $registry->delete_track_hubs(@hub_ids);
+    $registry->delete_track_hubs(@$hubs);
   } else {
     $logger->info("Deleting all track hubs in the registry");
     $registry->delete_all_track_hubs;
@@ -265,13 +264,6 @@ sub get_list_db_hubs {
   return @hub_ids;
 }
 
-sub get_list_reg_hubs {
-  my ($registry) = @_;
-  
-  my $reg_hubs = $registry->get_all_registered;
-  return @$reg_hubs;
-}
-
 sub list_db_hubs {
   my ($hubs) = @_;
   
@@ -286,7 +278,7 @@ sub list_db_hubs {
 sub list_reg_hubs {
   my ($registry, $hubs) = @_;
   
-  my @reg_hubs = get_list_reg_hubs($registry);
+  my @reg_hubs = $registry->get_all_registered();
   my $num_hubs = @reg_hubs;
   print "$num_hubs track hubs registered\n";
   for my $hub_id (@reg_hubs) {
@@ -298,10 +290,10 @@ sub diff_hubs {
   my ($registry, $hubs) = @_;
   
   my @db_hubs  = get_list_db_hubs($hubs);
-  my @reg_hubs = get_list_reg_hubs($registry);
+  my @reg_hubs = $registry->get_registered();
   
   my %db_hub_hash  = map { $_ => 1 } @db_hubs;
-  my %reg_hub_hash = map { $_ => 1 } @reg_hubs;
+  my %reg_hub_hash = map { $_->{name} => 1 } @reg_hubs;
   my @common;
   for my $reg_hub_id (keys %reg_hub_hash) {
     if (exists $db_hub_hash{$reg_hub_id}) {

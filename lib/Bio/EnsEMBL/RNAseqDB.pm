@@ -1,4 +1,5 @@
-package Bio::EnsEMBL::RNAseqDB 1.0;
+package Bio::EnsEMBL::RNAseqDB;
+our $VERSION = "1.00";
 use utf8;
 
 use strict;

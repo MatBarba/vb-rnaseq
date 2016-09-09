@@ -3,6 +3,7 @@ docs/rnaseqdb_doc.css
 docs/rnaseqdb_schema.html
 docs/rnaseqdb_schema.inc
 MANIFEST			This list of files
+lib/Bio/EnsEMBL/RNAseqDB/Analysis.pm
 lib/Bio/EnsEMBL/RNAseqDB/Bundle.pm
 lib/Bio/EnsEMBL/RNAseqDB/Common.pm
 lib/Bio/EnsEMBL/RNAseqDB/File.pm

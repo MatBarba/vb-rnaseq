@@ -621,6 +621,16 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
 
 =over
 
+=item update_track
+
+  function       : Update the fields of a track row
+  args           : 
+    1) track_id
+    2) hash ref where the keys are track table columns
+  
+  usage:
+  $rdb->update_track(1, { title_manual => 'Foobar' });
+
 =item get_tracks()
 
   function       : search and retrieve tracks
@@ -744,33 +754,20 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
 =item inactivate_tracks
 
   function       : Inactivate tracks using track ids.
-  arg[1]         : 
+  args           : 
     1) array ref of SRA accessions
     2) [optional] new status text (default = 'RETIRED')
   
   usage:
   $rdb->inactivate_tracks([1, 2], 'MERGED');
     
+=item guess_track_text
+
+  function       : populate title_auto and text_auto for a given list of tracks
+  args           : an array of track ids
+  
+  usage:
+  $rdb->guess_track_text(1, 2, 3);
+
 =back
-
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-This module requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
- * Log::Log4perl
- * DBIx::Class
- * Moose::Role
-
-
-=head1 BUGS AND LIMITATIONS
-
-...
-
-=head1 AUTHOR
-
-Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
 

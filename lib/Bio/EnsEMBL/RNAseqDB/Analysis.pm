@@ -19,15 +19,15 @@ use Data::Dumper;
 use Readonly;
 
 ###############################################################################
-## TRACKS PRIVATE METHODS
+## ANALYSIS METHODS
 #
-## PRIVATE METHOD
-## Purpose   : insert a new track in the database for a given SRA run
-## Parameters: a run table run_id
-
 ## INSTANCE METHOD
-## Purpose   : for all active tracks, compute their merge_ids
-## Parameters: force (bool) to force the change even if the merge_id exists
+## Purpose   : add commands and files for a track
+## Parameters:
+# 1) track_id
+# 2) array ref of command strings
+# 3) array ref of alignment files created
+# 4) version of the aligner used
 sub add_track_results {
   my $self = shift;
   my ($track_id, $commands, $files, $version) = @_;
@@ -45,6 +45,12 @@ sub add_track_results {
   return 1;
 }
 
+## PRIVATE METHOD
+## Purpose   : insert a list of alignment commands for a track
+## Parameters:
+# 1) track_id
+# 2) array ref of commands
+# 3) Aligner version
 sub _add_commands {
   my $self = shift;
   my ($track_id, $commands, $version) = @_;
@@ -83,6 +89,9 @@ sub _add_commands {
   return 1;
 }
 
+## PRIVATE METHOD
+## Purpose   : find the name of the aligner program used
+## Parameters: a command-line string
 sub _guess_analysis_program {
   my $self = shift;
   my ($command) = @_;
@@ -98,7 +107,9 @@ sub _guess_analysis_program {
   return;
 }
 
-#memoize('_load_analysis_descriptions');
+## PRIVATE METHOD
+## Purpose   : load the programs descriptions from the DB
+## Parameters: none
 sub _load_analysis_descriptions {
   my $self = shift;
   
@@ -108,6 +119,11 @@ sub _load_analysis_descriptions {
   return @descriptions;
 }
 
+## PRIVATE METHOD
+## Purpose   : insert a list of files for a track
+## Parameters:
+# 1) track_id
+# 2) array ref of files paths
 sub _add_files {
   my $self = shift;
   my ($track_id, $paths) = @_;
@@ -174,6 +190,24 @@ Bio::EnsEMBL::RNAseqDB::Analysis - Analysis role for the RNAseq DB
 
 =head1 DESCRIPTION
 
-Private subroutines to help populate analysis and files tables. They are used
-by the tracks methods.
+Only one important method to add the commands and the files created from the
+alignment of the track.
+
+=head1 INTERFACE
+
+=over
+
+=item add_track_results
+
+  function       : add and link commands and files for a given track
+  arguments      :
+    1) track_id
+    2) array ref of command strings
+    3) array ref of alignment files created
+    4) version of the aligner used
+  
+
+=back
+
+=cut
 

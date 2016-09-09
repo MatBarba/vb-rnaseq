@@ -21,6 +21,12 @@ use Bio::EnsEMBL::RNAseqDB::Common;
 my $common = Bio::EnsEMBL::RNAseqDB::Common->new();
 my $sra_regex = $common->get_sra_regex();
 
+###############################################################################
+## TRACKS PRIVATE METHODS
+#
+## PRIVATE METHOD
+## Purpose   : insert a new track in the database for a given SRA run
+## Parameters: a run table run_id
 sub _add_track {
   my ($self, $run_id) = @_;
   
@@ -55,15 +61,57 @@ sub _add_track {
   # Finally, try to create a title + description for the track
   $self->guess_track_text($track_id);
   
-  return;
+  return 1;
 }
 
+## PRIVATE METHOD
+## Purpose   : insert a link between the tables track and run
+## Parameters: a run table run_id, a track table track_id
+sub _add_sra_track {
+  my ($self, $run_id, $track_id) = @_;
+  
+  # First, check that the link doesn't already exists
+  my $sra_track_search = $self->resultset('SraTrack')->search({
+      run_id    => $run_id,
+      track_id  => $track_id,
+  });
+  my $links_count = $sra_track_search->all;
+  if ($links_count > 0) {
+    $logger->warn("There is already a link between run $run_id and track $track_id");
+    return;
+  }
+  
+  my $sra_track_insertion = $self->resultset('SraTrack')->create({
+      run_id    => $run_id,
+      track_id  => $track_id,
+  });
+  return 1;
+}
+
+###############################################################################
+## TRACKS INSTANCE METHODS
+
+# INSTANCE METHOD
+## Purpose   : retrieve an array of track objects given some conditions
+## Parameters:
+# Filters
+# * species = string
+# * aligned = 0/1
+# * status  = string 'ACTIVE', 'RETIRED', 'MERGED', ''
+# Selection
+# * merge_ids, track_ids, sra_ids = array of strings/ids
 sub get_tracks {
   my $self = shift;
   my %pars = @_;
   
   my %filter;
   my $me = 'me';
+  
+  my @allowed_args = qw(species status aligned merge_ids track_ids sra_ids);
+  my %allowed = map { $_ => 1 } @allowed_args;
+  for my $arg (keys %pars) {
+    croak "Can't use argument '$arg'" if not defined $allowed{$arg};
+  }
   
   # Return active tracks by default
   # (To get all tracks: status='')
@@ -106,8 +154,6 @@ sub get_tracks {
   #$logger->debug(Dumper \%pars);
   #$logger->debug(Dumper \%search);
   
-  croak "Search has no constraint" if not %search;
-  
   # Actual request with filters
   my $track_req = $self->resultset('Track')->search(\%search,
     {
@@ -116,7 +162,8 @@ sub get_tracks {
         { 'sra_tracks' =>
           { 'run' => [
               { 'sample' => 'strain' },
-              { 'experiment' => 'study' }
+              { 'experiment' => 'study' },
+              'private_files',
             ]
           }
         }
@@ -128,14 +175,9 @@ sub get_tracks {
   return @tracks;
 }
 
-sub get_track_from_track_id {
-  my $self = shift;
-  my ($track_id) = @_;
-  
-  my @tracks = $self->get_tracks(track_ids => [$track_id]);
-  return $tracks[0];
-}
-
+## INSTANCE METHOD
+## Purpose   : update a table row
+## Parameters: a track table track_id, a ref hash with new data
 sub update_track {
   my $self = shift;
   my ($track_id, $track_data) = @_;
@@ -145,29 +187,9 @@ sub update_track {
     })->update($track_data);
 }
 
-sub get_active_tracks {
-  my $self = shift;
-  my ($species) = @_;
-  
-  my %search = (
-    status  => 'ACTIVE',
-  );
-  my $track_req = $self->resultset('Track')->search(\%search);
-  my @tracks = $track_req->all;
-  return @tracks;
-}
-
-sub get_track_ids {
-  my $self = shift;
-  my ($species) = @_;
-  
-  my %search;
-  $search{production_name} = $species if $species;
-  my $track_req = $self->resultset('SraToActiveTrack')->search(\%search);
-  my @track_ids = uniq map { $_->track_id } $track_req->all;
-  return @track_ids;
-}
-
+## INSTANCE METHOD
+## Purpose   : populate title_auto and text_auto for tracks
+## Parameters: an array of track_ids
 sub guess_track_text {
   my $self = shift;
   my @track_ids = @_;
@@ -218,90 +240,55 @@ sub guess_track_text {
   return 1;
 }
 
-sub _add_sra_track {
-  my ($self, $run_id, $track_id) = @_;
-  
-  # First, check that the link doesn't already exists
-  my $sra_track_search = $self->resultset('SraTrack')->search({
-      run_id    => $run_id,
-      track_id  => $track_id,
-  });
-  my $links_count = $sra_track_search->all;
-  if ($links_count > 0) {
-    $logger->warn("There is already a link between run $run_id and track $track_id");
-    return;
-  }
-  
-  my $sra_track_insertion = $self->resultset('SraTrack')->create({
-      run_id    => $run_id,
-      track_id  => $track_id,
-  });
-  return;
-}
-
+## INSTANCE METHOD
+## Purpose   : retrieve meta information about tracks that needs to be aligned
+## Parameters: a species string (optional)
+## Returns   : a hash in the form
+#              {production_name => { taxon_id => 0, sra => ['']} }
 sub get_new_runs_tracks {
   my $self = shift;
   my ($species) = @_;
   
-  my $search_href = {
-    'track.status' => 'ACTIVE',
-  };
-  $search_href->{'strain.production_name'} = $species if defined $species;
-  
-  my $track_req = $self->resultset('SraTrack')->search(
-    $search_href,
-    {
-    prefetch    => [ 'track', { 'run' => { 'sample' => { 'strain' => 'species' } } } ],
-  });
-  
-  my @res_tracks = $track_req->all;
-  
-  if (defined $species) {
-    @res_tracks = grep { $_->run->sample->strain->production_name eq $species } @res_tracks;
-  }
-  $logger->debug((@res_tracks+0) . " tracks to consider as new");
+  my @tracks = $self->get_tracks(
+    species => $species,
+    aligned => 0
+  );
+  $logger->debug((@tracks+0) . " tracks to consider as new");
   
   my %new_track = ();
-  for my $track (@res_tracks) {
+  for my $track (@tracks) {
     my $track_id = $track->track_id;
-    $logger->debug("Checking track $track_id");
-    
-    # Check if this track has any file already (bigwig and bam)
-    my $files_req = $self->resultset('File')->search({
-        'track_id' => $track_id,
-      });
-    my @files = $files_req->all;
-    
-    # We do have some files!
-    if (@files) {
-      $logger->debug("The track $track_id already has files: no need to align");
-    }
-    else {
-      $logger->debug("The track $track_id has no files: to align");
-      # Is this a private data? In that case, get the fastq files
-      if (defined $track->run->run_private_acc) {
-        my $fastq_req = $self->resultset('PrivateFile')->search({
-            run_id  => $track->run->run_id
-        });
-        my @fastq = $fastq_req->get_column('path')->all;
-        $self->_add_new_runs_track(\%new_track, $track, \@fastq);
+    $logger->debug("Check track $track_id as new run track");
+
+    for my $sra_track ($track->sra_tracks) {
+      my $run = $sra_track->run;
+      
+      # Private file?
+      if (defined $run->run_private_acc) {
+        my @fastq = map { $_->path } $run->private_files->all;
+        $self->_add_new_runs_track(\%new_track, $track_id, $run, \@fastq);
       }
       # Otherwise, the SRA accessions will suffice
       else {
-        $self->_add_new_runs_track(\%new_track, $track);
+        $self->_add_new_runs_track(\%new_track, $track_id, $run);
       }
     }
   }
   return \%new_track;
 }
 
+## PRIVATE METHOD
+## Purpose   : populate the new runs hash with a track data
+## Parameters:
+# 1 = hash ref of the new runs hash
+# 2 = track_id
+# 3 = run object
+# 4 = (optional) array ref of fastq paths (for private runs only)
 sub _add_new_runs_track {
   my $self = shift;
-  my ($track_list, $track, $fastqs) = @_;
+  my ($track_list, $track_id, $run, $fastqs) = @_;
 
-  my $track_id = $track->track_id;
   $logger->debug("Generating track to add ($track_id)");
-  my $run = $track->run;
   my $strain = $run->sample->strain;
   my $production_name = $strain->production_name;
   my $taxon_id        = $strain->species->taxon_id;
@@ -325,6 +312,10 @@ sub _add_new_runs_track {
   $track_list->{$production_name}->{$track_id} = $track_data;
 }
 
+## INSTANCE METHOD
+## Purpose   : returns the merge level of a track
+## Parameters: a track_id
+## Returns   : 1) merge_level 2) merge_id
 sub get_track_level {
   my $self = shift;
   my ($track_id) = @_;
@@ -341,7 +332,18 @@ sub get_track_level {
     return;
   }
 }
-  
+
+## PRIVATE METHOD
+## Purpose   : guess the merge level of a track
+## Purpose   : returns the merge_level
+## Returns   : 1) merge_level 2) merge_id 3) merge_text
+# Detail:
+#   * If the track can be summarised as 1 SRA accession at a given level, then
+#   the merge_text will be this accession
+#   * If the track is a combination of several SRA accession of the same level (e.g.
+#   several studies or several samples), then the merge_text is the sorted list of SRA
+#   accessions separated by _ (e.g. "SRP000001_SRP000002")
+#   * The merge_id is the md5sum of the merge_text if it is more than one SRA accession
 sub _compute_track_level {
   my $self = shift;
   my ($track_id) = @_;
@@ -416,6 +418,9 @@ sub _compute_track_level {
   return ($merge_level, $merge_id, $merge_text);
 }
 
+## INSTANCE METHOD
+## Purpose   : for all active tracks, compute their merge_ids
+## Parameters: force (bool) to force the change even if the merge_id exists
 sub regenerate_merge_ids {
   my $self = shift;
   my ($force) = @_;
@@ -446,161 +451,9 @@ sub regenerate_merge_ids {
   return scalar @track_ids;
 }
 
-sub get_track_id_from_merge_id {
-  my $self = shift;
-  my ($merge_id) = @_;
-  
-  $logger->debug("Retrieve track_id for merge_id $merge_id");
-  
-  my $track_req = $self->resultset('Track')->search({
-      merge_id => $merge_id,
-    });
-  my $track = $track_req->first;
-  
-  if ($track) {
-    return  $track->track_id;
-  }
-  else {
-    $logger->warn("Can't get a track with merge_id = $merge_id");
-    return;
-  }
-}
-
-sub add_track_results {
-  my $self = shift;
-  my ($track_id, $commands, $files, $version) = @_;
-  
-  $logger->debug("Add data for track $track_id");
-  
-  # Add commands
-  my $cmds_ok = $self->_add_commands($track_id, $commands, $version);
-  return if not $cmds_ok;
-  
-  # Add files
-  my $files_ok = $self->_add_files($track_id, $files);
-  return if not $files_ok;
-  
-  return 1;
-}
-
-sub _add_commands {
-  my $self = shift;
-  my ($track_id, $commands, $version) = @_;
-  
-  # First, check that there is no command for this track already
-  my $cmd_req = $self->resultset('Analysis')->search({
-      track_id => $track_id,
-    });
-  my @cmds = $cmd_req->all;
-  
-  # Some commands: skip
-  if (@cmds) {
-    $logger->warn("WARNING: the track $track_id already has commands. Skip addition.");
-    return;
-  }
-  
-  # Add the commands!
-  my @commands = map { split /\s*;\s*/ } @cmds;
-  for my $command (@$commands) {
-    my $desc = $self->_guess_analysis_program($command);
-    my ($an_id, $an_version);
-    if (not $desc) {
-      carp "No analysis description found for command $command";
-    } else {
-      $an_id   = $desc->analysis_description_id;
-      $an_version = $version if ($desc->type eq 'aligner' and defined $version),
-    }
-    my $cmd = $self->resultset('Analysis')->create({
-        track_id                => $track_id,
-        command                 => $command,
-        analysis_description_id => $an_id,
-        version                 => $an_version
-      });
-  }
-  
-  return 1;
-}
-
-sub _guess_analysis_program {
-  my $self = shift;
-  my ($command) = @_;
-  
-  my @descriptions = $self->_load_analysis_descriptions;
-  
-  foreach my $desc (@descriptions) {
-    my $pattern = $desc->pattern;
-    if ($command =~ /$pattern/) {
-      return $desc;
-    }
-  }
-  return;
-}
-
-#memoize('_load_analysis_descriptions');
-sub _load_analysis_descriptions {
-  my $self = shift;
-  
-  my $req = $self->resultset('AnalysisDescription');
-  my @descriptions = $req->all;
-  
-  return @descriptions;
-}
-
-sub _add_files {
-  my $self = shift;
-  my ($track_id, $paths) = @_;
-  
-  # First, check that there is no files for this track already
-  # (Except for fastq files)
-  my $file_req = $self->resultset('File')->search({
-      track_id => $track_id,
-    });
-  my @files = $file_req->all;
-  
-  # Some files: skip
-  if (@files) {
-    $logger->warn("WARNING: the track $track_id already has files. Skip addition.");
-    return;
-  }
-  
-  # Add the files!
-  for my $path (@$paths) {
-    # Only keep the filename, not the path
-    my ($vol, $dir, $file) = File::Spec->splitpath($path);
-    
-    # Determine the type of the file from its extension
-    my $type;
-    if ($file =~ /\.bw$/) {
-      $type = 'bigwig';
-    }
-    elsif ($file =~ /\.bam$/) {
-      $type = 'bam';
-      push @$paths, $path . '.bai';
-    }
-    elsif ($file =~ /\.bam.bai$/) {
-      $type = 'bai';
-    }
-    
-    # Get md5sum file
-    my $file_md5;
-    #try {
-    #  $file_md5 = file_md5_hex($path);
-    #}
-    #catch {
-    #  warn "Can't find file for md5sum: $path";
-    #};
-    
-    my $cmd = $self->resultset('File')->create({
-        track_id => $track_id,
-        path     => $file,
-        type     => $type,
-        md5      => $file_md5,
-      });
-  }
-  
-  return 1;
-}
-
+## INSTANCE METHOD
+## Purpose   : Merge several tracks together
+## Parameters: an array ref of SRA accessions
 sub merge_tracks_by_sra_ids {
   my ($self, $sra_accs) = @_;
   
@@ -609,29 +462,24 @@ sub merge_tracks_by_sra_ids {
   # - Inactivation of the constitutive, merged tracks (status=MERGED)
   # - Creation of a new sra_track link between the runs and the track
   
-  # Get the list of SRA runs from the list of SRA_ids
-  my $run_ids = $self->_sra_to_run_ids($sra_accs);
-  if (not defined $run_ids) {
-    warn "Abort merging: can't find all the members to merge";
-    return;
-  }
-  
   # Get the list of tracks associated with them
-  my $old_track_ids = $self->_get_tracks_for_runs($run_ids);
+  my @old_tracks = $self->get_tracks(sra_ids => $sra_accs);
+  my @old_track_ids = map { $_->track_id } @old_tracks;
+  $logger->debug("Run_ids to merge: " . join(',', @old_track_ids));
 
   # Check that there are multiple tracks to merge, abort otherwise
-  my $n_tracks = scalar @$old_track_ids;
+  my $n_tracks = scalar @old_track_ids;
   if ($n_tracks == 0) {
     warn "No tracks found to merge!";
     return;
   }
   elsif ($n_tracks == 1) {
-    $logger->warn("Trying to merge tracks, but there is only one track to merge ($old_track_ids->[0])");
+    $logger->warn("Trying to merge tracks, but there is only one track to merge ($old_track_ids[0])");
     return;
   } else {
-    $logger->debug(sprintf "Can merge %d tracks", scalar @$old_track_ids);
+    $logger->debug(sprintf "Can merge %d tracks", scalar @old_track_ids);
     # Inactivate tracks as MERGED
-    $self->inactivate_tracks($old_track_ids, 'MERGED');
+    $self->inactivate_tracks(\@old_track_ids, 'MERGED');
   }
   
   # Create a new merged track
@@ -640,7 +488,13 @@ sub merge_tracks_by_sra_ids {
   $logger->debug(sprintf "Merged in track %d", $merged_track_id);
   
   # Then, create a link for each run to the new merged track
-  map { $self->_add_sra_track($_, $merged_track_id) } @$run_ids;
+  my @run_ids;
+  for my $track (@old_tracks) {
+    my @sra_tracks = $track->sra_tracks;
+    push @run_ids, map { $_->run_id } @sra_tracks;
+  }
+  
+  map { $self->_add_sra_track($_, $merged_track_id) } @run_ids;
   
   # Also create and link a bundle to the track
   $self->_add_bundle_from_track($merged_track_id);
@@ -661,21 +515,17 @@ sub _merge_sample_tracks {
   }
 }
 
+## INSTANCE METHOD
+## Purpose   : Merge several tracks together with SRA accessions
+## Parameters: an array ref of SRA accessions
 sub inactivate_tracks_by_sra_ids {
   my ($self, $sra_accs) = @_;
   
-  # Get the list of SRA runs from the list of SRA_ids
-  my $run_ids = $self->_sra_to_run_ids($sra_accs);
-  if (not defined $run_ids) {
-    $logger->warn("Abort inactivation: can't find all the members listed");
-    return;
-  }
-  
   # Get the list of tracks associated with them
-  my $track_ids = $self->_get_tracks_for_runs($run_ids);
+  my @track_ids = map { $_->track_id } $self->get_tracks(sra_ids => $sra_accs);
   
   # Check that the number of tracks is the same as the number of provided accessions
-  my $n_tracks = scalar @$track_ids;
+  my $n_tracks = scalar @track_ids;
   my $n_sras   = scalar @$sra_accs;
   if ($n_tracks != $n_sras) {
     $logger->warn("Not the same number of tracks ($n_tracks) and SRA accessions ($n_sras). Abort inactivation.");
@@ -683,11 +533,16 @@ sub inactivate_tracks_by_sra_ids {
   }
   
   # All is well: inactivate
-  $self->inactivate_tracks($track_ids, 'RETIRED');
+  $self->inactivate_tracks(\@track_ids, 'RETIRED');
 
   return;
 }
 
+## INSTANCE METHOD
+## Purpose   : Merge several tracks together
+## Parameters:
+# 1) array ref of track_id
+# 2) status text (default = RETIRED)
 sub inactivate_tracks {
   my ($self, $track_ids_aref, $status) = @_;
   $status ||= 'RETIRED';
@@ -702,60 +557,16 @@ sub inactivate_tracks {
   $self->_inactivate_bundles_for_tracks($track_ids_aref);
 }
 
-sub _get_tracks_for_runs {
-  my ($self, $run_ids) = @_;
-  
-  my @runs_conds = map { { 'sra_tracks.run_id' => $_ } } @$run_ids;
-  
-  my $tracks_req = $self->resultset('Track')->search({
-      -or => \@runs_conds,
-      -and => { status => 'ACTIVE' },
-    },
-    {
-      prefetch  => 'sra_tracks',
-  });
-  
-  my @tracks = map { $_->track_id } $tracks_req->all;
-  
-  return \@tracks;
-}
-
-sub _get_active_tracks {
-  my ($self) = @_;
-  
-  my $track_search = $self->resultset('Track')->search({
-    status  => 'ACTIVE',
-  });
-  my $tracks = $track_search->all;
-  return $tracks;
-}
-
-sub get_tracks_from_sra {
-  my $self = shift;
-  my @sras_list = @_;
-  
-  return $self->get_tracks(sra_ids => \@sras_list);
-}
-
-sub old_get_tracks_from_sra {
-  my ($self, $sras_aref) = @_;
-  # Format sra ids
-  my $sras_search = $self->_format_sras_for_search(@$sras_aref);
-  
-  $logger->debug("Get tracks for " . join( ',',  @$sras_aref));
-  my $tracks_get = $self->resultset('SraToActiveTrack')->search($sras_search);
-  
-  my @tracks = $tracks_get->all;
-  my @track_ids = uniq map { $_->track_id } @tracks;
-  $logger->debug("Tracks found: @track_ids");
-  return \@track_ids;
-}
-
+## PRIVATE METHOD
+## Purpose   : Given a list of various SRA accessions, prepare the DBIx search
+# to use find all of them (=or list)
+## Parameters: array ref of SRA accessions
 sub _format_sras_for_search {
   my $self = shift;
   my @sras_list = @_;
   
   my @sras;
+  # Guess what table needs to be searched for each accession
   for my $sra_acc (@sras_list) {
     if ($sra_acc =~ /$sra_regex->{vb_study}/) {
       push @sras, { 'study.study_private_acc' => $sra_acc };
@@ -809,6 +620,29 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
 =head1 INTERFACE
 
 =over
+
+=item get_tracks()
+
+  function       : search and retrieve tracks
+  returntype     : array of DBIx track objects
+  arguments      : see below. If no argument is given, return all active tracks.
+  
+  Selection arguments:
+    - track_ids = array ref of track_ids integers
+    - sra_ids   = ............ sra accessions strings
+    - merge_ids = ............ merge ids strings
+  
+  Filter arguments:
+    - species   = production_name
+    - aligned   = 1 (with alignment files) or 0
+    - status    = 'ACTIVE' (default), 'RETIRED', 'MERGED', OR '' (=all)
+  
+  usage:
+    my @tracks = $rdb->get_tracks();
+    my @tracks = $rdb->get_tracks(sra_ids => ['SRS0000001']);
+    my @tracks = $rdb->get_tracks(track_ids => [1, 2]);
+    my @tracks = $rdb->get_tracks(species => 'aedes_aegypti');
+    my @tracks = $rdb->get_tracks(aligned => 0);
  
 =item get_new_runs_tracks()
 
@@ -833,16 +667,6 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
   usage:
     my $sras = [ 'SRS000001', 'SRS000002' ];
     $rdb->merge_tracks_by_sra_ids($sras);
-    
-=item get_tracks_from_sra
-
-  function       : retrieve a list of tracks
-  arg            : a ref array of SRA accessions
-  return         : a ref array of track_ids
-  
-  usage:
-    my $sras = [ 'SRS000001', 'SRS000002' ];
-    my $track_ids = $rdb->get_tracks_from_sras($sras);
     
 =item inactivate_tracks_by_sra_ids()
 
@@ -873,14 +697,6 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
     my $track_id = 1;
     my $merge_level = $rdb->get_track_level(track_id);
     
-=item get_track_id_from_merge_id()
-
-  function       : map a merge_id to a track_id
-  arg[1]         : merge_id
-  
-  usage:
-    my $track_id = $rdb->get_track_id_from_merge_id('SRS260844_SRS260845');
-    
 =item add_track_results()
   
   function       : import a list of commands and files for a given track
@@ -900,6 +716,40 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
   
   usage:
   $rdb->regenerate_merge_ids;
+  
+=item merge_tracks_by_sra_ids
+
+  function       : Merge tracks using SRA accessions.
+  arg[1]         : array ref of SRA accessions
+  
+  This method takes a list of SRA accessions, gets the corresponding list of tracks,
+  and merges them. That means that a new track is created, linked to all SRA accessions,
+  and the old tracks status is changed to 'MERGED'. They remain in the database for
+  history purposed, but they can be removed.
+  
+  usage:
+  $rdb->merge_tracks_by_sra_ids(['SRS00001', 'SRS000002']);
+
+=item inactivate_tracks_by_sra_ids
+
+  function       : Inactivate tracks using SRA accessions.
+  arg[1]         : array ref of SRA accessions
+  
+  This method takes a list of SRA accessions, gets the corresponding list of tracks,
+  and change their status to 'RETIRED'.
+  
+  usage:
+  $rdb->inactivate_tracks_by_sra_ids(['SRS00001', 'SRS000002']);
+
+=item inactivate_tracks
+
+  function       : Inactivate tracks using track ids.
+  arg[1]         : 
+    1) array ref of SRA accessions
+    2) [optional] new status text (default = 'RETIRED')
+  
+  usage:
+  $rdb->inactivate_tracks([1, 2], 'MERGED');
     
 =back
 

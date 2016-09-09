@@ -51,7 +51,7 @@ sub _format_voc {
 sub analyze_tracks_vocabulary {
   my ($self, $species) = shift;
   
-  my @tracks = $self->get_active_tracks($species);
+  my @tracks = $self->get_tracks(species => $species);
   my $vocabulary = $self->formatted_voc;
   
   my %tracks_vocabulary;

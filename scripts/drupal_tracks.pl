@@ -65,7 +65,7 @@ sub match_drupal_tracks {
         next TYPE;
       }
       my @sras = split /[ ,]/, $node->{ $type };
-      my $tracks = $db->get_tracks_from_sra(\@sras);
+      my $tracks = $db->get_tracks(sra_ids => \@sras);
       if ( scalar @$tracks == 0 ) {
         $logger->warn("$node_id: No track found for SRA $type accessions = @sras");
         next TYPE;

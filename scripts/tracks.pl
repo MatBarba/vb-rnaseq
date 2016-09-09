@@ -276,7 +276,8 @@ sub add_tracks_results {
     $logger->debug("Data:" . Dumper($track_data));
     
     # First, get the track_id
-    my $track_id = $db->get_track_id_from_merge_id($merge_id);
+    my ($track) = $db->get_tracks(merge_ids => [$merge_id]);
+    my $track_id = $track->track_id;
     
     if ($track_id) {
       # Then, add the data

@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use Carp;
+$Carp::Verbose = 1;
 use autodie qw( :all );
 use Test::More;
 use Test::Exception;
@@ -8,7 +10,6 @@ use Test::Warnings;
 use Data::Dumper;
 
 use Log::Log4perl qw( :easy );
-#Log::Log4perl->easy_init($WARN);
 #Log::Log4perl->easy_init($DEBUG);
 my $logger = get_logger();
 
@@ -39,7 +40,7 @@ $db->add_species({
   check_tables_numbers($db, [0,0,0,0,0]);
 }
 {
-  ok((my @track_ids = $db->get_track_ids) == 0, "Get empty list of track_ids");
+  ok($db->get_tracks() == 0, "Get empty list of track_ids");
 }
 
 {
@@ -52,16 +53,17 @@ $db->add_species({
   # Check sizes
   check_expected_track($tracks, [1, 5]);
   check_tables_numbers($db, [1,5,5,5,5]);
+  
+  #sleep 1000;
 }
 
 {
-  ok(my @track_ids = $db->get_track_ids, "Get list of track_ids");
-  cmp_ok(@track_ids+0, 'gt', 0, "Several track ids in the list");
+  ok(my @tracks = $db->get_tracks(), "Get list of tracks");
+  cmp_ok(@tracks+0, 'gt', 0, "Several track ids in the list");
   
-  my $track_id = shift @track_ids;
-  ok(my $track = $db->get_track_from_track_id($track_id), "Get track information");
+  my $track = shift @tracks;
   isa_ok($track, 'Bio::EnsEMBL::RNAseqDB::Schema::Result::Track', 'Get a track object');
-  ok(my $track_id_bis = $track->track_id, "Can get track_id");
+  ok(my $track_id = $track->track_id, "Can get track_id");
 }
 
 {
@@ -123,7 +125,6 @@ sub check_expected_track {
     }
     cmp_ok( $num_tracks, '==', $nums->[1], "Got $nums->[1] tracks");
   }
-  
 }
 
 sub check_number_in_table {

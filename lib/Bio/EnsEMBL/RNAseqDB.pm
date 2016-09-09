@@ -21,6 +21,7 @@ extends 'Bio::EnsEMBL::RNAseqDB::Schema';
 with  'Bio::EnsEMBL::RNAseqDB::Species';
 with  'Bio::EnsEMBL::RNAseqDB::Publications';
 with  'Bio::EnsEMBL::RNAseqDB::SRA';
+with  'Bio::EnsEMBL::RNAseqDB::Analysis';
 with  'Bio::EnsEMBL::RNAseqDB::Track';
 with  'Bio::EnsEMBL::RNAseqDB::Bundle';
 with  'Bio::EnsEMBL::RNAseqDB::File';

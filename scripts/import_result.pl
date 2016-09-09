@@ -53,7 +53,8 @@ sub add_tracks_results {
     my $track_data = $results_href->{$merge_id};
     
     # First, get the track_id
-    my $track_id = $db->get_track_id_from_merge_id($merge_id);
+    my ($track) = $db->get_tracks(merge_ids => [$merge_id]);
+    my $track_id = $track->track_id;
     
     # Then, add the data
     if ($track_id) {

@@ -27,7 +27,7 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 );
 
 # Deactivate every tracks based on their SRA
-my @track_ids = $db->get_track_ids($opt{species});
+my @track_ids = map { $_->track_id } $db->get_tracks(species => $opt{species});
 $db->guess_track_text(@track_ids);
 
 ###############################################################################

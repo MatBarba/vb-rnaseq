@@ -69,6 +69,10 @@ sub _add_bundle_track {
   return;
 }
 
+# INSTANCE METHOD
+# Purpose   : insert a bundle in the DB given a list of track_ids
+# Parameters: array of track_ids
+# Returns   : int bundle_id that was just created
 sub create_bundle_from_track_ids {
   my $self = shift;
   my @track_ids = @_;
@@ -128,6 +132,9 @@ sub _inactivate_bundles_for_tracks {
   $self->inactivate_bundles(@bundle_ids);
 }
 
+# INSTANCE METHOD
+# Purpose   : Inactivate a list of bundles
+# Parameters: array of bundle_ids
 sub inactivate_bundles {
   my $self = shift;
   my @bundle_ids = @_;
@@ -163,6 +170,9 @@ sub update_bundle {
   })->update($node_content);
 }
 
+# INSTANCE METHOD
+# Purpose   : Merge a list of bundles into one
+# Parameters: array of bundle_ids
 sub merge_bundles {
   my $self = shift;
   my @bundle_ids = @_;
@@ -183,6 +193,9 @@ sub merge_bundles {
   return $new_bundle_id;
 }
 
+# INSTANCE METHOD
+# Purpose   : Get the list of tracks contained by a given bundle
+# Parameters: one bundle_id
 sub get_bundle_tracks {
   my $self = shift;
   my ($bundle_id) = @_;
@@ -195,6 +208,10 @@ sub get_bundle_tracks {
   return @track_ids;
 }
 
+# INSTANCE METHOD
+# Purpose   : Get the list of all samples metadata for every species
+# Parameters: none
+# Returns   : Hash ref of samples
 sub get_samples {
   my $self = shift;
   
@@ -610,6 +627,15 @@ This module is a role to interface the bundle part of the Bio::EnsEMBL::RNAseqDB
 =head1 INTERFACE
 
 =over
+
+=item create_bundle_from_track_ids
+
+  function       : Create a new bundle of tracks
+  args           : array of track_ids
+  returns        : the bundle_id of the bundle that was just created
+
+  Usage:
+    $rdb->create_bundle_from_track_ids(1, 2, 3);
  
 =item update_bundle()
 
@@ -625,7 +651,7 @@ This module is a role to interface the bundle part of the Bio::EnsEMBL::RNAseqDB
     };
     $rdb->update_bundle($bundle_id, $content);
     
-=item get_bundle_id_from_track_id()
+=item get_bundle_id_from_track_id
 
   function       : returns track_ids from bundle_ids
   arg            : ref array of track_ids
@@ -636,7 +662,7 @@ This module is a role to interface the bundle part of the Bio::EnsEMBL::RNAseqDB
     my $track_ids = [1, 2];
     my $bundle_ids = $rdb->get_bundle_id_from_track_id($track_ids);
     
-=item get_bundles()
+=item get_bundles
 
   function       : returns an array of groups of tracks.
   arg[1]         : hash ref with key 'species' defined [optional] to filter groups by species
@@ -646,7 +672,7 @@ This module is a role to interface the bundle part of the Bio::EnsEMBL::RNAseqDB
   
     my $groups = $rdb->get_bundles();
     
-=item get_bundles_for_solr()
+=item get_bundles_for_solr
 
   function       : returns groups of track in a data structure suuitable for Solr.
   arg[1]         : hash ref with key 'species' defined [optional] to filter groups by species
@@ -655,6 +681,51 @@ This module is a role to interface the bundle part of the Bio::EnsEMBL::RNAseqDB
   Usage:
   
     my $groups = $rdb->get_bundles_for_solr();
+
+=item get_bundle_tracks
+
+  function       : Get the list of tracks contained by a given bundle
+  arg[1]         : one bundle_id
+  returns        : array of track_ids
+  
+  Usage:
+    
+    my @track_ids = $rdb->get_bundle_tracks(2);
+
+=item get_samples
+
+  function       : Get a list of samples metadata
+  args           : none
+  returns        : hash ref of samples:
+  
+  {
+    'production_name' => DBix Sample object ref,
+  }
+  
+  Usage:
+    
+    my $samples_data = $rdb->get_samples();
+
+=item inactivate_bundles
+
+  function       : inactivate a list of bundles
+  args           : an array of bundle_ids
+  
+  Usage:
+  
+    $rdb->inactivate_bundles(3, 4);
+
+=item merge_bundles
+
+  function       : merge a list of bundles into 1
+  args           : an array of bundle_ids
+  returns        : integer bundle_id
+  
+  NB: all the bundles in the list are inactivated.
+  
+  Usage:
+  
+    my $merged_bundle_id = $rdb->merge_bundles(3, 4, 5);
     
 =back
 

@@ -11,6 +11,8 @@ use Data::Dumper;
 use Readonly;
 use Try::Tiny;
 
+###############################################################################
+# Cache attributes
 has vocabulary => (
   is  => 'rw',
   isa => 'HashRef[HashRef[Str]]',
@@ -23,6 +25,18 @@ has formatted_voc => (
   builder => '_format_voc',
 );
 
+###############################################################################
+# ATTRIBUTES BUILDERS
+
+# Purpose   : format the vocabulary
+# Parameters: none
+# Returns   : ref array of ref hashes in the following form:
+# {
+#   pattern => 'regex_pattern',
+#   type    => 'foo',
+#   name    => 'bar'
+# }
+# The pattern is used on a string to identify one vocabulary term with a given name.
 sub _format_voc {
   my $self = shift;
   my $voc = $self->vocabulary;
@@ -47,7 +61,14 @@ sub _format_voc {
   
   return \@formatted_voc;
 }
+###############################################################################
+# VOCABULARY INSTANCE METHODS
 
+## INSTANCE METHOD
+## Purpose   : analyze the title of all tracks to search for specific vocabulary words
+## Parameters: [optional] A production_name
+## Returns   : a hash ref of vocabulary in the form:
+# { track_id => [ { type => '', name => '' } ] }
 sub analyze_tracks_vocabulary {
   my ($self, $species) = shift;
   
@@ -86,6 +107,9 @@ sub analyze_tracks_vocabulary {
   return \%tracks_vocabulary;
 }
 
+## INSTANCE METHOD
+## Purpose   : Remove all data from the vocabulary tables
+## Parameters: none
 sub purge_vocabulary {
   my $self = shift;
   
@@ -93,6 +117,9 @@ sub purge_vocabulary {
   my $delete_voc  = $self->resultset('Vocabulary')->delete_all;
 }
 
+## INSTANCE METHOD
+## Purpose   : Link vocabulary terms to tracks
+## Parameters: a track_vocabulary hash ref produced by analyze_tracks_vocabulary
 sub add_vocabulary_to_tracks {
   my $self = shift;
   my ($tracks_voc) = @_;
@@ -112,12 +139,18 @@ sub add_vocabulary_to_tracks {
   }
 }
 
+## INSTANCE METHOD
+## Purpose   : Link a vocabulary term to a track
+## Parameters:
+# track_id = int track_id
+# name     = vocabulary name to link to the track
+# type     = vocabulary type
 sub add_vocabulary_to_track {
   my $self = shift;
-  my %track_voc = @_;
-  my $track_id = $track_voc{track_id};
-  my $voc_type = $track_voc{type};
-  my $voc_name = $track_voc{name};
+  my %pars = @_;
+  my $track_id = $pars{track_id};
+  my $voc_type = $pars{type};
+  my $voc_name = $pars{name};
   
   if (not ($track_id and $voc_type and $voc_name)) {
     $logger->warn("Missing data to add vocabulary to track");
@@ -135,6 +168,11 @@ sub add_vocabulary_to_track {
   $logger->debug("ADD vocabulary link $track_id - $voc_id");
 }
 
+## PRIVATE METHOD
+## Purpose   : get the id of a vocabulary; create it if it doesn't exist
+## Parameters:
+# 1) vocabulary type
+# 2) vocabulary name
 sub _get_vocabulary_id {
   my $self = shift;
   my ($voc_type, $voc_name) = @_;
@@ -163,6 +201,10 @@ sub _get_vocabulary_id {
   return $voc_id;
 }
 
+# INSTANCE METHOD
+# Purpose   : Get all vocabulary terms linked to a track
+# Parameters: int track_id
+# Returns   : Hash ref with keys = type and value an array of names
 sub get_vocabulary_for_track_id {
   my $self = shift;
   my ($track_id) = @_;
@@ -203,28 +245,68 @@ This module is a role to interface the controlled vocabular part of the Bio::Ens
 =head1 INTERFACE
 
 =over
+
+=item analyze_tracks_vocabulary
+
+  function       : compute a list of controlled terms used in the title fields of tracks
+  args           : [optional] a production_name
+  returns        : A hash ref of the following form:
+  
+  {
+    track_id =>
+      [
+        {
+          type => '',
+          name => ''
+        }
+      ]
+  }
+  
+  usage:
+  my $voc = $rdb->analyze_tracks_vocabulary();
  
-    
+=item purge_vocabulary
+
+  function       : Clean the vocabulary table and its links
+  args           : none
+  
+  usage:
+  $rdb->purge_vocabulary();
+
+=item add_vocabulary_to_tracks
+
+  function       : Link vocabulary terms to tracks
+  args           : the hash produced by analyze_tracks_vocabulary
+  
+  usage:
+  my $voc = $rdb->analyze_tracks_vocabulary();
+  $rdb->add_vocabulary_to_tracks($voc);
+
+=item add_vocabulary_to_track
+
+  function       : Link one vocabulary term to one track
+  args           :
+    Int track_id
+    String type of the term
+    String name of the term
+  
+  usage:
+  $rdb->add_vocabulary_to_track(
+    track_id  => 100,
+    name      => 'foo',
+    type      => 'bar',
+  );
+
+=item get_vocabulary_for_track_id
+
+  function       : Retrieve all terms linked to a track
+  args           : a track_id
+  returns        : hash ref with keys = type and value = array ref of names
+  
+  usage:
+  my $voc = $rdb->get_vocabulary_for_track_id(100);
+ 
 =back
 
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-Requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
- * Log::Log4perl
- * DBIx::Class
- * Moose::Role
-
-
-=head1 BUGS AND LIMITATIONS
-
-...
-
-=head1 AUTHOR
-
-Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
+=cut
 

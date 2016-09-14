@@ -273,7 +273,7 @@ sub _get_study_id {
 
     foreach my $pubmed_link (@pubmed_links) {
       my $pubmed_id = $pubmed_link->{XREF_LINK}->{ID};
-      $self->_add_study_publication($study_id, $pubmed_id);
+      $self->add_study_publication($study_id, $pubmed_id);
     }
     
     return $study_id;
@@ -502,7 +502,7 @@ sub add_private_study {
   
   # Insert the pbmed
   my $pubmed_id = $study_href->{pubmed_id};
-  $self->_add_study_publication($study_id, $pubmed_id) if defined $pubmed_id;
+  $self->add_study_publication($study_id, $pubmed_id) if defined $pubmed_id;
   
   # Create an accession for this study from its id
   if (not defined $study->{study_private_acc}) {

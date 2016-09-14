@@ -15,7 +15,36 @@ use JSON;
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 
-sub _add_study_publication {
+sub add_study_publication_from_sra {
+  my ($self, $sra_id, $pubmed_id) = @_;
+  
+  # Get the study id for the sra
+  my $study_id = $self->_sra_to_study_id($sra_id);
+  
+  # Add the publication
+  $self->add_study_publication($study_id, $pubmed_id);
+}
+
+sub _sra_to_study_id {
+  my $self = shift;
+  my ($sra_id) = @_;
+  
+  # Take one run_id to find the study
+  my $run_id = $self->_sra_to_run_ids([$sra_id]);
+  
+  my $study_req = $self->resultset('Study')->search({
+      'runs.run_id' => $run_id->[0]
+    },
+    {
+      prefetch => { experiments => 'runs' }
+  });
+  
+  my ($study) = $study_req->all;
+  
+  return $study->study_id;
+}
+
+sub add_study_publication {
   my ($self, $study_id, $pubmed_id) = @_;
   if (not defined $pubmed_id) {
     $logger->debug("No pubmed defined for study $study_id");
@@ -120,6 +149,16 @@ sub _get_pubmed_data {
   return \%data;
 }
 
+sub get_publications {
+  my $self = shift;
+  
+  my $pub_request = $self->resultset('Publication')->search({},
+    {
+      prefetch => 'study_publications',
+  });
+  return $pub_request->all;
+}
+
 1;
 
 
@@ -138,22 +177,6 @@ This module is a role to interface the publications part of the Bio::EnsEMBL::RN
     
 =back
 
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-Requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
- * Log::Log4perl
- * DBIx::Class
- * Moose::Role
-
-
-=head1 BUGS AND LIMITATIONS
-
-...
 
 =head1 AUTHOR
 

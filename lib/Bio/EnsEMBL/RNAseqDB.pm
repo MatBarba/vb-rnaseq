@@ -1,9 +1,10 @@
 package Bio::EnsEMBL::RNAseqDB;
-our $VERSION = "1.00";
-use utf8;
 
 use strict;
 use warnings;
+use utf8;
+our $VERSION = "1.00";
+
 use List::Util qw( first );
 use JSON;
 use Perl6::Slurp;

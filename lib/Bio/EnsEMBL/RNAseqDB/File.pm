@@ -40,6 +40,8 @@ sub check_files {
   $self->_check_files_in_dir($bam,   "$dir/bam",    $update_md5);
   $self->_check_files_in_dir(\@bai,  "$dir/bam",    $update_md5);
   $self->_check_files_in_dir($fastq, "$dir/fastq",  $update_md5, 'private');
+  
+  return 1;
 }
 
 sub _get_all_files {

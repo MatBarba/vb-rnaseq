@@ -445,6 +445,7 @@ sub get_bundles {
         title       => $title,
         description => $description,
         id          => $TRACK_PREFIX . $track->track_id,
+        merge_text  => $track->merge_text,
       );
       
       my @files;
@@ -595,11 +596,13 @@ sub _format_publications {
     $pub_links{ $title } = $url;
   }
   
-  my @titles = keys %pub_links;
-  my @urls   = map { $pub_links{$_} } @titles;
+  my @titles  = keys %pub_links;
+  my @urls    = map { $pub_links{$_} } @titles;
+  my @pubmeds = map { $_->publication->pubmed_id } @$study_pubs_aref;
   my %publications = (
-    publications      => \@titles,
-    publications_urls => \@urls,
+    publications         => \@titles,
+    publications_urls    => \@urls,
+    publications_pubmeds => \@pubmeds,
   );
   
   return %publications;

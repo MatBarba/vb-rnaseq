@@ -4,6 +4,7 @@ use Moose::Role;
 
 use strict;
 use warnings;
+use Carp;
 #use List::Util qw( first );
 #use JSON;
 #use Perl6::Slurp;
@@ -599,13 +600,30 @@ sub _format_publications {
   my @titles  = keys %pub_links;
   my @urls    = map { $pub_links{$_} } @titles;
   my @pubmeds = map { $_->publication->pubmed_id } @$study_pubs_aref;
+  my @pubmed_abbrevs = map { _make_publication_abbrev($_->publication) } @$study_pubs_aref;
   my %publications = (
     publications         => \@titles,
     publications_urls    => \@urls,
     publications_pubmeds => \@pubmeds,
+    publications_abbrevs => \@pubmed_abbrevs,
   );
   
   return %publications;
+}
+
+sub _make_publication_abbrev {
+  my ($pub) = @_;
+  
+  my @authors = split /,/, $pub->authors;
+  
+  # Get first author and only keep surname
+  my $first_author = shift @authors;
+  $first_author =~ s/\s[A-Z]{1,2}$//;
+  
+  $first_author .= ' et al.' if @authors;
+  my $year = $pub->year;
+  
+  return sprintf "$first_author $year";
 }
 
 1;

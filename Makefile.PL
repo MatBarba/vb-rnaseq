@@ -13,6 +13,7 @@ WriteMakefile(
         'Digest::MD5'            => '0',
         'Digest::MD5::File'      => '0',
         'DBIx::Class'            => '0',
+        'HTML::Strip'            => '0',
         'HTTP::Request::Common'  => '0',
         'JSON'                   => '0',
         'List::MoreUtils'        => '0',

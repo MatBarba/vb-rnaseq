@@ -15,6 +15,7 @@ use File::Spec qw(cat_file);
 use File::Path qw(make_path);
 use File::Copy;
 use Data::Dumper;
+use HTML::Strip;
 
 use aliased 'Bio::EnsEMBL::RNAseqDB';
 
@@ -53,7 +54,7 @@ for my $metatrack (@metatracks) {
   my $species = $metatrack->{production_name};
   my $file_dir = $opt{output_dir} . '/' . $species;
   make_path $file_dir;
-  my $output_path = $file_dir . '/' . $track->{label} . '.json' ;
+  my $output_path = $file_dir . '/' . $metatrack->{file_name} . '.json' ;
   print_json($output_path, $track);
 }
 
@@ -78,9 +79,8 @@ sub convert_for_Webapollo {
       FILE: foreach my $file (@{ $track->{files} }) {
         next FILE if not $allowed_type_category{ $file->{type} };
         
-        my %track = (
-          label => $file->{name},
-          category  => $allowed_type_category{ $file->{type} },
+        my %track_data = (
+          label     => $track->{title},
         );
         
         # Guess the SRA source
@@ -99,7 +99,8 @@ sub convert_for_Webapollo {
 
         my %metadata = (
           $accession_type     => join(', ', @{ $track->{studies} }),
-          caption             => $track->{title},
+          caption             => $track_data{label},
+          category            => $allowed_type_category{ $file->{type} },
           display             => 'off',
           description         => $track->{description},
           version             => $group->{assembly},
@@ -108,14 +109,23 @@ sub convert_for_Webapollo {
           source              => $source // $track->{merge_text},
         );
         $metadata{pubmed}      = join(', ', @{ $group->{publications_pubmeds} }) if @{ $group->{publications_pubmeds} };
-        $metadata{description} =~ s/(<br>.*)?RNA-seq data from.+$//;
-        $metadata{description} ||= $metadata{caption};
+        $metadata{description} =~ s/(<br>.*)?( ?Merged )?RNA-seq data from.+$//;
+        $metadata{description} ||= $track_data{label};
+        $metadata{description} = "$metadata{$accession_type} $metadata{description}";
+        my $abbrev = @{ $group->{publications_abbrevs} } ? join(', ',  @{ $group->{publications_abbrevs} }) : '';
+        $metadata{description} .= " ($abbrev)" if $abbrev;
         $metadata{source}      =~ s/_/, /g;
+        
+        # Strip any HTML-like tags
+        my $hstripper             = HTML::Strip->new();
+        $metadata{description} = $hstripper->parse( $metadata{description} );
+        $hstripper->eof;
 
-        $track{metadata} = \%metadata;
+        $track_data{metadata} = \%metadata;
         my %metatrack = (
           production_name => $group->{production_name},
-          track           => \%track,
+          track           => \%track_data,
+          file_name       => $file->{name}
         );
         push @metatracks, \%metatrack;
       }
@@ -129,6 +139,7 @@ sub print_json {
   
   open my $OUT, '>', $output;
   my $json = JSON->new;
+  $json->utf8;
   $json->allow_nonref;  # Keep undef values as null
   $json->canonical;     # order keys
   $json->pretty;        # Beautify

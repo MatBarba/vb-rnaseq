@@ -80,7 +80,7 @@ sub convert_for_Webapollo {
         next FILE if not $allowed_type_category{ $file->{type} };
         
         my %track_data = (
-          label     => $track->{title},
+          label     => $file->{name},
         );
         
         # Guess the SRA source
@@ -99,7 +99,7 @@ sub convert_for_Webapollo {
 
         my %metadata = (
           $accession_type     => join(', ', @{ $track->{studies} }),
-          caption             => $track_data{label},
+          caption             => $track->{title},
           category            => $allowed_type_category{ $file->{type} },
           display             => 'off',
           description         => $track->{description},
@@ -110,7 +110,7 @@ sub convert_for_Webapollo {
         );
         $metadata{pubmed}      = join(', ', @{ $group->{publications_pubmeds} }) if @{ $group->{publications_pubmeds} };
         $metadata{description} =~ s/(<br>.*)?( ?Merged )?RNA-seq data from.+$//;
-        $metadata{description} ||= $track_data{label};
+        $metadata{description} ||= $track->{title};
         $metadata{description} = "$metadata{$accession_type} $metadata{description}";
         my $abbrev = @{ $group->{publications_abbrevs} } ? join(', ',  @{ $group->{publications_abbrevs} }) : '';
         $metadata{description} .= " ($abbrev)" if $abbrev;

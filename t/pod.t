@@ -1,4 +1,5 @@
 #!perl -T
+use Test::More skip_all => "Dev test";
 
 use Test::More;
 eval "use Test::Pod 1.14";

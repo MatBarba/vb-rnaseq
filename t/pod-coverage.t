@@ -1,4 +1,5 @@
 #!perl
+use Test::More skip_all => "Dev test";
 
 use Test::More;
 use Test::Pod::Coverage;

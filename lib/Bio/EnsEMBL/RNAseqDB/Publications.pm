@@ -173,8 +173,27 @@ This module is a role to interface the publications part of the Bio::EnsEMBL::RN
 =head1 INTERFACE
 
 =over
- 
-    
+
+=item add_study_publication
+
+  function       : add a publication linked to a study
+  arguments      :
+    1= study_id (table id)
+    2= pubmed_id
+
+=item add_study_publication_from_sra
+
+  function       : add a publication linked to a study identified by an sra accession
+  arguments      :
+    1= sra_id (study, experiment, run or sample id)
+    2= pubmed_id
+
+=item get_publications
+
+  function       : Retrieve all current publications from the DB
+  arguments      : none
+  return         : array of Publication resultsets
+
 =back
 
 

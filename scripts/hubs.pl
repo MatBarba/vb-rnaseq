@@ -72,9 +72,9 @@ if ($opt{reg_user} and $opt{reg_pass}) {
 create_hubs($hubs)  if $opt{create};
 list_db_hubs($hubs) if $opt{list_db};
 if ($registry) {
-  $registry->is_public(1) if $opt{public_hubs};
-  $registry->is_public(0) if $opt{private_hubs};
-  if ($opt{register} or $opt{public_hubs} or $opt{private_hubs}) {
+  if ($opt{register}) {
+    $registry->is_public(1) if $opt{public_hubs};
+    $registry->is_public(0) if $opt{private_hubs};
     $registry->register_track_hubs(@$hubs);
   }
   delete_hubs($registry, $hubs, \%opt) if $opt{delete};
@@ -90,8 +90,14 @@ sub prepare_hubs {
   my ($groups, $opt) = @_;
   my $dir    = $opt->{hub_root};
   
-  croak "Need directory where the hubs would be placed" if not defined $dir;
-  croak "Email needed" if not $opt->{email};
+  if ($opt{create}) {
+    croak "Need directory where the hubs would be placed" if not defined $dir;
+    croak "Email needed" if not $opt->{email};
+  } else {
+    # Don't care about these options if we don't create the files
+    $dir //= '.';
+    $opt->{email} //= 'dummy@dummy.com';
+  }
   
   my @hubs;
   GROUP: for my $group (@$groups) {
@@ -421,11 +427,13 @@ sub opt_check {
   usage("Need --port")   if not $opt{port};
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
-  usage("Need --hub_root") if not $opt{hub_root};
+  usage("Need --hub_root") if $opt{create} and not $opt{hub_root};
   $opt{password} //= '';
   usage("Need registry user and password") if ($opt{register} or $opt{delete} or $opt{public_hubs} or $opt{private_hubs} or $opt{list_registry} or $opt{list_diff}) and not ($opt{reg_user} and $opt{reg_pass});
   usage("Need hub server") if $opt{register} and not $opt{hub_server};
   usage("Select public XOR private") if ($opt{public_hubs} and $opt{private_hubs});
+  usage("Select --register with public/private") if ($opt{public_hubs} or $opt{private_hubs}) and not $opt{register};
+  usage("Select an action") if not ($opt{create} or $opt{register} or $opt{delete} or $opt{list_db} or $opt{list_registry} or $opt{list_diff});
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

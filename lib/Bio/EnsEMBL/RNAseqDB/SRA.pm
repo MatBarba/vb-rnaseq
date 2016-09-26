@@ -61,7 +61,7 @@ sub add_sra {
 # add_runs_from   generic function to add runs from an SRA item
 # Input[1]        string = SRA accession
 # Input[2]        string = RNAseqDB table for this SRA item
-sub _add_runs_from() {
+sub _add_runs_from {
   my ($self, $acc, $table) = @_;
   
   return 0 if not defined $acc or $acc =~ /^\s*$/;
@@ -104,7 +104,10 @@ sub _add_runs_from() {
   # Add each one individually
   my $total = 0;
   RUN: for my $run (@{ $sra->runs() }) {
-    next RUN if not _is_run_transcriptomic($run);
+    if (not _is_run_transcriptomic($run)) {
+      $logger->debug("Skip run " . $run->accession() . " because it is not transcriptomic");
+      next RUN;
+    }
     my $num_inserted = $self->_add_run( $run->accession() );
     $total += $num_inserted;
   }

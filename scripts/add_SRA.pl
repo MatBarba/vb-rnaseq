@@ -115,7 +115,7 @@ sub opt_check {
   usage("Need --port") if not $opt{port};
   usage("Need --user") if not $opt{user};
   usage("Need --db") if not $opt{db};
-  usage("Need --run or --file") if not ($opt{sra_acc} xor $opt{file});
+  usage("Need --sra or --file") if not ($opt{sra_acc} xor $opt{file});
   $opt{password} ||= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

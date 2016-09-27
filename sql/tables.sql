@@ -44,8 +44,6 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 @column species_id              Species primary key (foreign key).
 @column production_name         Production name for this strain (species + strain).
 @column strain                  Name of the strain.
-@column assembly                Version of the assembly.
-@column assembly_accession      Version of the assembly in INSDC.
 @column sample_location         Sample location to be used for this strain.
 @column metasum                 Checksum of @production_name + @strain.
 @column date                    Entry timestamp.
@@ -58,8 +56,6 @@ CREATE TABLE strain (
   species_id                INT(10) UNSIGNED NOT NULL,
   production_name           VARCHAR(64) NOT NULL,
   strain                    VARCHAR(32),
-  assembly                  VARCHAR(32),
-  assembly_accession        VARCHAR(32),
   sample_location           VARCHAR(128),
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -71,11 +67,37 @@ CREATE TABLE strain (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER strain_md5_upd_tr BEFORE UPDATE ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly, NEW.assembly_accession) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
 CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain, NEW.assembly, NEW.assembly_accession) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.production_name, NEW.strain) );
 
-    
+/**
+@table assembly
+@desc A list of all assemblies for each strain.
+
+@column assembly_id             Assembly id (primary key, internal identifier).
+@column strain_id               Strain primary key (foreign key).
+@column assembly                Version of the assembly.
+@column assembly_accession      Version of the assembly in INSDC.
+@column latest                  If it is the latest available assembly.
+@column date                    Entry timestamp.
+
+*/
+
+CREATE TABLE assembly (
+  assembly_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  strain_id                 INT(10) UNSIGNED NOT NULL,
+  assembly                  VARCHAR(32),
+  assembly_accession        VARCHAR(32),
+  latest                    BOOLEAN DEFAULT TRUE,
+  date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY(strain_id) REFERENCES strain(strain_id),
+  
+  KEY assembly_id_idx              (assembly_id)
+) ENGINE=InnoDB;
+
+
 CREATE VIEW taxonomy AS
   SELECT binomial_name,
          taxon_id,
@@ -83,7 +105,10 @@ CREATE VIEW taxonomy AS
         strain,
         strain_id,
         strain.status AS status
-  FROM strain LEFT JOIN species
+  FROM assembly
+  LEFT JOIN strain
+    USING(strain_id)
+  LEFT JOIN species
     USING(species_id)
 ;
 

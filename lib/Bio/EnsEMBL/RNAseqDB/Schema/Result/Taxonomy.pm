@@ -39,7 +39,7 @@ __PACKAGE__->table("taxonomy");
 =head2 production_name
 
   data_type: 'varchar'
-  is_nullable: 0
+  is_nullable: 1
   size: 64
 
 =head2 strain
@@ -51,7 +51,6 @@ __PACKAGE__->table("taxonomy");
 =head2 strain_id
 
   data_type: 'integer'
-  default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
@@ -70,16 +69,11 @@ __PACKAGE__->add_columns(
   "taxon_id",
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "production_name",
-  { data_type => "varchar", is_nullable => 0, size => 64 },
+  { data_type => "varchar", is_nullable => 1, size => 64 },
   "strain",
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "strain_id",
-  {
-    data_type => "integer",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
   "status",
   {
     data_type => "enum",
@@ -90,8 +84,8 @@ __PACKAGE__->add_columns(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-03 16:57:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/TlqIpe1fKh80rlthwAiuw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-27 09:51:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oW9WG1e+jHvkw8CRBw0jNg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

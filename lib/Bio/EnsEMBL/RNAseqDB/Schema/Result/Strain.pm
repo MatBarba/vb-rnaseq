@@ -49,18 +49,6 @@ __PACKAGE__->table("strain");
   is_nullable: 1
   size: 32
 
-=head2 assembly
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 32
-
-=head2 assembly_accession
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 32
-
 =head2 sample_location
 
   data_type: 'varchar'
@@ -107,10 +95,6 @@ __PACKAGE__->add_columns(
   "production_name",
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "strain",
-  { data_type => "varchar", is_nullable => 1, size => 32 },
-  "assembly",
-  { data_type => "varchar", is_nullable => 1, size => 32 },
-  "assembly_accession",
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "sample_location",
   { data_type => "varchar", is_nullable => 1, size => 128 },
@@ -160,6 +144,21 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 =head1 RELATIONS
 
+=head2 assemblies
+
+Type: has_many
+
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Assembly>
+
+=cut
+
+__PACKAGE__->has_many(
+  "assemblies",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Assembly",
+  { "foreign.strain_id" => "self.strain_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 samples
 
 Type: has_many
@@ -191,8 +190,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-08-10 09:51:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cpyGmhFf2dquUHY2DbCgwQ
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-27 09:51:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MDDthHC+AWkKVHqSo2f83w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

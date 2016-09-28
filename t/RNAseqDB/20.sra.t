@@ -20,19 +20,27 @@ my $db = create_mock_db();
 my $DONT_DROP = 0;
 
 # Preparation: add necessary species
-$db->add_species({
+$db->add_species(
     production_name => 'culex_quinquefasciatus',
     binomial_name   => 'Culex quinquefasciatus',
     taxon_id        => 7176,
-  });
-$db->add_species({
+    strain          => 'type',
+    assembly        => 'CquiS1'
+  );
+$db->add_species(
     production_name => 'aedes_aegypti',
+    binomial_name   => 'Aedes aegypti',
     taxon_id        => 7159,
-  });
-$db->add_species({
+    strain          => 'type',
+    assembly        => 'AaegL3',
+  );
+$db->add_species(
     production_name => 'glossina_brevipalpis',
+    binomial_name   => 'Glossina brevipalpis',
     taxon_id        => 37001,
-  });
+    strain          => 'type',
+    assembly        => 'GbreS1',
+  );
 
 # Check tables are empty
 check_tables_numbers($db, [0,0,0,0,0,0]);

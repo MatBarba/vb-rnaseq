@@ -1,176 +1,162 @@
-use utf8;
 package Bio::EnsEMBL::RNAseqDB::Species;
-use Moose::Role;
-
+use 5.10.00;
 use strict;
 use warnings;
+use Carp;
+use Moose::Role;
+
 use List::Util qw( first );
 use JSON;
-use Perl6::Slurp;
 use Log::Log4perl qw( :easy );
-
 my $logger = get_logger();
-use Data::Dumper;
-use Readonly;
-use Try::Tiny;
 
-use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
-
-sub _get_species_id {
-  my ($self, $species_href) = @_;
-  my $taxid = $species_href->{taxon_id};
-  my $name = $species_href->{binomial_name};
-  delete $species_href->{taxon_id};
-  delete $species_href->{binomial_name};
+# Add one species + strain + assembly
+sub add_species {
+  my $self = shift;
+  my %sp = @_;
   
-  if (not defined $taxid) {
-    $logger->warn("WARNING: new species has no taxon_id");
-    return;
+  # Check parameters
+  my @needed_args = qw(production_name taxon_id binomial_name strain assembly);
+  for my $arg (@needed_args) {
+    croak "Species has no $arg" if not exists $sp{$arg};
+  }
+  # Optional missing parameters
+  my @optional_args = qw(assembly_accession sample_location);
+  for my $arg (@optional_args) {
+    $logger->info("Species has no $arg (optional but recommended)") if not exists $sp{$arg};
   }
   
-  # Try to get the species id if it exists
-  my $species_req = $self->resultset('Species')->search({
-      taxon_id => $taxid,
+  # First find or create the species_id
+  my $species = $self->resultset('Species')->find_or_create({
+    taxon_id      => $sp{taxon_id},
+    binomial_name => $sp{binomial_name},
   });
-
-  my @species_rows = $species_req->all;
-  my $num_species = scalar @species_rows;
-  if ($num_species == 1) {
-    $logger->debug("Species $taxid has 1 id already.");
-    return $species_rows[0]->species_id;
-  }
-  # Error: there should not be more than one row per species
-  elsif ($num_species > 1) {
-    $logger->warn("Several species found with taxid $taxid");
+  
+  # Check that the strain doesn't already exists
+  my $existing_strain = $self->resultset('Strain')->find({
+      production_name => $sp{production_name}
+  });
+  if ($existing_strain) {
+    croak("Strain already exists: $sp{production_name}");
     return;
   }
-  # Last case: we have to add this species
-  else {
-    my $insertion = $self->resultset('Species')->create({
-        taxon_id        => $taxid,
-        binomial_name   => $name,
-      });
-    $name ||= '';
-    $logger->info("NEW SPECIES added: $taxid, $name");
-    return $insertion->id();
-  }
-  return;
+
+  # Add the strain + assembly
+  my $strain = {
+    species_id      => $species->species_id,
+    production_name => $sp{production_name},
+    strain          => $sp{strain},
+    assemblies      => [
+    {
+      assembly           => $sp{assembly},
+      assembly_accession => $sp{assembly_accession},
+      sample_location    => $sp{sample_location},
+    }
+    ],
+  };
+  $self->resultset('Strain')->create($strain);
+  $logger->info("Added NEW STRAIN: $sp{production_name} ($sp{assembly})");
 }
 
-sub add_species {
-  my ($self, $species_href) = @_;
+sub add_new_assembly {
+  my $self = shift;
+  my %sp = @_;
   
-  my $nname      = $species_href->{production_name};
-  my $nstrain    = $species_href->{strain} // 'no strain';
-  $nstrain ||= '';
+  # Check parameters
+  my @needed_args = qw(assembly);
+  for my $arg (@needed_args) {
+    croak "Assembly has no $arg" if not exists $sp{$arg};
+  }
+  # Optional missing parameters
+  my @optional_args = qw(assembly_accession sample_location);
+  for my $arg (@optional_args) {
+    $logger->info("Assembly has no $arg (optional but recommended)") if not exists $sp{$arg};
+  }
   
-  my $species_id = $self->_get_species_id( $species_href );
-  if (not defined $species_id) {
-    $logger->warn("WARNING: Couldn't get the species id for $nname, $nstrain");
-    return 0;
-  }
-  $species_href->{species_id} = $species_id;
+  # TODO
   
-  if (defined $nname) {
-    # Check that the taxon doesn't already exists
-    my $currents = $self->resultset('Strain')->search({
-        production_name => $nname
-      });
-    
-    my ($current_sp) = $currents->all;
-    
-    # Already exists? Check that it is the same
-    if (defined $current_sp) {
-      $logger->debug("Strain with name $nname already in the database");
-      return 0;
-    }
-      
-    # Ok? Add it
-    else {
-      $self->resultset('Strain')->create( $species_href );
-      my $nassembly  = $species_href->{assembly} // 'no assembly';
-      my $naccession = $species_href->{assembly_accession} // 'no assembly accession';
-      $logger->debug("NEW STRAIN added: $nname, $nstrain, $nassembly");
-      return 1;
-    }
-  }
-   else {
-     $logger->warn("WARNING: no production_name given");
-    return 0;
-  }
+  # Get the previous latest assembly
+  my $last_assembly = $self->resultset('Assembly')->search({
+      'strain.production_name' => $sp{production_name}
+    },
+    {
+      prefetch => 'strain'
+    })->single();
+  croak "Can't add new assembly without existing strain" if not $last_assembly;
+  
+  # Inactivate the previous assembly
+  $last_assembly->update({ latest => 0 });
+  
+  # Create a new assembly row
+  my $insert_assembly = $self->resultset('Assembly')->create({
+      strain_id          => $last_assembly->strain_id,
+      assembly           => $sp{assembly},
+      assembly_accession => $sp{assembly_accession},
+      sample_location    => $sp{sample_location},
+  });
+  
+  # Last step: replicate all the tracks from the previous assembly
+  # TODO
 }
 
 1;
 
-
-=head1 NAME
-
-Bio::EnsEMBL::RNAseqDB::Species - Species role for the RNAseq DB
-
-=head1 SYNOPSIS
-
-    use Bio::EnsEMBL::RNAseqDB;
-
-    # Connect to an RNAseqDB
-    my $rdb = Bio::EnsEMBL::RNAseqDB->connect(
-      "dbi:mysql:host=$host:port=$port:database=$db",
-      $user,
-      $password
-    );
-    
-    # Prepare the species table
-    $rdb->add_species('aedes_aegypti', 7159, 'Liverpool');
-
 =head1 DESCRIPTION
 
-This module is a role to interface the taxonomy part of the Bio::EnsEMBL::RNAseqDB object.
+Bio::EnsEMBL::RNAseqDB::Species - Species and taxonomy role for the RNAseq DB.
 
 =head1 INTERFACE
 
 =over
  
-=item add_species()
+=item add_species(%species)
 
-  function       : add a species line to the species table.
-  arg            : hash ref with the following keys:
+  function       : add rows to the species, sample and assembly tables.
+                   WARNING: only one assembly per strain can be added this way.
+                   To add another assembly, use add_assembly().
+  arg            : hash with the following keys:
   
     production_name
     binomial_name
     taxon_id
     strain
+    assembly
+    assembly_accession [optional GCA id, necesseary for the Track Hub Registry]
+    sample_location    [optional, needed for activation links]
   
-  returntype     : integer: 0 = not added, 1 = added
   usage:
 
-    # those are equivalent
-    my $species_href = {
+    my %species = (
       production_name => 'anopheles_stephensiI',
       binomial_name   => 'Anopheles stephensi',
       taxon_id        => 30069,
       strain          => 'Indian',
-    }
-    $rdb->add_species( $species_href );
+      assembly        => 'AsteI2',
+      assembly_accession  => 'GCA_000300775.2',
+    );
+    $rdb->add_species( %species );
+
+=item add_new_assembly(%assembly)
+
+  function       : add a new assembly for a strain.
+                   This function also updates the tracks list, so that new
+                   tracks need to be aligned along the new assembly.
+  arg            : hash with the following keys:
+  
+    production_name [used as key to find a given strain]
+    assembly
+    assembly_accession [optional GCA id, necesseary for the Track Hub Registry]
+    sample_location    [optional, needed for activation links]
+  
+  usage:
+
+    my %assembly = (
+      production_name => 'anopheles_stephensiI',
+      assembly        => 'AsteI2',
+      assembly_accession  => 'GCA_000300775.2',
+    );
+    $rdb->add_new_assembly( %assembly );
+
     
 =back
-
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-Bio::EnsEMBL::RNAseqDB::Species requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
- * Log::Log4perl
- * DBIx::Class
- * Moose::Role
-
-
-=head1 BUGS AND LIMITATIONS
-
-...
-
-=head1 AUTHOR
-
-Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
 

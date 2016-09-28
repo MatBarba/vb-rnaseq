@@ -28,7 +28,7 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 # Add a single species from the command-line
 my $species_added = 0;
 if ($opt{production_name} and $opt{taxon_id}) {
-  my $species = {
+  my %species = (
     production_name    => $opt{production_name},
     binomial_name      => $opt{binomial_name},
     taxon_id           => $opt{taxon_id},
@@ -36,15 +36,15 @@ if ($opt{production_name} and $opt{taxon_id}) {
     assembly           => $opt{assembly},
     assembly_accession => $opt{assembly_accession},
     sample_location    => $opt{sample_location},
-  };
-  my $added = $db->add_species( $species );
+  );
+  my $added = $db->add_species( %species );
   $species_added += $added;
 }
 # Or add a list from a file (more efficient)
 elsif (defined $opt{file}) {
   my @species_list = get_species_from_file($opt{file});
   for my $species (@species_list) {
-    my $added = $db->add_species( $species );
+    my $added = $db->add_species( %$species );
     $species_added += $added;
   }
 }

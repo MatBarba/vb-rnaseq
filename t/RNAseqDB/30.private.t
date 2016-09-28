@@ -18,12 +18,13 @@ my $db = create_mock_db();
 my $DONT_DROP = 0;
 
 # Preparation: add necessary species
-$db->add_species({
+$db->add_species(
     production_name => 'species_xxx',
     binomial_name   => 'Species xxx',
     taxon_id        => 29031,
     strain          => 'A',
-});
+    assembly        => 'SxxxS1',
+);
 
 # Check tables are empty
 check_tables_numbers($db, [0,0,0,0,0,0,0 ]);

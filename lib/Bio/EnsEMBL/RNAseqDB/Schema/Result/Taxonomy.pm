@@ -61,6 +61,18 @@ __PACKAGE__->table("taxonomy");
   extra: {list => ["ACTIVE","RETIRED"]}
   is_nullable: 1
 
+=head2 assembly
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 32
+
+=head2 assembly_accession
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 32
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -81,11 +93,15 @@ __PACKAGE__->add_columns(
     extra => { list => ["ACTIVE", "RETIRED"] },
     is_nullable => 1,
   },
+  "assembly",
+  { data_type => "varchar", is_nullable => 1, size => 32 },
+  "assembly_accession",
+  { data_type => "varchar", is_nullable => 1, size => 32 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-27 09:51:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:oW9WG1e+jHvkw8CRBw0jNg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 11:11:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:m82LTnI5LT1OZNnbxCSvyg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

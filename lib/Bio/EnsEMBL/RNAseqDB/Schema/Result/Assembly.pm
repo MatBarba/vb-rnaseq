@@ -49,6 +49,12 @@ __PACKAGE__->table("assembly");
   is_nullable: 1
   size: 32
 
+=head2 sample_location
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 128
+
 =head2 latest
 
   data_type: 'tinyint'
@@ -83,6 +89,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 32 },
   "assembly_accession",
   { data_type => "varchar", is_nullable => 1, size => 32 },
+  "sample_location",
+  { data_type => "varchar", is_nullable => 1, size => 128 },
   "latest",
   { data_type => "tinyint", default_value => 1, is_nullable => 1 },
   "date",
@@ -124,8 +132,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-27 09:51:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Nxhz7PBq6hUH2IBu5lrB0g
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 10:51:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:m4A2Y9yG6oA8G43tf/5HHA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

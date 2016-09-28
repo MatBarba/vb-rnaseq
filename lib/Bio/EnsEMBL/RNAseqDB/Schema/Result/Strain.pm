@@ -49,12 +49,6 @@ __PACKAGE__->table("strain");
   is_nullable: 1
   size: 32
 
-=head2 sample_location
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 128
-
 =head2 metasum
 
   data_type: 'char'
@@ -96,8 +90,6 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 64 },
   "strain",
   { data_type => "varchar", is_nullable => 1, size => 32 },
-  "sample_location",
-  { data_type => "varchar", is_nullable => 1, size => 128 },
   "metasum",
   { data_type => "char", is_nullable => 1, size => 32 },
   "date",
@@ -190,8 +182,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-27 09:51:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MDDthHC+AWkKVHqSo2f83w
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 10:51:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tEQjvBmyTS40k2N8ooN1IA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

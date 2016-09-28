@@ -44,7 +44,6 @@ CREATE TRIGGER species_md5_ins_tr BEFORE INSERT ON species
 @column species_id              Species primary key (foreign key).
 @column production_name         Production name for this strain (species + strain).
 @column strain                  Name of the strain.
-@column sample_location         Sample location to be used for this strain.
 @column metasum                 Checksum of @production_name + @strain.
 @column date                    Entry timestamp.
 @column status                  Active (True) or retired (False) row.
@@ -56,7 +55,6 @@ CREATE TABLE strain (
   species_id                INT(10) UNSIGNED NOT NULL,
   production_name           VARCHAR(64) NOT NULL,
   strain                    VARCHAR(32),
-  sample_location           VARCHAR(128),
   metasum                   CHAR(32) UNIQUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
@@ -79,6 +77,7 @@ CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
 @column strain_id               Strain primary key (foreign key).
 @column assembly                Version of the assembly.
 @column assembly_accession      Version of the assembly in INSDC.
+@column sample_location         Sample location to be used for this strain.
 @column latest                  If it is the latest available assembly.
 @column date                    Entry timestamp.
 
@@ -89,6 +88,7 @@ CREATE TABLE assembly (
   strain_id                 INT(10) UNSIGNED NOT NULL,
   assembly                  VARCHAR(32),
   assembly_accession        VARCHAR(32),
+  sample_location           VARCHAR(128),
   latest                    BOOLEAN DEFAULT TRUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
@@ -102,14 +102,18 @@ CREATE VIEW taxonomy AS
   SELECT binomial_name,
          taxon_id,
          production_name,
-        strain,
-        strain_id,
-        strain.status AS status
+         strain,
+         strain_id,
+         strain.status AS status,
+         assembly,
+         assembly_accession
   FROM assembly
   LEFT JOIN strain
     USING(strain_id)
   LEFT JOIN species
     USING(species_id)
+  WHERE
+    latest
 ;
 
 /**

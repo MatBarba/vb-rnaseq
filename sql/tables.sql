@@ -404,6 +404,32 @@ CREATE TABLE sra_track (
   KEY sra_track_track_id_idx           (track_id)
 ) ENGINE=InnoDB;
 
+
+/**
+@table track_analysis
+@desc Defines an instance of aligned track.
+
+@column track_analysis_id      Track analysis id (primary key, internal identifier).
+@column track_id               Track table primary id (foreign key).
+@column assembly_id            Assembly table primary id (foreign key).
+@column date                   Entry timestamp.
+
+*/
+
+CREATE TABLE track_analysis (
+  track_analysis_id     INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
+  track_id              INT(10) UNSIGNED NOT NULL,
+  assembly_id           INT(10) UNSIGNED NOT NULL,
+  date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  FOREIGN KEY(assembly_id) REFERENCES assembly(assembly_id),
+  
+  KEY track_analysis_id_idx            (track_analysis_id),
+  KEY sra_track_assembly_id_idx        (assembly_id),
+  KEY track_analysis_track_id_idx      (track_id)
+) ENGINE=InnoDB;
+
 /**
 
 PIPELINE TABLES
@@ -422,7 +448,7 @@ PIPELINE TABLES
 @desc Where all metadata about the files are stored.
 
 @column file_id                File id (primary key, internal identifier).
-@column track_id               Track primary id (foreign key).
+@column track_analysis_id      Track analysis primary id (foreign key).
 @column path                   Path of the file.
 @column type                   File type (fastq, bam...).
 @column md5                    md5 checksum of the file.
@@ -434,7 +460,7 @@ PIPELINE TABLES
 
 CREATE TABLE file (
   file_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  track_id              INT(10) UNSIGNED NOT NULL,
+  track_analysis_id     INT(10) UNSIGNED NOT NULL,
   path                  TEXT NOT NULL,
   type                  ENUM('fastq', 'bam', 'bai', 'bed', 'bigwig'),
   md5                   CHAR(32),
@@ -442,10 +468,10 @@ CREATE TABLE file (
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  FOREIGN KEY(track_analysis_id) REFERENCES track_analysis(track_analysis_id),
   
   KEY file_id_idx         (file_id),
-  KEY file_track_id_idx   (track_id)
+  KEY file_track_id_idx   (track_analysis_id)
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER file_md5_upd_tr BEFORE UPDATE ON file
@@ -521,7 +547,7 @@ INSERT INTO analysis_description (type, name, description, pattern) VALUES
 CREATE TABLE analysis (
   analysis_id              INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   analysis_description_id  INT(10) UNSIGNED,
-  track_id                 INT(10) UNSIGNED NOT NULL,
+  track_analysis_id        INT(10) UNSIGNED NOT NULL,
   version                  TEXT,
   command                  TEXT,
   metasum                  CHAR(32),
@@ -529,11 +555,11 @@ CREATE TABLE analysis (
   status                   ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
   FOREIGN KEY(analysis_description_id) REFERENCES analysis_description(analysis_description_id),
-  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  FOREIGN KEY(track_analysis_id) REFERENCES track_analysis(track_analysis_id),
   
-  KEY analysis_id_idx              (analysis_id),
-  KEY analysis_description_id_idx  (analysis_description_id),
-  KEY analysis_track_id_idx        (track_id)
+  KEY analysis_id_idx                (analysis_id),
+  KEY analysis_description_id_idx    (analysis_description_id),
+  KEY analysis_track_analysis_id_idx (track_analysis_id)
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER analysis_md5_upd_tr BEFORE UPDATE ON analysis

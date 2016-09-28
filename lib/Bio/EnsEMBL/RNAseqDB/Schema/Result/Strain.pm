@@ -182,11 +182,9 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 10:51:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tEQjvBmyTS40k2N8ooN1IA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EWCWk+GEzDHyfZISbQS/yw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->has_many( sample => 'Bio::EnsEMBL::RNAseqDB::Schema::Result::Sample', 'sample_id');
-__PACKAGE__->belongs_to( species => 'Bio::EnsEMBL::RNAseqDB::Schema::Result::Species', 'species_id');
 1;

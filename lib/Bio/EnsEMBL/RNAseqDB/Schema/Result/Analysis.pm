@@ -37,7 +37,7 @@ __PACKAGE__->table("analysis");
   is_foreign_key: 1
   is_nullable: 1
 
-=head2 track_id
+=head2 track_analysis_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -91,7 +91,7 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
-  "track_id",
+  "track_analysis_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -154,24 +154,24 @@ __PACKAGE__->belongs_to(
   },
 );
 
-=head2 track
+=head2 track_analysis
 
 Type: belongs_to
 
-Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Track>
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "track",
-  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Track",
-  { track_id => "track_id" },
+  "track_analysis",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis",
+  { track_analysis_id => "track_analysis_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-06 10:40:13
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Oe5+pm7JVHWzEY4kMzPiSg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:epdv7PMq2jGkEyM9f4BplA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

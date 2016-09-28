@@ -161,21 +161,6 @@ __PACKAGE__->add_unique_constraint("merge_id", ["merge_id"]);
 
 =head1 RELATIONS
 
-=head2 analyses
-
-Type: has_many
-
-Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Analysis>
-
-=cut
-
-__PACKAGE__->has_many(
-  "analyses",
-  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Analysis",
-  { "foreign.track_id" => "self.track_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 bundle_tracks
 
 Type: has_many
@@ -191,21 +176,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 files
-
-Type: has_many
-
-Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::File>
-
-=cut
-
-__PACKAGE__->has_many(
-  "files",
-  "Bio::EnsEMBL::RNAseqDB::Schema::Result::File",
-  { "foreign.track_id" => "self.track_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 sra_tracks
 
 Type: has_many
@@ -217,6 +187,21 @@ Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::SraTrack>
 __PACKAGE__->has_many(
   "sra_tracks",
   "Bio::EnsEMBL::RNAseqDB::Schema::Result::SraTrack",
+  { "foreign.track_id" => "self.track_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 track_analyses
+
+Type: has_many
+
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis>
+
+=cut
+
+__PACKAGE__->has_many(
+  "track_analyses",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis",
   { "foreign.track_id" => "self.track_id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -237,11 +222,9 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-07-22 12:01:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IOv9WpVGPMMAyBEj+uMalw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RKUhmaScVEMnJezUEXocYQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-
 1;
-

@@ -131,9 +131,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 track_analyses
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 10:51:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:m4A2Y9yG6oA8G43tf/5HHA
+Type: has_many
+
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis>
+
+=cut
+
+__PACKAGE__->has_many(
+  "track_analyses",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis",
+  { "foreign.assembly_id" => "self.assembly_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sTOPoT+AFW9Y/p4mwilZeA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

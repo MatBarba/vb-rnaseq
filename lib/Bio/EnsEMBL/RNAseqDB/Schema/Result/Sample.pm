@@ -255,12 +255,9 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:VfTi0LD3ym2feS1+JZJgAw
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gIe6Nz9tiKSg3InPCPK6XA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
-__PACKAGE__->belongs_to( strain     => 'Bio::EnsEMBL::RNAseqDB::Schema::Result::Strain',   'strain_id');
-__PACKAGE__->has_many(   runs       => 'Bio::EnsEMBL::RNAseqDB::Schema::Result::Run',      'sample_id');
 1;
-

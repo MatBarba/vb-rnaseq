@@ -30,7 +30,7 @@ __PACKAGE__->table("file");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 track_id
+=head2 track_analysis_id
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -84,7 +84,7 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "track_id",
+  "track_analysis_id",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -147,24 +147,24 @@ __PACKAGE__->add_unique_constraint("metasum", ["metasum"]);
 
 =head1 RELATIONS
 
-=head2 track
+=head2 track_analysis
 
 Type: belongs_to
 
-Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Track>
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "track",
-  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Track",
-  { track_id => "track_id" },
+  "track_analysis",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis",
+  { track_analysis_id => "track_analysis_id" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-05-13 14:43:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CST4qKXW/cJ5Ei5aEbwhpg
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:33tIQr8Ot14vqSe8vW8RBA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

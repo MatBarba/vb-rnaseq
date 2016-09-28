@@ -101,7 +101,7 @@ sub insert_species {
 
 # Delete temp database
 END {
-  #drop_mock_db($db);
+  drop_mock_db($db);
   done_testing();
 }
 

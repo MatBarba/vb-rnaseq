@@ -23,6 +23,11 @@ use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
+Bio::EnsEMBL::RNAseqDB::Common;
+my $common = Bio::EnsEMBL::RNAseqDB::Common->new();
+Readonly my $PREFIX         => $common->get_project_prefix();
+Readonly my $PRIVATE_SOURCE => 'VectorBase website';
+
 Readonly my %allowed_type_category => (
   bigwig => 'RNAseq',
   bam    => 'BAM',
@@ -86,9 +91,9 @@ sub convert_for_Webapollo {
         # Guess the SRA source
         my ($accession_type, $source);
         my $study = $track->{studies}->[0];
-        if ($study =~ /^VB/) {
-          $source = 'VectorBase website';
-          $accession_type = 'VB_study_accession';
+        if ($study =~ /^$PREFIX/) {
+          $source = $PRIVATE_SOURCE;
+          $accession_type = $PREFIX . '_study_accession';
         } elsif ($study =~ /^E/) {
           $accession_type = 'ERA_study_accession';
         } elsif ($study =~ /^D/) {

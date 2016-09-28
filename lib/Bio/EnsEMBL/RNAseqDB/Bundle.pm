@@ -1,28 +1,32 @@
-use utf8;
 package Bio::EnsEMBL::RNAseqDB::Bundle;
-use Moose::Role;
-
 use strict;
 use warnings;
 use Carp;
-#use List::Util qw( first );
-#use JSON;
-#use Perl6::Slurp;
-use Log::Log4perl qw( :easy );
-use File::Spec;
+use Moose::Role;
 
-my $logger = get_logger();
+use File::Spec;
 use Data::Dumper;
 use Readonly;
-#use Try::Tiny;
 
-Readonly my $GROUP_PREFIX,  'VBRNAseq_group_';
-Readonly my $TRACK_PREFIX,  'VBRNAseq_track_';
-Readonly my $SOLR_CHILDREN, '_childDocuments_';
-Readonly my $SEARCH_ROOT,   '/vbsearch/details/';
-Readonly my $PUBMED_ROOT,   'http://europepmc.org/abstract/MED/';
-Readonly my $SRA_URL_ROOT,   'http://www.ebi.ac.uk/ena/data/view/';
+use Log::Log4perl qw( :easy );
+my $logger = get_logger();
 
+###############################################################################
+use Bio::EnsEMBL::RNAseqDB::Common;
+my $common = Bio::EnsEMBL::RNAseqDB::Common->new();
+Readonly my $PREFIX => $common->get_project_prefix();
+
+# Name of the bundles
+Readonly my $GROUP_PREFIX => $PREFIX . 'RNAseq_group_';
+Readonly my $TRACK_PREFIX => $PREFIX . 'RNAseq_track_';
+
+# Solr specific constants
+Readonly my $SOLR_CHILDREN => '_childDocuments_';
+Readonly my $SEARCH_ROOT   => '/vbsearch/details/';
+Readonly my $PUBMED_ROOT   => 'http://europepmc.org/abstract/MED/';
+Readonly my $SRA_URL_ROOT  => 'http://www.ebi.ac.uk/ena/data/view/';
+
+###############################################################################
 sub _add_bundle_from_track {
   my ($self, $track_id) = @_;
   
@@ -485,7 +489,7 @@ sub get_bundles {
         $experiments{ $exp_acc    }++;
         $studies{     $study_acc  }++;
         $samples{     $sample_acc }++;
-        $private = 1 if $run_acc =~ /^VB/;
+        $private = 1 if $run_acc =~ /^$PREFIX/;
         
         # Associated publications
         my @study_pubs = $run->experiment->study->study_publications->all;
@@ -630,20 +634,9 @@ sub _make_publication_abbrev {
 
 __END__
 
-
-=head1 NAME
-
-Bio::EnsEMBL::RNAseqDB::Bundle - Bundle role for the RNAseq DB
-
-
-=head1 SYNOPSIS
-
-    # Update a bundle given a list of its SRA elements
-    $db->update_bundle(@sra_ids, $description, $title, $bundle_id)
-
 =head1 DESCRIPTION
 
-This module is a role to interface the bundle part of the Bio::EnsEMBL::RNAseqDB object.
+Bio::EnsEMBL::RNAseqDB::Bundle - Bundle role for the RNAseq DB.
 
 =head1 INTERFACE
 
@@ -750,24 +743,5 @@ This module is a role to interface the bundle part of the Bio::EnsEMBL::RNAseqDB
     
 =back
 
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-This module requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
- * Log::Log4perl
- * DBIx::Class
- * Moose::Role
-
-
-=head1 BUGS AND LIMITATIONS
-
-...
-
-=head1 AUTHOR
-
-Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
+=cut
 

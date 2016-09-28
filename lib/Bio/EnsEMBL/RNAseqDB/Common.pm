@@ -1,48 +1,56 @@
-use utf8;
 package Bio::EnsEMBL::RNAseqDB::Common;
-
+use 5.10.00;
 use strict;
 use warnings;
 use Carp;
-use English qw( -no_match_vars );
 use Moose;
 use MooseX::FollowPBP;
-use Readonly;
 
-has sra_regex => (
-  is  => 'ro',
-  isa => 'HashRef',
-  default => sub{ {
-    study      => qr{[SED]RP\d+},
-    experiment => qr{[SED]RX\d+},
-    run        => qr{[SED]RR\d+},
-    sample     => qr{[SED]RS\d+},
-    vb_study      => qr{VBSRP\d+},
-    vb_experiment => qr{VBSRX\d+},
-    vb_run        => qr{VBSRR\d+},
-    vb_sample     => qr{VBSRS\d+},
-  } }
+has project_prefix => (
+  is      => 'rw',
+  isa     => 'Str',
+  default => 'VB',
 );
 
- __PACKAGE__->meta->make_immutable;
+# Regex list to identify
+has sra_regex => (
+  is      => 'ro',
+  isa     => 'HashRef',
+  lazy    => 1,
+  builder => '_build_sra_regex',
+);
+
+sub _build_sra_regex {
+  my $self = shift;
+
+  my $prefix = $self->get_project_prefix();
+  my %regex = (
+    study         => qr{[SED]RP\d+},
+    experiment    => qr{[SED]RX\d+},
+    run           => qr{[SED]RR\d+},
+    sample        => qr{[SED]RS\d+},
+    vb_study      => qr/${prefix}SRP\d+/,
+    vb_experiment => qr/${prefix}SRX\d+/,
+    vb_run        => qr/${prefix}SRR\d+/,
+    vb_sample     => qr/${prefix}SRS\d+/,
+  );
+return \%regex;
+}
+
+__PACKAGE__->meta->make_immutable;
 1;
 
 __END__
 
+=head1 DESCRIPTION
 
-=head1 NAME
+This package provides some common general functions or data.
 
-Bio::EnsEMBL::RNAseqDB::Common - Basic data for the RNAseqDB
-
-
-=head1 SYNOPSIS
-
+=head1 USAGE
     my $reg = $db->get_sra_regex();
     if ('SRP000001' =~ /$reg->{study}/) {
       print "OK";
     }
 
-=head1 DESCRIPTION
-
-This role provides some common general functions or data.
+=cut
 

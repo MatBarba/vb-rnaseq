@@ -21,7 +21,7 @@ use Bio::EnsEMBL::RNAseqDB::Common;
 my $common = Bio::EnsEMBL::RNAseqDB::Common->new();
 my $sra_regex = $common->get_sra_regex();
 
-my Readonly $PRIVATE_PREFIX    = 'VBSR';
+my Readonly $PRIVATE_PREFIX    = $common->get_project_prefix() . 'R';
 my Readonly $STUDY_PREFIX      = $PRIVATE_PREFIX . 'P';
 my Readonly $EXPERIMENT_PREFIX = $PRIVATE_PREFIX . 'X';
 my Readonly $RUN_PREFIX        = $PRIVATE_PREFIX . 'R';
@@ -697,54 +697,12 @@ sub _load_species {
 1;
 __END__
 
-=head1 NAME
-
-Bio::EnsEMBL::RNAseqDB::SRA - Interface for the RNAseq DB.
-
-=head1 SYNOPSIS
-
-    use Bio::EnsEMBL::RNAseqDB;
-
-    # Connect to an RNAseqDB
-    my $rdb = Bio::EnsEMBL::RNAseqDB->connect(
-      "dbi:mysql:host=$host:port=$port:database=$db",
-      $user,
-      $password
-    );
-    
-    # Prepare the species table
-    $rdb->add_species('aedes_aegypti', 7159, 'Liverpool');
-    
-    # Add a study
-    $rdb->add_sra('SRP009679');
-
 
 =head1 DESCRIPTION
 
-This module is an object interface for the RNAseqDB. It inherits the Bio::EnsEMBL::RNAseqDB::Schema object, which is a DBIx class.
-
-
-The purpose of the interface is to simplify the population of the database.
-
-
-The module logs with Log4perl (easy mode).
+Bio::EnsEMBL::RNAseqDB::SRA - Interface for the RNAseq DB for managing SRA entries.
 
 =head1 INTERFACE
-
-=over
-
-=item BUILD connect()
-
-  (Inherited from Bio::EnsEMBL::RNAseqDB::Schema)
-  Args           : DBI connection arguments
-  Function       : create a connection to an RNAseq DB
-  Usage:
-
-    my $rdb = Bio::EnsEMBL::RNAseqDB->connect(
-      "dbi:mysql:host=$host:port=$port:database=$db",
-      $user,
-      $password
-    );
 
 =item add_sra()
 
@@ -821,23 +779,5 @@ The module logs with Log4perl (easy mode).
   
 =back
 
-=head1 CONFIGURATION AND ENVIRONMENT
-
-Bio::EnsEMBL::RNAseqDB requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
- * Bio::EnsEMBL::ENA (eg-ena)
- * Log::Log4perl
- * DBIx::Class
-
-
-=head1 BUGS AND LIMITATIONS
-
-...
-
-=head1 AUTHOR
-
-Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
+=cut
 

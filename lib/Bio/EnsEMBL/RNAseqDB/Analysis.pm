@@ -1,22 +1,21 @@
 package Bio::EnsEMBL::RNAseqDB::Analysis;
-use 5.10.0;
-use utf8;
-use Moose::Role;
-
+use 5.10.00;
 use strict;
 use warnings;
 use Carp;
-use Log::Log4perl qw( :easy );
+use Moose::Role;
+
 use List::MoreUtils qw(uniq);
 use File::Spec;
 use Digest::MD5::File qw(file_md5_hex);
 use Digest::MD5 qw(md5_hex);
 use Try::Tiny;
 use Memoize;
-
-my $logger = get_logger();
-use Data::Dumper;
 use Readonly;
+use Data::Dumper;
+
+use Log::Log4perl qw( :easy );
+my $logger = get_logger();
 
 ###############################################################################
 ## ANALYSIS METHODS
@@ -183,12 +182,9 @@ sub _add_files {
 
 __END__
 
-
-=head1 NAME
-
-Bio::EnsEMBL::RNAseqDB::Analysis - Analysis role for the RNAseq DB
-
 =head1 DESCRIPTION
+
+Bio::EnsEMBL::RNAseqDB::Analysis - Analysis role for the RNAseq DB.
 
 Only one important method to add the commands and the files created from the
 alignment of the track.

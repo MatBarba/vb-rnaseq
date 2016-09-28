@@ -1,19 +1,19 @@
-use utf8;
 package Bio::EnsEMBL::RNAseqDB::Publications;
-use Moose::Role;
-
 use strict;
 use warnings;
-use Log::Log4perl qw( :easy );
+use Carp;
+use Moose::Role;
 
-my $logger = get_logger();
+use JSON qw(decode_json);
 use Data::Dumper;
 use Readonly;
-use Try::Tiny;
 use LWP::Simple qw( get );
-use JSON;
+
+use Log::Log4perl qw( :easy );
+my $logger = get_logger();
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
+
 
 sub add_study_publication_from_sra {
   my ($self, $sra_id, $pubmed_id) = @_;
@@ -161,12 +161,9 @@ sub get_publications {
 
 1;
 
-
-=head1 NAME
-
-Bio::EnsEMBL::RNAseqDB::Publications - Publication role for the RNAseq DB
-
 =head1 DESCRIPTION
+
+Bio::EnsEMBL::RNAseqDB::Publications - Publication role for the RNAseq DB.
 
 This module is a role to interface the publications part of the Bio::EnsEMBL::RNAseqDB object.
 
@@ -196,8 +193,5 @@ This module is a role to interface the publications part of the Bio::EnsEMBL::RN
 
 =back
 
-
-=head1 AUTHOR
-
-Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
+=cut
 

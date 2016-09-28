@@ -1,19 +1,16 @@
-use utf8;
 package Bio::EnsEMBL::RNAseqDB::File;
-use Moose::Role;
-
 use strict;
 use warnings;
-#use List::Util qw( first );
-#use JSON;
-#use Perl6::Slurp;
-use Digest::MD5::File qw(file_md5_hex);
-use Log::Log4perl qw( :easy );
+use Carp;
+use Moose::Role;
 
-my $logger = get_logger();
+use Digest::MD5::File qw(file_md5_hex);
 use Data::Dumper;
 use Readonly;
-#use Try::Tiny;
+
+use Log::Log4perl qw( :easy );
+my $logger = get_logger();
+
 
 sub check_files {
   my $self = shift;
@@ -137,17 +134,9 @@ sub _check_files_in_dir {
 __END__
 
 
-=head1 NAME
+=head1 DESCRIPTION
 
 Bio::EnsEMBL::RNAseqDB::File - File role for the RNAseq DB
-
-
-=head1 SYNOPSIS
-
-    # Check current files
-    $db->check_files($dir);
-
-=head1 DESCRIPTION
 
 This module is a role to search the file and private_file tables.
 
@@ -166,24 +155,5 @@ This module is a role to search the file and private_file tables.
     
 =back
 
-
-=head1 CONFIGURATION AND ENVIRONMENT
-
-This module requires no configuration files or environment variables.
-
-
-=head1 DEPENDENCIES
-
- * Log::Log4perl
- * DBIx::Class
- * Moose::Role
-
-
-=head1 BUGS AND LIMITATIONS
-
-...
-
-=head1 AUTHOR
-
-Matthieu Barba  C<< <mbarba@ebi.ac.uk> >>
+=cut
 

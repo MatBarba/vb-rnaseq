@@ -1,22 +1,22 @@
 package Bio::EnsEMBL::RNAseqDB::Track;
 use 5.10.0;
-use utf8;
-use Moose::Role;
-
 use strict;
 use warnings;
 use Carp;
-use Log::Log4perl qw( :easy );
+use Moose::Role;
+
 use List::MoreUtils qw(uniq);
 use File::Spec;
 use Digest::MD5::File qw(file_md5_hex);
 use Digest::MD5 qw(md5_hex);
 use Try::Tiny;
 use Memoize;
-
-my $logger = get_logger();
 use Data::Dumper;
 use Readonly;
+
+use Log::Log4perl qw( :easy );
+my $logger = get_logger();
+
 use Bio::EnsEMBL::RNAseqDB::Common;
 my $common = Bio::EnsEMBL::RNAseqDB::Common->new();
 my $sra_regex = $common->get_sra_regex();
@@ -603,16 +603,6 @@ sub _format_sras_for_search {
 
 __END__
 
-
-=head1 NAME
-
-Bio::EnsEMBL::RNAseqDB::Track - Track role for the RNAseq DB
-
-=head1 SYNOPSIS
-
-    # Get the list of new SRA tracks to create
-    $rdb->get_new_runs_tracks();
-
 =head1 DESCRIPTION
 
 This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB object.
@@ -770,4 +760,6 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
   $rdb->guess_track_text(1, 2, 3);
 
 =back
+
+=cut
 

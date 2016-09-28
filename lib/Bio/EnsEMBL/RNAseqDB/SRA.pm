@@ -1,20 +1,21 @@
-use 5.10.0;
-use utf8;
 package Bio::EnsEMBL::RNAseqDB::SRA;
-use Moose::Role;
-
+use 5.10.0;
 use strict;
 use warnings;
+use Carp;
+use Moose::Role;
+
 use List::Util qw( first );
 use List::MoreUtils qw(uniq);
 use JSON;
 use Perl6::Slurp;
-use Log::Log4perl qw( :easy );
-
-my $logger = get_logger();
 use Data::Dumper;
 use Readonly;
 use Try::Tiny;
+
+use Log::Log4perl qw( :easy );
+my $logger = get_logger();
+
 
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
 use Bio::EnsEMBL::RNAseqDB::Common;
@@ -26,6 +27,7 @@ my Readonly $STUDY_PREFIX      = $PRIVATE_PREFIX . 'P';
 my Readonly $EXPERIMENT_PREFIX = $PRIVATE_PREFIX . 'X';
 my Readonly $RUN_PREFIX        = $PRIVATE_PREFIX . 'R';
 my Readonly $SAMPLE_PREFIX     = $PRIVATE_PREFIX . 'S';
+
 
 # add_sra     Add all runs related to the given SRA accession to the DB
 # Input       string = SRA accession

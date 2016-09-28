@@ -1,15 +1,15 @@
-use utf8;
 package Bio::EnsEMBL::RNAseqDB::Vocabulary;
-use Moose::Role;
-
 use strict;
 use warnings;
-use Log::Log4perl qw( :easy );
+use Carp;
+use Moose::Role;
 
-my $logger = get_logger();
 use Data::Dumper;
 use Readonly;
 use Try::Tiny;
+
+use Log::Log4perl qw( :easy );
+my $logger = get_logger();
 
 ###############################################################################
 # Cache attributes
@@ -228,15 +228,6 @@ sub get_vocabulary_for_track_id {
 }
 
 1;
-
-
-=head1 NAME
-
-Bio::EnsEMBL::RNAseqDB::Vocabulary - Vocabulary role for the RNAseq DB
-
-
-=head1 SYNOPSIS
-    
 
 =head1 DESCRIPTION
 

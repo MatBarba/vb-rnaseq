@@ -221,10 +221,15 @@ sub get_samples {
   my $self = shift;
   
   my %samples;
-  my $strains_req = $self->resultset('Strain');
+  my $strains_req = $self->resultset('Strain')->search({
+    'assemblies.latest' => 1,
+  },
+  {
+    prefetch  => 'assemblies',
+  });
   for my $strain ($strains_req->all) {
     my $name   = $strain->production_name;
-    my $sample = $strain->sample_location;
+    my $sample = $strain->assemblies->next->sample_location;
     $samples{$name} = $sample;
   }
   return \%samples;
@@ -271,13 +276,23 @@ sub get_bundles_for_solr {
   
   # Alter the structure and names to create a valid Solr json for indexing
   for my $group (@$groups) {
+    # Select the latest assembly data
+    my $as_data = $group->{assemblies};
+    my $assembly;
+    for my $name (keys %$as_data) {
+      if ($as_data->{$name}->{latest}) {
+        $assembly = $as_data->{$name};
+        $assembly->{name} = $name;
+      }
+    }
+    
     my %solr_group = (
       id                   => $group->{trackhub_id},
       label                => $group->{label},
       description          => $group->{description},
       species              => $group->{species},
       strain_s             => $group->{strain},
-      assembly             => $group->{assembly},
+      assembly             => $assembly->{name},
       site                 => 'Expression',
       bundle_name          => 'RNA-seq track groups',
       #pubmed_ids_ss        => $group->{publications_pubmeds},
@@ -296,6 +311,7 @@ sub get_bundles_for_solr {
     }
     
     foreach my $track (@{ $group->{tracks} }) {
+      my $assembly_data = $track->{assemblies}->{ $assembly->{name} };
       my %solr_track = (
         id                            => $track->{id},
         site                          => 'Expression',
@@ -310,7 +326,7 @@ sub get_bundles_for_solr {
         study_accessions_ss           => $track->{studies},
         sample_accessions_ss          => $track->{samples},
         
-        aligner_s                     => $track->{aligner},
+        aligner_s                     => $assembly_data->{aligner},
       );
       
       $solr_track{run_accessions_ss_urls} = $track->{runs_urls} if $track->{runs_urls};
@@ -319,7 +335,7 @@ sub get_bundles_for_solr {
       $solr_track{sample_accessions_ss_urls} = $track->{samples_urls} if $track->{samples_urls};
       
       # Add associated files
-      for my $file (@{ $track->{files} }) {
+      for my $file (@{ $assembly_data->{files} }) {
         if ($file->{type} eq 'bigwig') {
           $solr_track{bigwig_s} = $file->{name};
           $solr_track{bigwig_s_url} = $file->{url};
@@ -388,8 +404,6 @@ sub get_bundles {
     my %species = (
       species            => $strain->species->binomial_name,
       strain             => $strain->strain,
-      assembly           => $strain->assembly,
-      assembly_accession => $strain->assembly_accession,
       production_name    => $strain->production_name,
     );
     %group = ( %group, %species );
@@ -453,24 +467,42 @@ sub get_bundles {
         merge_text  => $track->merge_text,
       );
       
-      my @files;
-      FILE: foreach my $file ($track->files->all) {
-        my @url_path = (
-          $file->type eq 'bai' ? 'bam' : $file->type,
-          $strain->production_name,
-          $file->path
-        );
-        unshift @url_path, $opt->{files_url} if defined $opt->{files_url};
+      my %assemblies;
+      foreach my $track_analysis ($track->track_analyses) {
+        my $assembly = $track_analysis->assembly->assembly;
+        my @files;
+        FILE: foreach my $file ($track_analysis->files) {
+          my @url_path = (
+            $file->type eq 'bai' ? 'bam' : $file->type,
+            $strain->production_name,
+            $file->path
+          );
+          unshift @url_path, $opt->{files_url} if defined $opt->{files_url};
 
-        my %file_data = (
-          'name' => ''. $file->path,
-          'url'  => ''. join('/', @url_path),
-          'type' => ''. $file->type,
+          my %file_data = (
+            'name' => ''. $file->path,
+            'url'  => ''. join('/', @url_path),
+            'type' => ''. $file->type,
+          );
+          push @files, \%file_data;
+        }
+        my %track_assembly_data = (
+          files    => \@files,
+          aligner  => _determine_aligner($track_analysis->analyses),
         );
-        push @files, \%file_data;
+        $assemblies{$assembly} = \%track_assembly_data;
+        
+        # Also add this information for the whole bundle
+        my $ass_accession = $track_analysis->assembly->assembly_accession;
+        if (not exists $group{assemblies}->{$assembly}) {
+          my %bundle_assembly_data = (
+            accession => $ass_accession,
+            latest    => $track_analysis->assembly->latest,
+          );
+          $group{assemblies}->{$assembly} = \%bundle_assembly_data;
+        }
       }
-      $track_data{aligner} = _determine_aligner($track->analyses);
-      $track_data{files}   = \@files;
+      $track_data{assemblies} = \%assemblies;
       
       # Get the SRA accessions
       my (%runs, %experiments, %studies, %samples);
@@ -551,8 +583,12 @@ sub _get_bundles {
       prefetch    => {
         bundle_tracks => {
           track => [
-            'files',
-            { analyses => 'analysis_description' },
+            {
+             'track_analyses' => [
+              'files',
+              { analyses => 'analysis_description' }
+              ],
+            },
             { vocabulary_tracks => 'vocabulary' },
             {
               'sra_tracks' => {

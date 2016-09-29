@@ -23,7 +23,7 @@ use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
-Bio::EnsEMBL::RNAseqDB::Common;
+use Bio::EnsEMBL::RNAseqDB::Common;
 my $common = Bio::EnsEMBL::RNAseqDB::Common->new();
 Readonly my $PREFIX         => $common->get_project_prefix();
 Readonly my $PRIVATE_SOURCE => 'VectorBase website';
@@ -78,10 +78,14 @@ sub convert_for_Webapollo {
   for my $group (@bundles) {
     my $nt = @{ $group->{tracks} };
     $logger->debug("Group = $group->{trackhub_id} ($nt tracks)");
+    my ($assembly_name) = grep { $group->{assemblies}->{$_}->{latest} } keys %{$group->{assemblies}};
+    
     foreach my $track (@{ $group->{tracks} }) {
-      my $nf = @{ $track->{files} };
+      my $assembly_data = $track->{assemblies}->{$assembly_name};
+      my @files = @{$assembly_data->{files}};
+      my $nf = @files;
       $logger->debug("Track = $track->{id} ($nf files)");
-      FILE: foreach my $file (@{ $track->{files} }) {
+      FILE: foreach my $file (@files) {
         next FILE if not $allowed_type_category{ $file->{type} };
         
         my %track_data = (
@@ -108,7 +112,7 @@ sub convert_for_Webapollo {
           category            => $allowed_type_category{ $file->{type} },
           display             => 'off',
           description         => $track->{description},
-          version             => $group->{assembly},
+          version             => $assembly_name,
           source_url          => $file->{url},
           source_type         => $file->{type},
           source              => $source // $track->{merge_text},

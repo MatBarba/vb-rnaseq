@@ -33,24 +33,24 @@ my Readonly $SAMPLE_PREFIX     = $PRIVATE_PREFIX . 'S';
 # Input       string = SRA accession
 # Output      int    = number of runs added
 sub add_sra {
-  my ($self, $sra_acc) = @_;
+  my ($self, $sra_acc, $species) = @_;
   
   if ($sra_acc =~ $sra_regex->{study}) {
-    my $num = $self->_add_runs_from($sra_acc, 'study');
+    my $num = $self->_add_runs_from($sra_acc, 'study', $species);
     $self->_merge_sample_tracks($sra_acc);
     return $num;
   }
   elsif ($sra_acc =~ $sra_regex->{experiment}) {
-    my $num = $self->_add_runs_from($sra_acc, 'experiment');
+    my $num = $self->_add_runs_from($sra_acc, 'experiment', $species);
     $self->_merge_sample_tracks($sra_acc);
     return $num;
   }
   elsif ($sra_acc =~ $sra_regex->{run}) {
     # Special case: all other cases are wrappers around this
-    return $self->_add_run($sra_acc);
+    return $self->_add_run($sra_acc, $species);
   }
   elsif ($sra_acc =~ $sra_regex->{sample}) {
-    my $num = $self->_add_runs_from($sra_acc, 'sample');
+    my $num = $self->_add_runs_from($sra_acc, 'sample', $species);
     $self->_merge_sample_tracks($sra_acc);
     return $num;
   }
@@ -64,7 +64,7 @@ sub add_sra {
 # Input[1]        string = SRA accession
 # Input[2]        string = RNAseqDB table for this SRA item
 sub _add_runs_from {
-  my ($self, $acc, $table) = @_;
+  my ($self, $acc, $table, $species) = @_;
   
   return 0 if not defined $acc or $acc =~ /^\s*$/;
   
@@ -110,7 +110,7 @@ sub _add_runs_from {
       $logger->debug("Skip run " . $run->accession() . " because it is not transcriptomic");
       next RUN;
     }
-    my $num_inserted = $self->_add_run( $run->accession() );
+    my $num_inserted = $self->_add_run( $run->accession(), $species );
     $total += $num_inserted;
   }
   return $total;
@@ -140,7 +140,7 @@ sub _is_run_transcriptomic {
 # Input         SRA run accession
 # Output        Number of runs newly inserted in the DB (0 if none)
 sub _add_run {
-  my ($self, $run_acc) = @_;
+  my ($self, $run_acc, $species) = @_;
   return 0 if not defined $run_acc or $run_acc =~ /^\s*$/;
   
   # Try to get the run id if it exists
@@ -173,7 +173,7 @@ sub _add_run {
   }
   
   # Retrieve the experiment and sample ids to create a run
-  my $sample_id = $self->_get_sample_id($run->sample());
+  my $sample_id = $self->_get_sample_id($run->sample(), $species);
   if (not defined $sample_id) {
     $logger->warn("Can't insert the run $run_acc: no sample_id returned");
     return 0;
@@ -286,7 +286,7 @@ sub _get_study_id {
 }
 
 sub _get_sample_id {
-  my ($self, $sample) = @_;
+  my ($self, $sample, $species) = @_;
   
   # Try to get the sample id if it exists
   my $sample_req = $self->resultset('Sample')->search({
@@ -331,7 +331,12 @@ sub _get_sample_id {
     my $taxon_id = $sample->taxon()->taxon_id();
     
     # Get the correct species_id
-    my $strain_id = $self->_get_strain_id($taxon_id, $strain);
+    my $strain_id;
+    if ($species) {
+      $strain_id = $self->resultset('Strain')->find({ production_name => $species })->strain_id;
+    } else {
+      $strain_id = $self->_get_strain_id($taxon_id, $strain);
+    }
     
     # No species id? Failed to add
     if (not defined $strain_id) {

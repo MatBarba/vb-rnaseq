@@ -39,7 +39,9 @@ if ($opt{file}) {
 # Add all runs for those SRA accessions
 my $runs_added = 0;
 for my $sra_acc (@sras) {
-  my $added = $db->add_sra( $sra_acc );
+  my $acc = shift @$sra_acc;
+  my $species = shift @$sra_acc;
+  my $added = $db->add_sra($acc, $species);
   $runs_added += $added;
 }
 
@@ -53,9 +55,10 @@ sub get_sras_from_file {
   my @sra_accs;
   open my $SRAS_FH, '<', $file;
   while( my $line = readline $SRAS_FH ) {
-    next if $line =~ /^\s*$/;
+    next if $line =~ /^\s*$|^\#/;
     chomp $line;
-    push @sra_accs, $line;
+    my $acc = [split /\s+/, $line];
+    push @sra_accs, $acc;
   }
   close $SRAS_FH;
   return @sra_accs;

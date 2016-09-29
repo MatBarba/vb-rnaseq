@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Readonly;
 use Carp;
+use Carp 'verbose';
 use autodie;
 use English qw( -no_match_vars );
 use Getopt::Long qw(:config no_ignore_case);
@@ -51,13 +52,18 @@ sub add_tracks_results {
   for my $merge_id (sort keys %$results_href) {
     $logger->info("Importing data for $merge_id");
     my $track_data = $results_href->{$merge_id};
+    my $assembly = guess_assembly($track_data);
     
     # First, get the track_id
-    my ($track) = $db->get_tracks(merge_ids => [$merge_id]);
-    my $track_id = $track->track_id;
+    my ($track) = $db->get_tracks(
+      merge_ids => [$merge_id],
+      assembly => $assembly
+    );
+    croak "No track for $merge_id ($assembly)" if not $track;
+    my $track_an_id = $track->track_analyses->single->track_analysis_id;
     
     # Then, add the data
-    if ($track_id) {
+    if ($track_an_id) {
       my @files = (
         $track_data->{bw_file},
         $track_data->{bam_file},
@@ -69,12 +75,23 @@ sub add_tracks_results {
       my $version = $track_data->{aligner_version};
       
       # Add those data to the database
-      $db->add_track_results($track_id, \@cmds, \@files, $version);
+      $db->add_track_results($track_an_id, \@cmds, \@files, $version);
     }
     else {
       $logger->warn("Can't match the merge_id to a track_id in the database ($merge_id)");
     }
   }
+}
+
+sub guess_assembly {
+  my $data = shift;
+  
+  my $file = $data->{bw_file};
+  my $assembly;
+  if ($file =~ /_([A-Z][a-z]{3}[A-Z]\d)\.bw/) {
+    $assembly = $1;
+  }
+  return $assembly;
 }
 
 sub remove_paths {

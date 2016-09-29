@@ -33,6 +33,7 @@ sub _add_track {
   # Does the track already exists?
   my $track_req = $self->resultset('Track')->search({
       'sra_tracks.run_id' => $run_id,
+      status  => 'ACTIVE',
   },
   {
     prefetch    => 'sra_tracks',
@@ -45,46 +46,43 @@ sub _add_track {
     return;
   }
   
+  # Get the latest assembly for these runs
+  # NB: we're only going to align tracks against the latest version
+  my $ass_req = $self->resultset('Assembly')->search({
+    'runs.run_id' => $run_id,
+    latest => 1
+  },
+  {
+    prefetch  => { 'strain' => { 'samples' => 'runs' } }
+  });
+  my $assembly_id = $ass_req->next->assembly_id;
+  
   # Insert a new track and a link sra_track
   $logger->info("ADDING track for $run_id");
   
   # Add the track itself
-  my $track_insertion = $self->resultset('Track')->create({});
+  my $track_insertion = $self->resultset('Track')->create({
+      sra_tracks => [
+        {
+          run_id => $run_id,
+        }
+      ],
+      track_analyses  => [
+        {
+          assembly_id => $assembly_id
+        }
+      ]
+  });
   
   # Add the link from the run to the track
   my $track_id = $track_insertion->id;
-  $self->_add_sra_track($run_id, $track_id);
   
-  # Also create a gundle for this track
+  # Also create a bundle for this track
   $self->_add_bundle_from_track($track_id);
   
   # Finally, try to create a title + description for the track
   $self->guess_track_text($track_id);
   
-  return 1;
-}
-
-## PRIVATE METHOD
-## Purpose   : insert a link between the tables track and run
-## Parameters: a run table run_id, a track table track_id
-sub _add_sra_track {
-  my ($self, $run_id, $track_id) = @_;
-  
-  # First, check that the link doesn't already exists
-  my $sra_track_search = $self->resultset('SraTrack')->search({
-      run_id    => $run_id,
-      track_id  => $track_id,
-  });
-  my $links_count = $sra_track_search->all;
-  if ($links_count > 0) {
-    $logger->warn("There is already a link between run $run_id and track $track_id");
-    return;
-  }
-  
-  my $sra_track_insertion = $self->resultset('SraTrack')->create({
-      run_id    => $run_id,
-      track_id  => $track_id,
-  });
   return 1;
 }
 
@@ -107,7 +105,7 @@ sub get_tracks {
   my %filter;
   my $me = 'me';
   
-  my @allowed_args = qw(species status aligned merge_ids track_ids sra_ids);
+  my @allowed_args = qw(species status aligned merge_ids track_ids sra_ids assembly);
   my %allowed = map { $_ => 1 } @allowed_args;
   for my $arg (keys %pars) {
     croak "Can't use argument '$arg'" if not defined $allowed{$arg};
@@ -120,6 +118,13 @@ sub get_tracks {
   
   # Species
   $filter{'strain.production_name'} = $pars{species} if $pars{species};
+  
+  # Assemblies: one, latest, or all?
+  if ($pars{assembly}) {
+    $filter{'assembly.assembly'} = $pars{assembly};
+  } elsif (not $pars{all_assemblies}) {
+    $filter{'assembly.latest'} = 1;
+  }
 
   # Already aligned (with files) or not
   if (defined $pars{aligned}) {
@@ -158,7 +163,7 @@ sub get_tracks {
   my $track_req = $self->resultset('Track')->search(\%search,
     {
       prefetch => [
-        'files',
+        { 'track_analyses' => ['files', 'assembly'] },
         { 'sra_tracks' =>
           { 'run' => [
               { 'sample' => 'strain' },
@@ -470,7 +475,7 @@ sub merge_tracks_by_sra_ids {
   # Check that there are multiple tracks to merge, abort otherwise
   my $n_tracks = scalar @old_track_ids;
   if ($n_tracks == 0) {
-    warn "No tracks found to merge!";
+    carp "No tracks found to merge!";
     return;
   }
   elsif ($n_tracks == 1) {
@@ -483,18 +488,18 @@ sub merge_tracks_by_sra_ids {
   }
   
   # Create a new merged track
-  my $merger_track = $self->resultset('Track')->create({});
+  my $assembly_id = $old_tracks[0]->sra_tracks->next->run->sample->strain->assemblies->next->assembly_id;
+  my @run_ids = map { map { {run_id => $_->run->run_id} } $_->sra_tracks } @old_tracks;
+  my $merger_track = $self->resultset('Track')->create({
+      sra_tracks => \@run_ids,
+      track_analyses  => [
+        {
+          assembly_id => $assembly_id
+        }
+      ]
+  });
   my $merged_track_id = $merger_track->track_id;
   $logger->debug(sprintf "Merged in track %d", $merged_track_id);
-  
-  # Then, create a link for each run to the new merged track
-  my @run_ids;
-  for my $track (@old_tracks) {
-    my @sra_tracks = $track->sra_tracks;
-    push @run_ids, map { $_->run_id } @sra_tracks;
-  }
-  
-  map { $self->_add_sra_track($_, $merged_track_id) } @run_ids;
   
   # Also create and link a bundle to the track
   $self->_add_bundle_from_track($merged_track_id);

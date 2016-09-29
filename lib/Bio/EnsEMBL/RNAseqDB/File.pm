@@ -49,7 +49,7 @@ sub _get_all_files {
       type => $type,
     },
     {
-      prefetch  => { track => { sra_tracks => { run => { sample => { strain => 'species' } } } } },
+      prefetch  => { track_analyses => { track => { sra_tracks => { run => { sample => { strain => 'species' } } } } } },
   });
   
   my @files;

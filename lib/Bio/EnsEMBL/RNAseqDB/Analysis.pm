@@ -29,16 +29,16 @@ my $logger = get_logger();
 # 4) version of the aligner used
 sub add_track_results {
   my $self = shift;
-  my ($track_id, $commands, $files, $version) = @_;
+  my ($track_an_id, $commands, $files, $version) = @_;
   
-  $logger->debug("Add data for track $track_id");
+  $logger->debug("Add data for track analysis $track_an_id");
   
   # Add commands
-  my $cmds_ok = $self->_add_commands($track_id, $commands, $version);
+  my $cmds_ok = $self->_add_commands($track_an_id, $commands, $version);
   return if not $cmds_ok;
   
   # Add files
-  my $files_ok = $self->_add_files($track_id, $files);
+  my $files_ok = $self->_add_files($track_an_id, $files);
   return if not $files_ok;
   
   return 1;
@@ -52,17 +52,17 @@ sub add_track_results {
 # 3) Aligner version
 sub _add_commands {
   my $self = shift;
-  my ($track_id, $commands, $version) = @_;
+  my ($track_an_id, $commands, $version) = @_;
   
   # First, check that there is no command for this track already
   my $cmd_req = $self->resultset('Analysis')->search({
-      track_id => $track_id,
+      track_analysis_id => $track_an_id,
     });
   my @cmds = $cmd_req->all;
   
   # Some commands: skip
   if (@cmds) {
-    $logger->warn("WARNING: the track $track_id already has commands. Skip addition.");
+    $logger->warn("WARNING: the track $track_an_id already has commands. Skip addition.");
     return;
   }
   
@@ -78,7 +78,7 @@ sub _add_commands {
       $an_version = $version if ($desc->type eq 'aligner' and defined $version),
     }
     my $cmd = $self->resultset('Analysis')->create({
-        track_id                => $track_id,
+        track_analysis_id       => $track_an_id,
         command                 => $command,
         analysis_description_id => $an_id,
         version                 => $an_version
@@ -125,18 +125,18 @@ sub _load_analysis_descriptions {
 # 2) array ref of files paths
 sub _add_files {
   my $self = shift;
-  my ($track_id, $paths) = @_;
+  my ($track_an_id, $paths) = @_;
   
   # First, check that there is no files for this track already
   # (Except for fastq files)
   my $file_req = $self->resultset('File')->search({
-      track_id => $track_id,
+      track_analysis_id => $track_an_id,
     });
   my @files = $file_req->all;
   
   # Some files: skip
   if (@files) {
-    $logger->warn("WARNING: the track $track_id already has files. Skip addition.");
+    $logger->warn("WARNING: the track $track_an_id already has files. Skip addition.");
     return;
   }
   
@@ -168,7 +168,7 @@ sub _add_files {
     #};
     
     my $cmd = $self->resultset('File')->create({
-        track_id => $track_id,
+        track_analysis_id => $track_an_id,
         path     => $file,
         type     => $type,
         md5      => $file_md5,

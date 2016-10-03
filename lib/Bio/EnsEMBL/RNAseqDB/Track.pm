@@ -487,10 +487,20 @@ sub merge_tracks_by_sra_ids {
     $self->inactivate_tracks(\@old_track_ids, 'MERGED');
   }
   
+  # Prepare the track title
+  my @track_titles = uniq map { $_->title_auto } @old_tracks;
+  my $track_title = shift @track_titles;
+  
+  # Prepare the track text
+  my @track_texts = uniq map { $_->text_auto } @old_tracks;
+  my $track_text = shift @track_texts;
+  
   # Create a new merged track
   my $assembly_id = $old_tracks[0]->sra_tracks->next->run->sample->strain->assemblies->next->assembly_id;
   my @run_ids = map { map { {run_id => $_->run->run_id} } $_->sra_tracks } @old_tracks;
   my $merger_track = $self->resultset('Track')->create({
+      title_auto => $track_title,
+      text_auto => $track_text,
       sra_tracks => \@run_ids,
       track_analyses  => [
         {

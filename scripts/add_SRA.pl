@@ -29,7 +29,11 @@ my @sras = ();
 
 # Add a single SRA accession from the command-line
 if ($opt{sra_acc}) {
-  push @sras, $opt{sra_acc};
+  if ($opt{species}) {
+    push @sras, [$opt{sra_acc}, $opt{species}];
+  } else {
+    push @sras, [$opt{sra_acc}];
+  }
 }
 # Or add a list from a file (more efficient)
 if ($opt{file}) {

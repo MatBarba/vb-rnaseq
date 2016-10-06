@@ -3,7 +3,7 @@ package Bio::EnsEMBL::RNAseqDB;
 use strict;
 use warnings;
 use utf8;
-our $VERSION = "1.00";
+our $VERSION = "1.01";
 
 use List::Util qw( first );
 use JSON;
@@ -40,7 +40,7 @@ Bio::EnsEMBL::RNAseqDB - Interface for the RNAseq DB.
 
 =head1 VERSION
 
-This document describes Bio::EnsEMBL::RNAseqDB 1.0.
+This document describes Bio::EnsEMBL::RNAseqDB 1.1.
 
 
 =head1 SYNOPSIS

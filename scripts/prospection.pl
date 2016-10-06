@@ -57,7 +57,7 @@ if ($opt{search}) {
   my @search_list = @species;
   say STDERR "Searching for " . (@search_list+0) . " taxa";
   
-  say "species\tstatus\taccession\texps\truns\tsamps\tcenter\ttitle\tabstract";
+  say "species\tstatus\taccession\texps\truns\tsamps\tpubmed\tcenter\ttitle\tabstract";
   search(\@search_list, \%db_study);
 }
 
@@ -130,6 +130,7 @@ sub print_study {
   my $samples     = $st->samples;
   my $abstract    = $st->abstract // '';
   $abstract =~ s/ *\R+/ /g;  # Change newlines to spaces
+  my $pubmed_id = get_pubmed_id($st) // '';
   my @line = (
     $species->binomial_name,
     $category,
@@ -137,11 +138,29 @@ sub print_study {
     @$experiments+0,
     @$runs+0,
     @$samples+0,
+    $pubmed_id,
     $st->center_name,
     $st->title,
     $abstract,
   );
   say join("\t", @line);
+}
+
+sub get_pubmed_id {
+  my ($study) = @_;
+  
+  my @pubmed_links = grep {
+    defined($_->{XREF_LINK}->{DB} )
+      and $_->{XREF_LINK}->{DB} eq 'pubmed'
+  } @{ $study->links() };
+
+  my @pubmed_ids;
+  foreach my $pubmed_link (@pubmed_links) {
+    push @pubmed_ids, $pubmed_link->{XREF_LINK}->{ID};
+  }
+  carp sprintf("WARNING: the study %s has several pubmed_ids: %s", $study->accession, join(',', @pubmed_ids)) if @pubmed_ids > 1;
+  
+  return join(' ', @pubmed_ids);
 }
 
 sub get_studies_for_taxon {

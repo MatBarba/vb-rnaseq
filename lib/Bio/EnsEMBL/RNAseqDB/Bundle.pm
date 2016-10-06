@@ -295,10 +295,8 @@ sub format_bundles_for_solr {
       strain_s             => $group->{strain},
       assembly             => $assembly->{name},
       site                 => 'Expression',
-      bundle_name          => 'RNA-Seq track groups',
-      #pubmed_ids_ss        => $group->{publications_pubmeds},
-      publications_ss      => $group->{publications},
-      publications_ss_urls => $group->{publications_urls},
+      bundle_name          => 'RNA-seq track groups',
+      pubmed               => $group->{publications_pubmeds},
       hash                 => 'parentDocument',
     );
     

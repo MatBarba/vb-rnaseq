@@ -22,9 +22,8 @@ use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
-Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%s) AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
+Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
 Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=%s&result=read_run&fields=fastq_bytes,submitted_bytes';
-
 
 ###############################################################################
 # MAIN
@@ -88,7 +87,7 @@ sub get_species_from_db {
   $species_search{'strains.production_name'} = $opt->{species} if $opt->{species};
   if ($opt->{antispecies}) {
     my @anti = split ',', $opt->{antispecies};
-    $species_search{'-not'} = [ map { { production_name => $_ } } @anti ];
+    $species_search{'-not'} = [ map { { "strains.production_name" => $_ } } @anti ];
   }
   my @species = $db->resultset('Species')->search(
     \%species_search,
@@ -108,28 +107,39 @@ sub get_studies_from_db {
   my ($db, $opt) = @_;
 
   my %species_search;
-  $species_search{'strains.production_name'} = $opt->{species} if $opt->{species};
+  $species_search{'strain.production_name'} = $opt->{species} if $opt->{species};
   if ($opt->{antispecies}) {
     my @anti = split ',', $opt->{antispecies};
-    $species_search{'-not'} = [ map { { production_name => $_ } } @anti ];
+    $species_search{'-not'} = [ map { { "strain.production_name" => $_ } } @anti ];
   }
-  my @studies = $db->resultset('Study')->search({}, 
+  my @studies = $db->resultset('Study')->search(\%species_search, 
     {
-      prefetch => { 'experiments' => { 'runs' => 'sample' } }
+      prefetch => { 'experiments' => { 'runs' => { 'sample' => 'strain' } } }
     }
   );
 }
 
 sub search {
   my ($list, $db_study, $opt) = @_;
-  
+
+  my %completed_studies;
   for my $species (@$list) {
-    search_taxon($species, $db_study, $opt);
+    search_taxon($species, $db_study, \%completed_studies, $opt);
+  }
+
+  # Find studies from DB that were not found
+  my %not_found;
+  for my $study (keys %$db_study) {
+    $not_found{$study}++ if not exists $completed_studies{$study};
+  }
+
+  for my $missing_study (keys %not_found) {
+    say STDERR "MISSING STUDY: $missing_study";
   }
 }
 
 sub search_taxon {
-  my ($species, $db_study, $opt) = @_;
+  my ($species, $db_study, $completed, $opt) = @_;
   
   say STDERR "Searching for RNAseq studies for " . $species->binomial_name . "... ";
   
@@ -141,6 +151,11 @@ sub search_taxon {
   # Only print the studies that are not in the DB
   map { print_study($_, $species, 'inDB') } grep { $db_study{$_->accession} } @studies;
   map { print_study($_, $species, 'NEW ') } grep { not $db_study{$_->accession} } @studies;
+  
+  # Mark those studies as completed
+  for my $study (@studies) {
+    $completed->{ $study->accession }++;
+  }
 }
 
 sub print_study {

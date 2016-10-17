@@ -6,6 +6,7 @@ use Readonly;
 use Carp;
 use autodie;
 
+use List::Util qw(sum);
 use List::MoreUtils qw(uniq);
 use English qw( -no_match_vars );
 use Getopt::Long qw(:config no_ignore_case);
@@ -13,6 +14,7 @@ use Data::Dumper;
 use Readonly;
 use LWP::Simple qw(get is_success);
 use XML::LibXML;
+use open qw(:std :utf8);
 
 use Bio::EnsEMBL::RNAseqDB;
 use Bio::EnsEMBL::ENA::SRA::BaseSraAdaptor qw(get_adaptor);
@@ -20,7 +22,9 @@ use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
-Readonly my $template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%s) AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
+Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%s) AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
+Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=%s&result=read_run&fields=fastq_bytes,submitted_bytes';
+
 
 ###############################################################################
 # MAIN
@@ -57,8 +61,21 @@ if ($opt{search}) {
   my @search_list = @species;
   say STDERR "Searching for " . (@search_list+0) . " taxa";
   
-  say "species\tstatus\taccession\texps\truns\tsamps\tpubmed\tcenter\ttitle\tabstract";
-  search(\@search_list, \%db_study);
+  my @fields = qw(
+  species
+  status
+  accession
+  exps
+  runs
+  samps
+  fastq_bytes
+  pubmed
+  center
+  title
+  abstract
+  );
+  say join "\t", @fields;
+  search(\@search_list, \%db_study, \%opt);
 }
 
 ###############################################################################
@@ -104,18 +121,22 @@ sub get_studies_from_db {
 }
 
 sub search {
-  my ($list, $db_study) = @_;
+  my ($list, $db_study, $opt) = @_;
   
   for my $species (@$list) {
-    search_taxon($species, $db_study);
+    search_taxon($species, $db_study, $opt);
   }
 }
 
 sub search_taxon {
-  my ($species, $db_study) = @_;
+  my ($species, $db_study, $opt) = @_;
+  
+  say STDERR "Searching for RNAseq studies for " . $species->binomial_name . "... ";
   
   my @strains = $species->strains;
-  my @studies = get_studies_for_taxon($species->taxon_id);
+  my @studies = get_studies_for_taxon($species->taxon_id, $opt);
+  
+  say STDERR (@studies+0) . " studies found";
   
   # Only print the studies that are not in the DB
   map { print_study($_, $species, 'inDB') } grep { $db_study{$_->accession} } @studies;
@@ -138,6 +159,7 @@ sub print_study {
     @$experiments+0,
     @$runs+0,
     @$samples+0,
+    $st->{fastq_size} // 0,
     $pubmed_id,
     $st->center_name,
     $st->title,
@@ -158,31 +180,53 @@ sub get_pubmed_id {
   foreach my $pubmed_link (@pubmed_links) {
     push @pubmed_ids, $pubmed_link->{XREF_LINK}->{ID};
   }
-  carp sprintf("WARNING: the study %s has several pubmed_ids: %s", $study->accession, join(',', @pubmed_ids)) if @pubmed_ids > 1;
+  #carp sprintf("WARNING: the study %s has several pubmed_ids: %s", $study->accession, join(',', @pubmed_ids)) if @pubmed_ids > 1;
   
-  return join(' ', @pubmed_ids);
+  return join(',', @pubmed_ids);
 }
 
 sub get_studies_for_taxon {
-  my $taxon_id = shift;
+  my ($taxon_id, $opt) = @_;
+  $opt //= {};
   
-  my $url = sprintf($template, $taxon_id);
+  my $url = sprintf($run_info_template, $taxon_id);
   #say $url;
   my $xml = get $url or croak "Download failed for $url";
   my $dom = XML::LibXML->load_xml(string => $xml);
   
   # Extract study ids from the XML
   my %study;
-  my $xrefs = $dom->findnodes('//XREF_LINK');
-  foreach my $xref ($xrefs->get_nodelist) {
-    my $DB = $xref->findnodes('./DB')->shift()->textContent;
-    if ($DB eq 'ENA-STUDY') {
-      my $ID = $xref->findnodes('./ID')->shift()->textContent;
-      $study{$ID}++;
+  
+  my $runs = $dom->findnodes('//RUN');
+  my $count = 0;
+  RUN : foreach my $run ($runs->get_nodelist) {
+    my $run_id = $run->findnodes('.//PRIMARY_ID')->shift()->textContent;
+    my $xrefs = $run->findnodes('.//XREF_LINK');
+    XREF : foreach my $xref ($xrefs->get_nodelist) {
+      my $DB = $xref->findnodes('./DB')->shift()->textContent;
+      if ($DB eq 'ENA-STUDY') {
+        my $study_id = $xref->findnodes('./ID')->shift()->textContent;
+        
+        # Commpute the size of the fasta
+        my $run_fastq_size = exists $opt->{add_size} ? get_fastq_size($run_id, $study_id) : 0;
+        
+        # Save the count for the study
+        $study{$study_id} += $run_fastq_size;
+        if (++$count % 10 == 0) {
+          sleep 1;
+        }
+      }
     }
   }
   
-  return map { get_study($_) } sort keys %study;
+  my @studies;
+  for my $study_id (keys %study) {
+    my $study = get_study($study_id);
+    my $size = $study{$study_id};
+    $study->{fastq_size} = $size;
+    push @studies, $study;
+  }
+  return @studies;
 }
 
 sub get_study {
@@ -192,6 +236,33 @@ sub get_study {
   my $study = $adaptor->get_by_accession($id);
   
   return $study->[0];
+}
+
+sub get_fastq_size {
+  my ($run_id, $study_id) = @_;
+  
+  my $url = sprintf($fastq_size_template, $run_id);
+  my $run_text = get $url or croak "Download failed for $url";
+  sleep 0.5;
+  
+  # We only want the second line data
+  my @lines = split /\R+/, $run_text;
+  if (@lines == 1) {
+    say STDERR "$study_id: No fastq data for $run_id";
+    return 0;
+  }
+  
+  # ena fastq or submitted fastq?
+  my ($ena_fastq, $sub_fastq) = split /\t+/, $lines[1];
+  my $sizes = $ena_fastq ? $ena_fastq : $sub_fastq;
+  
+  if ($sizes) {
+    my $size = sum split(/;/, $sizes);
+    return $size;
+  } else {
+    carp "No fastq size available for $run_id";
+    return 0;
+  }
 }
 
 ###############################################################################
@@ -216,7 +287,9 @@ sub usage {
     Actions:
     --list_species    : list the current species in the database
     
-    --species <str>   : production_name to only search for one species
+    --species <str>     : production_name to only search for one species
+    --antispecies <str> : production_name of species to exclude
+    --add_size        : retrieve total fastq size of files (takes longer)
     
     --help            : show this help message
     --verbose         : show detailed progress
@@ -238,6 +311,7 @@ sub opt_check {
     "species=s",
     "antispecies=s",
     "list_species",
+    "add_size",
     "search",
     "help",
     "verbose",

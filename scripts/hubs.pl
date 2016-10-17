@@ -53,7 +53,7 @@ if (
   $logger->info("Retrieving the track bundles...");
   $groups = $db->get_bundles({
       species     => $opt{species},
-      files_dir   => $opt{files_dir},
+      files_url   => $opt{files_url},
     });
 
   # Create trackhub objects
@@ -101,7 +101,7 @@ sub prepare_hubs {
   
   my @hubs;
   GROUP: for my $group (@$groups) {
-    if (not $group->{assembly} and not $group->{assembly_accession}) {
+    if (not $group->{assemblies}) {
       print STDERR "No Assembly information for hub $group->{trackhub_id}\n";
       next GROUP;
     }
@@ -125,90 +125,95 @@ sub prepare_hubs {
     make_path $species_dir;
     $hub->root_dir( $species_dir );
     
-    # Create the associated genome
-    my $genome = Genome->new(
-      id    => $group->{assembly},
-      insdc => $group->{assembly_accession},
-    );
-    
-    # Add all tracks to the genome
-    my @big_tracks;
-    my @bam_tracks;
-    TRACK: for my $track (sort { $a->{id} cmp $b->{id} } @{ $group->{tracks} }) {
-      # Get the bigwig file
-      my $bigwig = get_file($track, 'bigwig');
-      if (not $bigwig) {
-        warn "No bigwig file for this track $track->{id}";
-        next TRACK;
-      }
+    # Add each assembly
+    for my $assembly_id (keys %{ $group->{assemblies} }) {
+      my $assembly = $group->{assemblies}->{$assembly_id};
       
-      my $big_track = Track->new(
-        track       => $track->{id} . '_bigwig',
-        shortLabel  => ($track->{title} // $track->{id}),
-        longLabel   => ($track->{description} // $track->{id}),
-        bigDataUrl  => $bigwig->{url},
-        type        => 'bigWig',
-        visibility  => 'full',
+      # Create the associated genome
+      my $genome = Genome->new(
+        id    => $assembly_id,
+        insdc => $assembly->{accession},
       );
       
-      push @big_tracks, $big_track;
-      
-      # Get the bam file
-      my $bam = get_file($track, 'bam');
-      if (not $bam) {
-        warn "No bam file for this track $track->{id}";
-        next TRACK;
+      # Add all tracks to the genome
+      my @big_tracks;
+      my @bam_tracks;
+      TRACK: for my $track (sort { $a->{id} cmp $b->{id} } @{ $group->{tracks} }) {
+        # Get the bigwig file
+        my $bigwig = get_file($track, 'bigwig', $assembly_id);
+        if (not $bigwig) {
+          warn "No bigwig file for this track $track->{id}";
+          next TRACK;
+        }
+
+        my $big_track = Track->new(
+          track       => $track->{id} . '_bigwig',
+          shortLabel  => ($track->{title} // $track->{id}),
+          longLabel   => ($track->{description} // $track->{id}),
+          bigDataUrl  => $bigwig->{url},
+          type        => 'bigWig',
+          visibility  => 'full',
+        );
+
+        push @big_tracks, $big_track;
+
+        # Get the bam file
+        my $bam = get_file($track, 'bam', $assembly_id);
+        if (not $bam) {
+          warn "No bam file for this track $track->{id}";
+          next TRACK;
+        }
+
+        my $bam_track = Track->new(
+          track       => $track->{id} . '_bam',
+          shortLabel  => ($track->{title} // $track->{id}),
+          longLabel   => ($track->{description} // $track->{id}),
+          bigDataUrl  => $bam->{url},
+          type        => 'bam',
+          visibility  => 'hide',
+        );
+
+        push @bam_tracks, $bam_track;
       }
-      
-      my $bam_track = Track->new(
-        track       => $track->{id} . '_bam',
-        shortLabel  => ($track->{title} // $track->{id}),
-        longLabel   => ($track->{description} // $track->{id}),
-        bigDataUrl  => $bam->{url},
-        type        => 'bam',
-        visibility  => 'hide',
-      );
-      
-      push @bam_tracks, $bam_track;
+
+      if (@big_tracks == 0) {
+        carp "No track can be used for this group $group->{id}: skip";
+        next GROUP;
+        #} elsif (@big_tracks == 1) {
+        #$genome->add_track($big_tracks[0]);
+        #$genome->add_track($bam_tracks[0]);
+      } else {
+        my $superbig = SuperTrack->new(
+          track      => $hub->{id} . '_bigwig',
+          shortLabel => 'Signal density (bigwig)',
+          longLabel  => 'Signal density (bigwig)',
+          type       => 'bigWig',
+          show       => 1,
+        );
+        my $superbam = SuperTrack->new(
+          track      => $hub->{id} . '_bam',
+          shortLabel => 'Reads (bam)',
+          longLabel  => 'Reads (bam)',
+          type       => 'bam',
+          show       => 0,
+        );
+        # Put all that in a supertrack
+        my $n = 0;
+        for my $big (@big_tracks) {
+          $big->visibility('hide') if $n >= 10;
+          $superbig->add_sub_track($big);
+          $n++;
+        }
+        for my $bam (@bam_tracks) {
+          $superbam->add_sub_track($bam);
+        }
+        $genome->add_track($superbig);
+        $genome->add_track($superbam);
+      }
+
+      # Add the genome...
+      $hub->add_genome($genome);
     }
-    
-    if (@big_tracks == 0) {
-      carp "No track can be used for this group $group->{id}: skip";
-      next GROUP;
-      #} elsif (@big_tracks == 1) {
-      #$genome->add_track($big_tracks[0]);
-      #$genome->add_track($bam_tracks[0]);
-    } else {
-      my $superbig = SuperTrack->new(
-        track      => $hub->{id} . '_bigwig',
-        shortLabel => 'Signal density (bigwig)',
-        longLabel  => 'Signal density (bigwig)',
-        type       => 'bigWig',
-        show       => 1,
-      );
-      my $superbam = SuperTrack->new(
-        track      => $hub->{id} . '_bam',
-        shortLabel => 'Reads (bam)',
-        longLabel  => 'Reads (bam)',
-        type       => 'bam',
-        show       => 0,
-      );
-      # Put all that in a supertrack
-      my $n = 0;
-      for my $big (@big_tracks) {
-        $big->visibility('hide') if $n >= 10;
-        $superbig->add_sub_track($big);
-        $n++;
-      }
-      for my $bam (@bam_tracks) {
-        $superbam->add_sub_track($bam);
-      }
-      $genome->add_track($superbig);
-      $genome->add_track($superbam);
-    }
-    
-    # Add the genome...
-    $hub->add_genome($genome);
     
     # And create the trackhub files
     push @hubs, $hub;
@@ -217,9 +222,13 @@ sub prepare_hubs {
 }
 
 sub get_file {
-  my ($track, $type) = @_;
+  my ($track, $type, $assembly_id) = @_;
   
-  for my $file (@{ $track->{files} }) {
+  croak("No type of file given for this track") if not defined $type;
+  croak("No assembly_id to get file from for this track") if not defined $assembly_id;
+  
+  my $files = $track->{assemblies}->{$assembly_id}->{files};
+  for my $file (@$files) {
     if ($file->{type} eq $type) {
       return $file;
     }
@@ -345,7 +354,7 @@ sub usage {
     
     
     TRACK HUBS
-    -files_dir        : root dir to use for the files paths
+    -files_url        : root dir to use for the files paths
                         (used in the Trackdb.txt files)
     --hub_root <path> : root where the trackhubs should be stored
     
@@ -403,7 +412,7 @@ sub opt_check {
     "db=s",
     "registry=s",
     "species=s",
-    "files_dir=s",
+    "files_url=s",
     "hub_root=s",
     "email=s",
     "create",

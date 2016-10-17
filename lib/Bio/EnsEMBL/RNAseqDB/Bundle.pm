@@ -92,8 +92,8 @@ sub create_bundle_from_track_ids {
       });
     my $track = $tracks->first;
     $bundle_data = {
-      title_auto => $track->title_manual // $track->title_auto,
-      text_auto  => $track->text_manual  // $track->text_auto,
+      title_auto => $track->title_manual || $track->title_auto,
+      text_auto  => $track->text_manual  || $track->text_auto,
     };
     $logger->debug("Bundle title = $bundle_data->{title_auto}") if $bundle_data and $bundle_data->{title_auto};
   }
@@ -385,9 +385,10 @@ sub get_bundles {
   DRU: for my $bundle ($bundles->all) {
     my %group = (
       id              => $GROUP_PREFIX . $bundle->bundle_id,
-      label           => $bundle->title_manual // $bundle->title_auto,
-      description     => $bundle->text_manual  // $bundle->text_auto,
+      label           => $bundle->title_manual || $bundle->title_auto,
+      description     => $bundle->text_manual  || $bundle->text_auto,
     );
+    $group{description} ||= $group{label};
     if (not defined $group{label}) {
       $logger->warn("WARNING: bundle $group{id} has no label (no auto or manual title). Using the id as label.");
       $group{label} = $group{id};
@@ -440,10 +441,10 @@ sub get_bundles {
       
       # Define description
       my @description_list;
-      my $track_description = $track->text_manual // $track->text_auto;
+      my $track_description = $track->text_manual || $track->text_auto;
       
       # warn if no default description for this track
-      if (defined $track_description) {
+      if ($track_description) {
         push @description_list, $track_description;
       } else {
         my $track_name = $TRACK_PREFIX . $track->id;

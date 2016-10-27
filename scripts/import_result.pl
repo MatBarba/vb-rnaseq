@@ -60,10 +60,10 @@ sub add_tracks_results {
       assembly => $assembly
     );
     croak "No track for $merge_id ($assembly)" if not $track;
-    my $track_an_id = $track->track_analyses->single->track_analysis_id;
+    my $track_an = $track->track_analyses->single;
     
     # Then, add the data
-    if ($track_an_id) {
+    if ($track_an) {
       my @files = (
         $track_data->{bw_file},
         $track_data->{bam_file},
@@ -75,7 +75,8 @@ sub add_tracks_results {
       my $version = $track_data->{aligner_version};
       
       # Add those data to the database
-      $db->add_track_results($track_an_id, \@cmds, \@files, $version);
+      $db->add_commands($track_an, \@cmds, $version);
+      $db->add_files($track_an, \@files);
     }
     else {
       $logger->warn("Can't match the merge_id to a track_id in the database ($merge_id)");

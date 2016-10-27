@@ -450,6 +450,7 @@ PIPELINE TABLES
 @column file_id                File id (primary key, internal identifier).
 @column track_analysis_id      Track analysis primary id (foreign key).
 @column path                   Path of the file.
+@column human_name             Human readable file name (not stable).
 @column type                   File type (fastq, bam...).
 @column md5                    md5 checksum of the file.
 @column metasum                Checksum of @path + @type + @md5.
@@ -462,6 +463,7 @@ CREATE TABLE file (
   file_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   track_analysis_id     INT(10) UNSIGNED NOT NULL,
   path                  TEXT NOT NULL,
+  human_name            TEXT NOT NULL,
   type                  ENUM('fastq', 'bam', 'bai', 'bed', 'bigwig'),
   md5                   CHAR(32),
   metasum               CHAR(32) UNIQUE,
@@ -475,9 +477,9 @@ CREATE TABLE file (
 ) ENGINE=InnoDB;
 
 CREATE TRIGGER file_md5_upd_tr BEFORE UPDATE ON file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.path, NEW.type, NEW.md5) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.path, NEW.human_name, NEW.type, NEW.md5) );
 CREATE TRIGGER file_md5_ins_tr BEFORE INSERT ON file
-  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.path, NEW.type, NEW.md5) );
+  FOR EACH ROW SET NEW.metasum = MD5( CONCAT_WS('', NEW.path, NEW.human_name, NEW.type, NEW.md5) );
 
 /**
 

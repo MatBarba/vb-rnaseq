@@ -42,6 +42,11 @@ __PACKAGE__->table("file");
   data_type: 'text'
   is_nullable: 0
 
+=head2 human_name
+
+  data_type: 'text'
+  is_nullable: 0
+
 =head2 type
 
   data_type: 'enum'
@@ -92,6 +97,8 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "path",
+  { data_type => "text", is_nullable => 0 },
+  "human_name",
   { data_type => "text", is_nullable => 0 },
   "type",
   {
@@ -163,8 +170,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:33tIQr8Ot14vqSe8vW8RBA
+# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-10-26 17:14:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5qlhbpTgsUCAvavkM6IAog
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

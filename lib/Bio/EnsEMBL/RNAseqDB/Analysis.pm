@@ -20,39 +20,17 @@ my $logger = get_logger();
 ###############################################################################
 ## ANALYSIS METHODS
 #
-## INSTANCE METHOD
-## Purpose   : add commands and files for a track
-## Parameters:
-# 1) track_id
-# 2) array ref of command strings
-# 3) array ref of alignment files created
-# 4) version of the aligner used
-sub add_track_results {
-  my $self = shift;
-  my ($track_an_id, $commands, $files, $version) = @_;
-  
-  $logger->debug("Add data for track analysis $track_an_id");
-  
-  # Add commands
-  my $cmds_ok = $self->_add_commands($track_an_id, $commands, $version);
-  return if not $cmds_ok;
-  
-  # Add files
-  my $files_ok = $self->_add_files($track_an_id, $files);
-  return if not $files_ok;
-  
-  return 1;
-}
 
-## PRIVATE METHOD
+## INSTANCE METHOD
 ## Purpose   : insert a list of alignment commands for a track
 ## Parameters:
 # 1) track_id
 # 2) array ref of commands
 # 3) Aligner version
-sub _add_commands {
+sub add_commands {
   my $self = shift;
-  my ($track_an_id, $commands, $version) = @_;
+  my ($track_an, $commands, $version) = @_;
+  my $track_an_id = $track_an->track_analysis_id;
   
   # First, check that there is no command for this track already
   my $cmd_req = $self->resultset('Analysis')->search({
@@ -118,66 +96,6 @@ sub _load_analysis_descriptions {
   return @descriptions;
 }
 
-## PRIVATE METHOD
-## Purpose   : insert a list of files for a track
-## Parameters:
-# 1) track_id
-# 2) array ref of files paths
-sub _add_files {
-  my $self = shift;
-  my ($track_an_id, $paths) = @_;
-  
-  # First, check that there is no files for this track already
-  # (Except for fastq files)
-  my $file_req = $self->resultset('File')->search({
-      track_analysis_id => $track_an_id,
-    });
-  my @files = $file_req->all;
-  
-  # Some files: skip
-  if (@files) {
-    $logger->warn("WARNING: the track $track_an_id already has files. Skip addition.");
-    return;
-  }
-  
-  # Add the files!
-  for my $path (@$paths) {
-    # Only keep the filename, not the path
-    my ($vol, $dir, $file) = File::Spec->splitpath($path);
-    
-    # Determine the type of the file from its extension
-    my $type;
-    if ($file =~ /\.bw$/) {
-      $type = 'bigwig';
-    }
-    elsif ($file =~ /\.bam$/) {
-      $type = 'bam';
-      push @$paths, $path . '.bai';
-    }
-    elsif ($file =~ /\.bam.bai$/) {
-      $type = 'bai';
-    }
-    
-    # Get md5sum file
-    my $file_md5;
-    #try {
-    #  $file_md5 = file_md5_hex($path);
-    #}
-    #catch {
-    #  warn "Can't find file for md5sum: $path";
-    #};
-    
-    my $cmd = $self->resultset('File')->create({
-        track_analysis_id => $track_an_id,
-        path     => $file,
-        type     => $type,
-        md5      => $file_md5,
-      });
-  }
-  
-  return 1;
-}
-
 1;
 
 __END__
@@ -186,20 +104,19 @@ __END__
 
 Bio::EnsEMBL::RNAseqDB::Analysis - Analysis role for the RNAseq DB.
 
-Only one important method to add the commands and the files created from the
-alignment of the track.
+Only one important method to add the commands created from the alignment of
+a track.
 
 =head1 INTERFACE
 
 =over
 
-=item add_track_results
+=item add_commands
 
-  function       : add and link commands and files for a given track
+  function       : add and link commands for a given track
   arguments      :
     1) track_id
     2) array ref of command strings
-    3) array ref of alignment files created
     4) version of the aligner used
   
 

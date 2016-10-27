@@ -265,31 +265,6 @@ sub copy_files {
   return;
 }
 
-sub add_tracks_results {
-  my ($db, $results_href) = @_;
-  
-  $logger->info("Importing " . (keys %$results_href) . " tracks");
-  
-  for my $merge_id (sort keys %$results_href) {
-    $logger->info("Importing data for $merge_id");
-    my $track_data = $results_href->{$merge_id};
-    $logger->debug("Data:" . Dumper($track_data));
-    
-    # First, get the track_id
-    my ($track) = $db->get_tracks(merge_ids => [$merge_id]);
-    my $track_id = $track->track_id;
-    
-    if ($track_id) {
-      # Then, add the data
-      my @files = (
-        $track_data->{bw_file},
-        $track_data->{bam_file},
-      );
-      $db->add_track_results($track_id, $track_data->{cmds}, \@files);
-    }
-  }
-}
-
 sub tracks_for_pipeline {
   my ($data, $opt) =  @_;
   

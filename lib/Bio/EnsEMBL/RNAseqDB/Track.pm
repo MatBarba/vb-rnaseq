@@ -712,18 +712,6 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
     my $track_id = 1;
     my $merge_level = $rdb->get_track_level(track_id);
     
-=item add_track_results()
-  
-  function       : import a list of commands and files for a given track
-  arg[1]         : track_id
-  arg[2]         : array ref to a list of commands used to create the files
-  arg[3]         : array ref to a list of generated files
-  
-  Note: only the filenames will be used.
-  
-  usage:
-  $rdb->add_track_results($track_id, $commands_aref, $files_aref);
-  
 =item regenerate_merge_ids
 
   function       : scans the tracks tables and add merge_id and merge_level to each track.

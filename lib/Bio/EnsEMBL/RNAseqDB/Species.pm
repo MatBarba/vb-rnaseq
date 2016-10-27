@@ -54,8 +54,8 @@ sub add_species {
     }
     ],
   };
-  $self->resultset('Strain')->create($strain);
   $logger->info("Added NEW STRAIN: $sp{production_name} ($sp{assembly})");
+  $self->resultset('Strain')->create($strain);
 }
 
 sub add_new_assembly {

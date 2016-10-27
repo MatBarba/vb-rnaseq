@@ -97,6 +97,10 @@ sub update_tracks {
   
   # 3) Annotate tracks
   annotate_tracks($db, $matched_entries) if $opt->{annotate_tracks};
+  
+  # 4) Force regenerate all the merge_ids
+  my $force = 1;
+  $db->regenerate_merge_ids($force);
 }
 
 sub match_tracks {

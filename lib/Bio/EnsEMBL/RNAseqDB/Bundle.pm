@@ -7,6 +7,7 @@ use Moose::Role;
 use File::Spec;
 use Data::Dumper;
 use Readonly;
+use File::Path qw(make_path);
 
 use Log::Log4perl qw( :easy );
 my $logger = get_logger();
@@ -266,11 +267,11 @@ sub _prepare_track_activation_link {
   return;
 }
 
-sub get_bundles_for_solr {
+sub format_bundles_for_solr {
   my $self = shift;
   my ($opt) = @_;
   
-  my $groups  = $self->get_bundles($opt);
+  my $groups  = $opt->{bundles};
   
   my @solr_groups;
   
@@ -337,11 +338,11 @@ sub get_bundles_for_solr {
       # Add associated files
       for my $file (@{ $assembly_data->{files} }) {
         if ($file->{type} eq 'bigwig') {
-          $solr_track{bigwig_s} = $file->{name};
+          $solr_track{bigwig_s} = defined $opt->{human_dir} ? $file->{human_name} : $file->{name};
           $solr_track{bigwig_s_url} = $file->{url};
         }
         elsif ($file->{type} eq 'bam') {
-          $solr_track{bam_s} = $file->{name};
+          $solr_track{bam_s} = defined $opt->{human_dir} ? $file->{human_name} : $file->{name};
           $solr_track{bam_s_url} = $file->{url};
         }
         
@@ -476,14 +477,24 @@ sub get_bundles {
           my @url_path = (
             $file->type eq 'bai' ? 'bam' : $file->type,
             $strain->production_name,
-            $file->path
           );
+          my $human_dir = $opt->{human_dir};
+          if ($human_dir) {
+            my @path = split /\//, $human_dir;
+            my $human_dir_name = pop @path;
+            unshift @url_path, $human_dir_name;
+            push @url_path, $file->human_name;
+          } else {
+            push @url_path, $file->path;
+          }
           unshift @url_path, $opt->{files_url} if defined $opt->{files_url};
+          my $url  = ''. join('/', @url_path);
 
           my %file_data = (
-            'name' => ''. $file->path,
-            'url'  => ''. join('/', @url_path),
-            'type' => ''. $file->type,
+            'name'       => $file->path,
+            'human_name' => $file->human_name,
+            'url'        => $url,
+            'type'       => ''. $file->type,
           );
           push @files, \%file_data;
         }
@@ -611,6 +622,34 @@ sub _get_bundles {
   return $bundles;
 }
 
+sub create_human_symlinks {
+  my $self = shift;
+  my ($groups, $human_dir) = @_;
+  
+  return if not $groups;
+  return if not defined $human_dir;
+  
+  # Create symlinks...
+  for my $group (@$groups) {
+    for my $track (@{ $group->{tracks} }) {
+      for my $assembly (keys %{ $track->{assemblies} }) {
+        my $assembly_data = $track->{assemblies}->{ $assembly };
+        for my $file (@{ $assembly_data->{files} }) {
+          my $type = $file->{type};
+          $type = 'bam' if $type eq 'bai';
+          my $species      = $group->{production_name};
+          my $sym_dir      = "$human_dir/$type/$species";
+          make_path $sym_dir;
+          my $relative_dir = "../../../$type/$species";
+          my $sym_file    = "$sym_dir/" . $file->{human_name};
+          my $actual_file = "$relative_dir/" . $file->{name};
+          symlink $actual_file, $sym_file;
+        }
+      }
+    }
+  }
+}
+
 sub _determine_aligner {
   my @analyses = @_;
   
@@ -723,7 +762,7 @@ Bio::EnsEMBL::RNAseqDB::Bundle - Bundle role for the RNAseq DB.
   
     my $groups = $rdb->get_bundles();
     
-=item get_bundles_for_solr
+=item format_bundles_for_solr
 
   function       : returns groups of track in a data structure suuitable for Solr.
   arg[1]         : hash ref with key 'species' defined [optional] to filter groups by species
@@ -777,6 +816,20 @@ Bio::EnsEMBL::RNAseqDB::Bundle - Bundle role for the RNAseq DB.
   Usage:
   
     my $merged_bundle_id = $rdb->merge_bundles(3, 4, 5);
+    
+=item create_human_symlinks
+
+  function       : create symlinks to human readable versions of the files
+  arg[1]         : A bundle resultset
+  arg[2]         : A directory where the symlinks will be created
+  returns        : none
+  
+  NB: the directory structure contains dirs for each file type, with the same
+  structure as the main dirs.
+  
+  Usage:
+  
+    $rdb->create_human_symlinks($bundle, './human_names');
     
 =back
 

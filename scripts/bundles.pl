@@ -39,29 +39,33 @@ my $db = RNAseqDB->connect(
 );
 
 # Retrieve track bundles
-my $bundles;
-if (not defined $opt{format}) {
-  $bundles = $db->get_bundles({
-      species     => $opt{species},
-      files_url   => $opt{files_url},
-    });
+$logger->info("Retrieve bundles");
+my $bundles = $db->get_bundles({
+  species   => $opt{species},
+  files_url => $opt{files_url},
+  human_dir => $opt{human_dir},
+});
+
+if ($opt{format} eq 'solr') {
+  $logger->info("Create symlinks");
+  # Create the human readable symlinks
+  $db->create_human_symlinks($bundles, $opt{human_dir});
   
-} elsif ($opt{format} eq 'solr') {
-  $bundles = $db->get_bundles_for_solr({
-      species     => $opt{species},
-      files_url   => $opt{files_url},
-      hubs_url    => $opt{hubs_url}
+  # Format the bundles for Solr output
+  $logger->info("Format for Solr");
+  my $solr_bundles = $db->format_bundles_for_solr({
+      bundles   => $bundles,
+      hubs_url  => $opt{hubs_url},
+      human_dir => $opt{human_dir},
     });
-  
-} elsif ($opt{format} eq 'webapollo') {
-  print STDERR "Format not yet implemented\n";
-  exit;
+  $bundles = $solr_bundles;
 }
 
 # Check result and print
 if (@$bundles == 0) {
   print STDERR "No bundle to extract\n";
 } else {
+  $logger->info("Output json");
   print_json($opt{output}, $bundles);
 }
 
@@ -108,6 +112,11 @@ sub usage {
                         If empty, defaults to a standard json with whole bundle data
     --hubs_url <path> : root url for the hubs files (needed for solr activation links)
                         This defaults to $files_url/hubs
+    --human_dir <path>: create symlinks with human readable file names, and use those
+                        in the solr json
+                        NOTE: the symlinks are created as if the human_dir were in the
+                        same dir as the files dirs (bam/ bigwig/ etc.) to use a relative
+                        path in the form "../../../bam/species/filename.bam"
     
     Other:
     --help            : show this help message
@@ -133,6 +142,7 @@ sub opt_check {
     "hubs_url=s",
     "output=s",
     "format=s",
+    "human_dir=s",
     "help",
     "verbose",
     "debug",

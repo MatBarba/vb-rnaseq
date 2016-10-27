@@ -35,29 +35,30 @@ my Readonly $SAMPLE_PREFIX     = $PRIVATE_PREFIX . 'S';
 sub add_sra {
   my ($self, $sra_acc, $species) = @_;
   
+  my $num = 0;
   if ($sra_acc =~ $sra_regex->{study}) {
-    my $num = $self->_add_runs_from($sra_acc, 'study', $species);
+    $num = $self->_add_runs_from($sra_acc, 'study', $species);
     $self->_merge_sample_tracks($sra_acc);
-    return $num;
   }
   elsif ($sra_acc =~ $sra_regex->{experiment}) {
-    my $num = $self->_add_runs_from($sra_acc, 'experiment', $species);
+    $num = $self->_add_runs_from($sra_acc, 'experiment', $species);
     $self->_merge_sample_tracks($sra_acc);
-    return $num;
   }
   elsif ($sra_acc =~ $sra_regex->{run}) {
     # Special case: all other cases are wrappers around this
-    return $self->_add_run($sra_acc, $species);
+    $num = $self->_add_run($sra_acc, $species);
   }
   elsif ($sra_acc =~ $sra_regex->{sample}) {
-    my $num = $self->_add_runs_from($sra_acc, 'sample', $species);
+    $num = $self->_add_runs_from($sra_acc, 'sample', $species);
     $self->_merge_sample_tracks($sra_acc);
-    return $num;
   }
   else {
     $logger->warn("WARNING; Invalid SRA accession: $sra_acc");
-    return 0;
   }
+  
+  # For all newly added tracks, generate their merge_ids
+  $self->regenerate_merge_ids();
+  return $num;
 }
 
 # add_runs_from   generic function to add runs from an SRA item
@@ -710,6 +711,8 @@ __END__
 Bio::EnsEMBL::RNAseqDB::SRA - Interface for the RNAseq DB for managing SRA entries.
 
 =head1 INTERFACE
+
+=over
 
 =item add_sra()
 

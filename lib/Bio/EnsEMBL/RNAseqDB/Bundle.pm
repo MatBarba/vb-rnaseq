@@ -24,7 +24,7 @@ Readonly my $TRACK_PREFIX => $PREFIX . 'RNAseq_track_';
 # Solr specific constants
 Readonly my $SOLR_CHILDREN => '_childDocuments_';
 Readonly my $SEARCH_ROOT   => '/vbsearch/details/';
-Readonly my $PUBMED_ROOT   => 'http://europepmc.org/abstract/MED/';
+Readonly my $PUBMED_ROOT   => 'https://www.ncbi.nlm.nih.gov/pubmed/';
 Readonly my $SRA_URL_ROOT  => 'http://www.ebi.ac.uk/ena/data/view/';
 
 ###############################################################################

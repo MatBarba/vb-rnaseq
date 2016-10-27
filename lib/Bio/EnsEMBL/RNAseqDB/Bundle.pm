@@ -306,7 +306,7 @@ sub format_bundles_for_solr {
     my $activation_link = $self->_prepare_hub_activation_link($opt->{hubs_url}, $group);
     if ($activation_link) {
       $solr_group{activation_link_s_url} = $activation_link;
-      $solr_group{activation_link_s} = 'Load in Genome Browser';
+      $solr_group{activation_link_s} = '<img src="/sites/default/files/ftp/images/browse_genome.png">';
     } else {
       $logger->warn("No hubs_url defined: can't create activation");
     }

@@ -725,19 +725,21 @@ VOCABULARY TABLES
 @table vocabulary
 @desc Contains controlled vocabulary to describe tracks.
 
-@column vocabulary_id          Vocabulary id (primary key, internal identifier).
-@column voc_name               Vocabulary name (displayed text).
-@column voc_type               Vocabulary type (e.g. tissue).
+@column vocabulary_id        Vocabulary id (primary key, internal identifier).
+@column voc_acc              Vocabulary accession from a given ontology.
+@column voc_text             Associated keyword (e.g. "female").
+@column voc_type             Ontology name.
 
 */
 
 CREATE TABLE vocabulary (
   vocabulary_id  INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
-  voc_name       VARCHAR(128),
+  voc_acc        VARCHAR(128),
+  voc_text       VARCHAR(128),
   voc_type       VARCHAR(128),
   
   KEY vocabulary_id_idx           (vocabulary_id),
-  KEY voc_name_id_idx             (voc_name),
+  KEY voc_acc_id_idx               (voc_acc),
   KEY voc_type_id_idx             (voc_type)
 ) ENGINE=InnoDB;
 

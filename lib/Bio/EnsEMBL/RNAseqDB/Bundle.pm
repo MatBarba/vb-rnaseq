@@ -360,11 +360,19 @@ sub format_bundles_for_solr {
       
       # Add keywords
       my @keywords;
+      my @cvterms;
+      my @cvterms_urls;
       for my $type (keys %{ $track->{keywords} }) {
         my $list = $track->{keywords}->{$type};
-        push @keywords, @$list;
+        for my $elt (@$list) {
+          push @keywords, $elt->{text} if $elt->{text};
+          push @cvterms, $elt->{acc} if $elt->{acc};
+          # TODO: make url links
+        }
       }
-      $solr_track{keywords_ss} = \@keywords;
+      $solr_track{keywords_ss} = \@keywords if @keywords;
+      $solr_track{cvterms_ss}  = \@cvterms  if @cvterms;
+      #$solr_track{cvterms_ss_urls}  = \@cvterms_urls;
       
       push @{ $solr_group{$SOLR_CHILDREN} }, \%solr_track;
     }

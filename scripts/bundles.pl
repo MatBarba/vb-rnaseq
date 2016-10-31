@@ -156,6 +156,7 @@ sub opt_check {
   usage("Need --output") if not $opt{output};
   $opt{hubs_url} = $opt{files_url} . '/hubs' if $opt{files_url} and not $opt{hubs_url};
   $opt{password} //= '';
+  $opt{format} = 'json' if not defined $opt{format};
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

@@ -150,55 +150,28 @@ sub add_vocabulary_to_track {
   my %pars = @_;
   my $track_id = $pars{track_id};
   my $voc_type = $pars{type};
-  my $voc_name = $pars{name};
+  my $voc_text = $pars{text} // $pars{name};
+  my $voc_acc  = $pars{acc};
   
-  if (not ($track_id and $voc_type and $voc_name)) {
+  if (not $track_id and not($voc_acc or $voc_acc)) {
     $logger->warn("Missing data to add vocabulary to track");
     return;
   }
   
-  # First, add the controlled vocabulary and/or get its id
-  my $voc_id = $self->_get_vocabulary_id($voc_type, $voc_name);
+  # First, add the controlled vocabulary (or find it)
+  my $voc = $self->resultset('Vocabulary')->find_or_create({
+      voc_type => $voc_type,
+      voc_text => $voc_text,
+      voc_acc  => $voc_acc
+  });
+  my $voc_id = $voc->vocabulary_id;
   
   # Second, link the track to the vocabulary
-  my $link_insert = $self->resultset('VocabularyTrack')->create({
+  my $link = $self->resultset('VocabularyTrack')->find_or_create({
       track_id       => $track_id,
       vocabulary_id  => $voc_id,
   });
   $logger->debug("ADD vocabulary link $track_id - $voc_id");
-}
-
-## PRIVATE METHOD
-## Purpose   : get the id of a vocabulary; create it if it doesn't exist
-## Parameters:
-# 1) vocabulary type
-# 2) vocabulary name
-sub _get_vocabulary_id {
-  my $self = shift;
-  my ($voc_type, $voc_name) = @_;
-  
-  # Get the id if it exists
-  my $voc_res = $self->resultset('Vocabulary')->search({
-      voc_type  => $voc_type,
-      voc_name  => $voc_name
-  });
-  
-  my $voc_id;
- 
-  my $voc_result = $voc_res->first;
-  
-  # No id? Create a new one
-  if (not defined $voc_result) {
-    my $voc_create = $self->resultset('Vocabulary')->create({
-        voc_type  => $voc_type,
-        voc_name  => $voc_name
-      });
-    $voc_id = $voc_create->id;
-  } else {
-    $voc_id = $voc_result->vocabulary_id;
-  }
-  
-  return $voc_id;
 }
 
 # INSTANCE METHOD
@@ -219,9 +192,14 @@ sub get_vocabulary_for_track_id {
   # Put data in a hash[array]
   my %vocabulary;
   for my $voc ($voc_req->all) {
-    my $type = $voc->vocabulary->voc_type;
-    my $name = $voc->vocabulary->voc_name;
-    push @{ $vocabulary{$type} }, $name;
+    my $vocab = $voc->vocabulary;
+    my %cv = (
+      acc  => $vocab->voc_acc,
+      text => $vocab->voc_text,
+    );
+    my $type = $voc->vocabulary->voc_type // '';
+    
+    push @{ $vocabulary{$type} }, \%cv;
   }
   
   return \%vocabulary;

@@ -105,7 +105,16 @@ sub get_tracks {
   my %filter;
   my $me = 'me';
   
-  my @allowed_args = qw(species status aligned merge_ids track_ids sra_ids assembly);
+  my @allowed_args = qw(
+    species
+    status
+    aligned
+    merge_ids
+    track_ids
+    sra_ids
+    assembly
+    all_assemblies
+  );
   my %allowed = map { $_ => 1 } @allowed_args;
   for my $arg (keys %pars) {
     croak "Can't use argument '$arg'" if not defined $allowed{$arg};
@@ -256,7 +265,8 @@ sub get_new_runs_tracks {
   
   my @tracks = $self->get_tracks(
     species => $species,
-    aligned => 0
+    aligned => 0,
+    all_assemblies => 1,
   );
   $logger->debug((@tracks+0) . " tracks to consider as new");
   
@@ -648,6 +658,8 @@ This module is a role to interface the tracks part of the Bio::EnsEMBL::RNAseqDB
     - merge_ids = ............ merge ids strings
   
   Filter arguments:
+    - assembly  = assembly name
+    - all_assemblies = get all assemblies. Default: only retrieve the latest
     - species   = production_name
     - aligned   = 1 (with alignment files) or 0
     - status    = 'ACTIVE' (default), 'RETIRED', 'MERGED', OR '' (=all)

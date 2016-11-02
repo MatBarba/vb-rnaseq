@@ -24,6 +24,7 @@ with  'Bio::EnsEMBL::RNAseqDB::Publications';
 with  'Bio::EnsEMBL::RNAseqDB::SRA';
 with  'Bio::EnsEMBL::RNAseqDB::Analysis';
 with  'Bio::EnsEMBL::RNAseqDB::Track';
+with  'Bio::EnsEMBL::RNAseqDB::Assembly';
 with  'Bio::EnsEMBL::RNAseqDB::Bundle';
 with  'Bio::EnsEMBL::RNAseqDB::File';
 with  'Bio::EnsEMBL::RNAseqDB::Vocabulary';

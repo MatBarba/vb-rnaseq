@@ -59,7 +59,7 @@ CREATE TABLE strain (
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(species_id) REFERENCES species(species_id),
+  FOREIGN KEY(species_id) REFERENCES species(species_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY strain_id_idx              (strain_id)
 ) ENGINE=InnoDB;
@@ -92,7 +92,7 @@ CREATE TABLE assembly (
   latest                    BOOLEAN DEFAULT TRUE,
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
-  FOREIGN KEY(strain_id) REFERENCES strain(strain_id),
+  FOREIGN KEY(strain_id) REFERENCES strain(strain_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY assembly_id_idx              (assembly_id)
 ) ENGINE=InnoDB;
@@ -189,7 +189,7 @@ CREATE TABLE experiment (
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(study_id) REFERENCES study(study_id),
+  FOREIGN KEY(study_id) REFERENCES study(study_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY experiment_id_idx            (experiment_id),
   KEY experiment_study_id_idx      (study_id),
@@ -239,7 +239,7 @@ CREATE TABLE sample (
   date                      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                    ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(strain_id) REFERENCES strain(strain_id),
+  FOREIGN KEY(strain_id) REFERENCES strain(strain_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY sample_id_idx              (sample_id),
   KEY sample_sra_acc_idx         (sample_sra_acc),
@@ -282,8 +282,8 @@ CREATE TABLE run (
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(experiment_id) REFERENCES experiment(experiment_id),
-  FOREIGN KEY(sample_id) REFERENCES sample(sample_id),
+  FOREIGN KEY(experiment_id) REFERENCES experiment(experiment_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(sample_id) REFERENCES sample(sample_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY run_id_idx              (run_id),
   KEY run_experiment_id_idx   (experiment_id),
@@ -320,7 +320,7 @@ CREATE TABLE private_file (
   date                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                 ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(run_id) REFERENCES run(run_id),
+  FOREIGN KEY(run_id) REFERENCES run(run_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY private_file_id_idx              (private_file_id),
   KEY private_file_run_id_idx          (run_id)
@@ -396,8 +396,8 @@ CREATE TABLE sra_track (
   track_id              INT(10) UNSIGNED NOT NULL,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
-  FOREIGN KEY(run_id) REFERENCES run(run_id),
-  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  FOREIGN KEY(run_id) REFERENCES run(run_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(track_id) REFERENCES track(track_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY sra_track_id_idx                 (sra_track_id),
   KEY sra_track_run_id_idx             (run_id),
@@ -422,8 +422,8 @@ CREATE TABLE track_analysis (
   assembly_id           INT(10) UNSIGNED NOT NULL,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
-  FOREIGN KEY(track_id) REFERENCES track(track_id),
-  FOREIGN KEY(assembly_id) REFERENCES assembly(assembly_id),
+  FOREIGN KEY(track_id) REFERENCES track(track_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(assembly_id) REFERENCES assembly(assembly_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY track_analysis_id_idx            (track_analysis_id),
   KEY sra_track_assembly_id_idx        (assembly_id),
@@ -470,7 +470,7 @@ CREATE TABLE file (
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(track_analysis_id) REFERENCES track_analysis(track_analysis_id),
+  FOREIGN KEY(track_analysis_id) REFERENCES track_analysis(track_analysis_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY file_id_idx         (file_id),
   KEY file_track_id_idx   (track_analysis_id)
@@ -556,8 +556,8 @@ CREATE TABLE analysis (
   date                     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status                   ENUM('ACTIVE', 'RETIRED') DEFAULT 'ACTIVE',
   
-  FOREIGN KEY(analysis_description_id) REFERENCES analysis_description(analysis_description_id),
-  FOREIGN KEY(track_analysis_id) REFERENCES track_analysis(track_analysis_id),
+  FOREIGN KEY(analysis_description_id) REFERENCES analysis_description(analysis_description_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(track_analysis_id) REFERENCES track_analysis(track_analysis_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY analysis_id_idx                (analysis_id),
   KEY analysis_description_id_idx    (analysis_description_id),
@@ -637,8 +637,8 @@ CREATE TABLE study_publication (
   study_id              INT(10) UNSIGNED NOT NULL,
   publication_id        INT(10) UNSIGNED NOT NULL,
   
-  FOREIGN KEY(study_id) REFERENCES study(study_id),
-  FOREIGN KEY(publication_id) REFERENCES publication(publication_id),
+  FOREIGN KEY(study_id) REFERENCES study(study_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(publication_id) REFERENCES publication(publication_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY study_pub_id_idx                (study_pub_id),
   KEY study_pub_study_id_idx          (study_id),
@@ -706,8 +706,8 @@ CREATE TABLE bundle_track (
   track_id              INT(10) UNSIGNED NOT NULL,
   date                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
-  FOREIGN KEY(bundle_id) REFERENCES bundle(bundle_id),
-  FOREIGN KEY(track_id) REFERENCES track(track_id),
+  FOREIGN KEY(bundle_id) REFERENCES bundle(bundle_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(track_id) REFERENCES track(track_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY bundle_track_id_idx                 (bundle_track_id),
   KEY bundle_track_bundle_id_idx          (bundle_id),
@@ -760,8 +760,8 @@ CREATE TABLE vocabulary_track (
   vocabulary_id         INT(10) UNSIGNED NOT NULL,
   track_id              INT(10) UNSIGNED NOT NULL,
   
-  FOREIGN KEY(vocabulary_id) REFERENCES vocabulary(vocabulary_id),
-  FOREIGN KEY(track_id)      REFERENCES track(track_id),
+  FOREIGN KEY(vocabulary_id) REFERENCES vocabulary(vocabulary_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY(track_id)      REFERENCES track(track_id) ON DELETE CASCADE ON UPDATE CASCADE,
   
   KEY vocabulary_track_id_idx                 (vocabulary_track_id),
   KEY vocabulary_track_vocabulary_id_idx      (vocabulary_id),

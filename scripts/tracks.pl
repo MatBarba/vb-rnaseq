@@ -518,7 +518,7 @@ sub usage {
     --pipeline_dir <path> : Path to a directory where the pipeline will store its work files
     --results_dir <path>  : Path to a directory where the pipeline will store its results
     --fastq_dir <path>    : path to the fastq dir (with one directory per production_name).
-    --aligner <str>       : aligner to use ([bowtie2], star, bwa).
+    --aligner <str>       : aligner to use ([hisat2], tophat2, bowtie2, star, bwa).
     
     RUN PIPELINE
     --run_pipeline        : run the pipeline for all new tracks with the config defined above
@@ -563,7 +563,7 @@ sub opt_check {
   usage("Need --port")   if not $opt{port};
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
-  $opt{aligner} //= 'bowtie2';
+  $opt{aligner} //= 'hisat2';
   $opt{password} //= '';
   if (defined $opt{format}) {
     usage("Need --output") if not $opt{output};

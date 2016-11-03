@@ -60,7 +60,8 @@ sub add_tracks_results {
       assembly => $assembly
     );
     croak "No track for $merge_id ($assembly)" if not $track;
-    my $track_an = $track->track_analyses->single;
+    my @track_ans = $track->track_analyses;
+    my $track_an = shift @track_ans;
     
     # Then, add the data
     if ($track_an) {

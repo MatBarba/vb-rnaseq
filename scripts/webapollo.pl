@@ -118,7 +118,7 @@ sub convert_for_Webapollo {
           source              => $source // $track->{merge_text},
         );
         $metadata{pubmed}      = join(', ', @{ $group->{publications_pubmeds} }) if @{ $group->{publications_pubmeds} };
-        $metadata{description} =~ s/(<br>.*)?( ?Merged )?RNA-seq data from.+$//;
+        $metadata{description} =~ s/(<br>.*)?( ?Merged )?RNA-Seq data from.+$//;
         $metadata{description} ||= $track->{title};
         $metadata{description} = "$metadata{$accession_type} $metadata{description}";
         my $abbrev = @{ $group->{publications_abbrevs} } ? join(', ',  @{ $group->{publications_abbrevs} }) : '';

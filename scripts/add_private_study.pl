@@ -43,7 +43,7 @@ sub usage {
     $help = "[ $error ]\n";
   }
   $help .= <<'EOF';
-    This script adds private RNA-seq runs (without SRA) to the RNAseqDB from a json file.
+    This script adds private RNA-Seq runs (without SRA) to the RNAseqDB from a json file.
 
     Database connection:
     --host    <str>   : host name

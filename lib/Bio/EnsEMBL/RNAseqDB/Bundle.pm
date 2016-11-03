@@ -295,7 +295,7 @@ sub format_bundles_for_solr {
       strain_s             => $group->{strain},
       assembly             => $assembly->{name},
       site                 => 'Expression',
-      bundle_name          => 'RNA-seq track groups',
+      bundle_name          => 'RNA-Seq track groups',
       #pubmed_ids_ss        => $group->{publications_pubmeds},
       publications_ss      => $group->{publications},
       publications_ss_urls => $group->{publications_urls},
@@ -316,7 +316,7 @@ sub format_bundles_for_solr {
       my %solr_track = (
         id                            => $track->{id},
         site                          => 'Expression',
-        bundle_name                   => 'RNA-seq tracks',
+        bundle_name                   => 'RNA-Seq tracks',
         species                       => $group->{species},
         label                         => $track->{title},
         description                   => $track->{description},
@@ -464,9 +464,9 @@ sub get_bundles {
       my $merge = $track->merge_text;
       $merge =~ s/(.R[PXRS]\d{6,8})/<a href="http:\/\/www.ebi.ac.uk\/ena\/data\/view\/$1">$1<\/a>/g;
       if ($merge =~ s/_/, /g) {
-        push @description_list, "Merged RNA-seq data from: $merge";
+        push @description_list, "Merged RNA-Seq data from: $merge";
       } else {
-        push @description_list, "RNA-seq data from $merge";
+        push @description_list, "RNA-Seq data from $merge";
       }
       my $description = join("<br>", @description_list);
       

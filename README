@@ -4,7 +4,7 @@ This module is used to build and maintain a database of RNAseq tracks.
 - The modules are in lib/
 - Various scripts are in the scripts folder to:
   - Add species
-  - Add RNA-seq from SRA or from local files
+  - Add RNA-Seq from SRA or from local files
   - Annotate the metadata (e.g. create groups of tracks)
   - Retrieve tracks
 

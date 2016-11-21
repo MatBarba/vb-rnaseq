@@ -94,7 +94,7 @@ sub run_pipeline {
       $logger->info($pipeline_cmd);
       
       # Set the hivedb to be reinitialized on the following runs
-      $reinit_hivedb = '-hive_force_init';
+      $reinit_hivedb = '-hive_force_init 1';
       
       # Execute
       my $pipe_log = 'rnaseqdb_pipeline_init.log';

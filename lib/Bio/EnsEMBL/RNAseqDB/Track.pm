@@ -78,7 +78,7 @@ sub _add_track {
   my $track_id = $track_insertion->id;
   
   # Also create a bundle for this track
-  $self->_add_bundle_from_track($track_id);
+  #$self->_add_bundle_from_track($track_id);
   
   # Finally, try to create a title + description for the track
   $self->guess_track_text($track_id);
@@ -522,7 +522,7 @@ sub merge_tracks_by_sra_ids {
   $logger->debug(sprintf "Merged in track %d", $merged_track_id);
   
   # Also create and link a bundle to the track
-  $self->_add_bundle_from_track($merged_track_id);
+  #$self->_add_bundle_from_track($merged_track_id);
 
   return $merged_track_id;
 }

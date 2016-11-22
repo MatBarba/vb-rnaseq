@@ -28,6 +28,66 @@ Readonly my $PUBMED_ROOT   => 'https://www.ncbi.nlm.nih.gov/pubmed/';
 Readonly my $SRA_URL_ROOT  => 'http://www.ebi.ac.uk/ena/data/view/';
 
 ###############################################################################
+
+# Check all tracks and create a bundle for all unbundled ones
+sub create_new_bundles {
+  my $self = shift;
+  
+  # Get the list of available tracks/bundles
+  my @bundled_tracks = $self->resultset('BundleTrack')->all;
+  # Make a hash to get the bundle given a track
+  my %bundled_track = map { $_->track_id => $_->bundle_id } @bundled_tracks;
+  
+  # First, retrieve the species (we don't want to mix them)
+  my @production_names = $self->resultset('Strain')->get_column('production_name')->all;
+  
+  SPECIES: for my $species (@production_names) {
+    $logger->debug("Check new bundles for $species");
+    
+    # Get all studies/tracks for this bundle
+    my @studies = $self->resultset('Study')->search(
+      {
+        'strain.production_name' => $species,
+        'track.status' => 'ACTIVE',
+      }, {
+        prefetch => { experiments => { runs => [ { sample => 'strain' }, { sra_tracks => 'track' } ] } }
+      })->all;
+    
+    STUDY: for my $study (@studies) {
+      my $study_acc = $study->study_sra_acc // $study->study_private_acc;
+      my @tracks;
+      for my $exp ($study->experiments->all) {
+        for my $run ($exp->runs->all) {
+          for my $sra_track ($run->sra_tracks->all) {
+            my $track = $sra_track->track;
+            push @tracks, $track;
+          }
+        }
+      }
+      
+      # Check if the tracks are part of a bundle
+      my $num_bundled = 0;
+      for my $track (@tracks) {
+        $num_bundled++ if $bundled_track{ $track->track_id };
+      }
+      
+      $logger->debug("$study_acc: $num_bundled / " . (@tracks+0));
+      if ($num_bundled == @tracks) {
+        $logger->debug("\tAll tracks are in a bundle. Skip.");
+        next STUDY;
+      }
+      elsif ($num_bundled > 0) {
+        $logger->warn("\tTracks are partially bundled for $study_acc");
+        next STUDY;
+      }
+      else {
+        $logger->info("$species - $study_acc: $num_bundled tracks to bundle together.");
+        
+      }
+    }
+  }
+}
+
 sub _add_bundle_from_track {
   my ($self, $track_id) = @_;
   

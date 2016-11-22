@@ -97,9 +97,7 @@ sub run_pipeline {
       $reinit_hivedb = '-hive_force_init 1';
       
       # Execute
-      my $pipe_log = 'rnaseqdb_pipeline_init.log';
-      my $init_msg = `$pipeline_cmd 2> $pipe_log`;
-      my $pipe_log_msg = slurp $pipe_log;
+      my $pipe_log_msg = `$pipeline_cmd`;
       
       # Prepare to get the beekeeper commands
       my $beekeeper_cmd;

@@ -81,7 +81,7 @@ sub create_new_bundles {
         next STUDY;
       }
       else {
-        $logger->info("$species - $study_acc: $num_bundled tracks to bundle together.");
+        $logger->info("$species - $study_acc: " . (@tracks+0) . " tracks to bundle together.");
         
       }
     }
@@ -352,11 +352,11 @@ sub format_bundles_for_solr {
       label                => $group->{label},
       description          => $group->{description},
       species              => $group->{species},
-      strain_s             => $group->{strain},
+      strain               => [$group->{strain}],
       assembly             => $assembly->{name},
       site                 => 'Expression',
       bundle_name          => 'RNA-seq track groups',
-      pubmed               => $group->{publications_pubmeds},
+      pubmed               => [ map { 'PMID:'.$_ } @{$group->{publications_pubmeds}} ],
       hash                 => 'parentDocument',
     );
     
@@ -428,8 +428,8 @@ sub format_bundles_for_solr {
           # TODO: make url links
         }
       }
-      $solr_track{keywords_ss} = \@keywords if @keywords;
-      $solr_track{cvterms_ss}  = \@cvterms  if @cvterms;
+      $solr_track{keywords} = \@keywords if @keywords;
+      $solr_track{cvterms}  = \@cvterms  if @cvterms;
       #$solr_track{cvterms_ss_urls}  = \@cvterms_urls;
       
       push @{ $solr_group{$SOLR_CHILDREN} }, \%solr_track;

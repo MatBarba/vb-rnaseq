@@ -83,6 +83,19 @@ sub create_new_bundles {
       else {
         $logger->info("$species - $study_acc: " . (@tracks+0) . " tracks to bundle together.");
         
+        # Create a bundle
+        my $title = $study->title ? "$study_acc ".$study->title : $study_acc;
+        my $bundle_data = {
+          title_auto => $title,
+          text_auto  => $study->abstract // $study_acc
+        };
+        my $bundle_insertion = $self->resultset('Bundle')->create($bundle_data);
+        my $bundle_id = $bundle_insertion->id;
+        
+        # Link the tracks to the bundle
+        for my $track (@tracks) {
+          $self->_add_bundle_track($bundle_id, $track->track_id);
+        }
       }
     }
   }
@@ -219,6 +232,7 @@ sub inactivate_bundles {
 sub get_bundle_id_from_track_id {
   my ($self, $track_id) = @_;
   
+  $logger->debug("Search for a bundle for track $track_id");
   my $links = $self->_get_bundle_tracks_links({
       track_id => $track_id,
       'bundle.status' => 'ACTIVE'

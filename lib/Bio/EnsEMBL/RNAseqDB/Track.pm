@@ -173,6 +173,7 @@ sub get_tracks {
     {
       prefetch => [
         { 'track_analyses' => ['files', 'assembly'] },
+        { 'bundle_tracks' => 'bundle' },
         { 'sra_tracks' =>
           { 'run' => [
               { 'sample' => 'strain' },
@@ -477,11 +478,14 @@ sub merge_tracks_by_sra_ids {
   # - Inactivation of the constitutive, merged tracks (status=MERGED)
   # - Creation of a new sra_track link between the runs and the track
   
+  
+  #$self->_add_bundle_from_track($merged_track_id);
+  
   # Get the list of tracks associated with them
   my @old_tracks = $self->get_tracks(sra_ids => $sra_accs);
   my @old_track_ids = map { $_->track_id } @old_tracks;
   $logger->debug("Run_ids to merge: " . join(',', @old_track_ids));
-
+  
   # Check that there are multiple tracks to merge, abort otherwise
   my $n_tracks = scalar @old_track_ids;
   if ($n_tracks == 0) {
@@ -489,7 +493,7 @@ sub merge_tracks_by_sra_ids {
     return;
   }
   elsif ($n_tracks == 1) {
-    $logger->warn("Trying to merge tracks, but there is only one track to merge ($old_track_ids[0])");
+    $logger->debug("Trying to merge tracks, but there is only one track to merge ($old_track_ids[0])");
     return;
   } else {
     $logger->debug(sprintf "Can merge %d tracks", scalar @old_track_ids);
@@ -497,6 +501,18 @@ sub merge_tracks_by_sra_ids {
     $self->inactivate_tracks(\@old_track_ids, 'MERGED');
   }
   
+  # Check that the tracks are in one and only one bundle
+  # No bundle: don't care
+  # Several bundles: try to merge de bundles
+  my $bundle_id;
+  my @bundles = $self->_get_common_bundles(@old_tracks);
+  if (@bundles == 1) {
+    $bundle_id = $bundles[0]->bundle_id;
+  } elsif (@bundles > 1) {
+    my @bundle_ids = map { $_->bundle_id } @bundles;
+    $bundle_id = $self->merge_bundles(@bundle_ids);
+  }
+
   # Prepare the track title
   my @track_titles = uniq map { $_->title_auto } @old_tracks;
   my $track_title = shift @track_titles;
@@ -521,10 +537,33 @@ sub merge_tracks_by_sra_ids {
   my $merged_track_id = $merger_track->track_id;
   $logger->debug(sprintf "Merged in track %d", $merged_track_id);
   
-  # Also create and link a bundle to the track
-  #$self->_add_bundle_from_track($merged_track_id);
+  # Link the new track to the bundle if any
+  if ($bundle_id) {
+    $logger->info("Link new merger to corresponding bundle");
+    $self->_add_bundle_track($bundle_id, $merged_track_id); 
+  } else {
+    $logger->warn("Merge tracks but not linked to a bundle");
+  }
 
   return $merged_track_id;
+}
+
+# Input: array of tracks objects from get_tracks
+sub _get_common_bundles {
+  my $self = shift;
+  my @tracks = @_;
+  
+  my %bundles_hash;
+  for my $track (@tracks) {
+    my @bundle_tracks = $track->bundle_tracks->all;
+    for my $bt (@bundle_tracks) {
+      $bundles_hash{ $bt->bundle_id } = $bt->bundle;
+    }
+  }
+  
+  # Check number of bundles
+  my @bundles = values %bundles_hash;
+  return @bundles;
 }
 
 sub _merge_sample_tracks {
@@ -579,7 +618,7 @@ sub inactivate_tracks {
   });
 
   # Also inactivate corresponding bundles
-  $self->_inactivate_bundles_for_tracks($track_ids_aref);
+  #$self->_inactivate_bundles_for_tracks($track_ids_aref);
 }
 
 ## PRIVATE METHOD

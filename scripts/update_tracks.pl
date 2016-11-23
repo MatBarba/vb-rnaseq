@@ -114,15 +114,14 @@ sub match_tracks {
     
     # Check number of tracks found
     if (@tracks == 0) {
-      $logger->warn("No track found for SRA: $sra_list");
+      $logger->warn("No track found for the following SRAs: $sra_list");
       next ENTRY;
     }
     elsif (@tracks > 1) {
-      $logger->warn("More than 1 track found for SRA: $sra_list");
-      $logger->warn(join(',', map { $_->track_id . $_->status } @tracks));
+      $logger->warn("More than 1 track found for the following SRAs: $sra_list");
     }
     else {
-      $logger->debug("One track found for SRA: $sra_list = track_id " . $tracks[0]->track_id);
+      $logger->debug("One track found for the following SRAs: $sra_list = track_id " . $tracks[0]->track_id);
     }
     
     # Store the list of tracks
@@ -216,14 +215,14 @@ sub match_bundles {
     
     # Check number of bundles found
     if (@bundles == 0) {
-      $logger->warn("No bundle found for SRA: $sra_list");
+      $logger->warn("No bundle found for the following SRAs: $sra_list");
       next ENTRY;
     }
     elsif (@bundles > 1) {
-      $logger->warn("More than 1 bundle found for SRA: $sra_list = " . join(',', @bundles));
+      $logger->warn("More than 1 bundle found for the following SRAs: $sra_list = " . join(',', @bundles));
     }
     else {
-      $logger->debug("One bundle found for SRA: $sra_list = $bundles[0]");
+      $logger->debug("One bundle found for the following SRAs: $sra_list = $bundles[0]");
     }
     
     # Store the list of bundles

@@ -49,7 +49,7 @@ sub add_tracks_results {
   
   $logger->info("Importing " . (keys %$results_href) . " tracks");
   
-  for my $merge_id (sort keys %$results_href) {
+  TRACK: for my $merge_id (sort keys %$results_href) {
     $logger->info("Importing data for $merge_id");
     my $track_data = $results_href->{$merge_id};
     my $assembly = guess_assembly($track_data);
@@ -59,7 +59,10 @@ sub add_tracks_results {
       merge_ids => [$merge_id],
       assembly => $assembly
     );
-    croak "No track for $merge_id ($assembly)" if not $track;
+    if (not $track) {
+      $logger->warn("No track for $merge_id ($assembly). Skip.");
+      next TRACK;
+    }
     my @track_ans = $track->track_analyses;
     my $track_an = shift @track_ans;
     

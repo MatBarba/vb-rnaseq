@@ -51,6 +51,9 @@ for my $sra_acc (@sras) {
 
 $logger->info("$runs_added new runs added");
 
+# Finalization: add new bundles (by default, 1 bundle = 1 study)
+$db->create_new_bundles();
+
 ###############################################################################
 # UTILITY SUBS
 sub get_sras_from_file {

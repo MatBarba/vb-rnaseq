@@ -8,6 +8,7 @@ use File::Spec;
 use Data::Dumper;
 use Readonly;
 use File::Path qw(make_path);
+use List::MoreUtils qw(uniq);
 
 use Log::Log4perl qw( :easy );
 my $logger = get_logger();
@@ -93,8 +94,9 @@ sub create_new_bundles {
         my $bundle_id = $bundle_insertion->id;
         
         # Link the tracks to the bundle
-        for my $track (@tracks) {
-          $self->_add_bundle_track($bundle_id, $track->track_id);
+        my @track_ids = uniq map { $_->track_id } @tracks;
+        for my $track_id (@track_ids) {
+          $self->_add_bundle_track($bundle_id, $track_id);
         }
       }
     }
@@ -350,7 +352,7 @@ sub format_bundles_for_solr {
   my @solr_groups;
   
   # Alter the structure and names to create a valid Solr json for indexing
-  for my $group (@$groups) {
+  GROUP: for my $group (@$groups) {
     # Select the latest assembly data
     my $as_data = $group->{assemblies};
     my $assembly;
@@ -383,8 +385,15 @@ sub format_bundles_for_solr {
       $logger->warn("No hubs_url defined: can't create activation");
     }
     
-    foreach my $track (@{ $group->{tracks} }) {
+    TRACK: foreach my $track (@{ $group->{tracks} }) {
       my $assembly_data = $track->{assemblies}->{ $assembly->{name} };
+      
+      # Don't add track if no files
+      if (@{$assembly_data->{files}} == 0) {
+        $logger->warn("Track $track->{id} has no data. Don't export it.");
+        next TRACK;
+      }
+      
       my %solr_track = (
         id                            => $track->{id},
         site                          => 'Expression',
@@ -447,6 +456,11 @@ sub format_bundles_for_solr {
       #$solr_track{cvterms_ss_urls}  = \@cvterms_urls;
       
       push @{ $solr_group{$SOLR_CHILDREN} }, \%solr_track;
+    }
+    # Check if there are any data: don't add the group otherwise
+    if (not exists $solr_group{$SOLR_CHILDREN} ) {
+      $logger->warn("Group $group->{trackhub_id} has no track: don't add it.");
+      next GROUP;
     }
     
     push @solr_groups, \%solr_group;

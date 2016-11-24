@@ -212,11 +212,19 @@ sub prepare_hubs {
       }
 
       # Add the genome...
-      $hub->add_genome($genome);
+      if (keys %{$genome->tracks} > 0) {
+        $hub->add_genome($genome);
+      } else {
+        $logger->warn("Genome ".$genome->id." has no track. Don't add it to the hub.");
+      }
     }
     
     # And create the trackhub files
-    push @hubs, $hub;
+    if (keys %{$hub->genomes} > 0) {
+      push @hubs, $hub;
+      } else {
+        $logger->warn("Hub ".$hub->id." has no genomes. Don't create it.");
+    }
   }
   return \@hubs;
 }

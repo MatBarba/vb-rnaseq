@@ -13,6 +13,7 @@ use Perl6::Slurp;
 use List::Util qw( first );
 use File::Path qw(make_path);
 use File::Copy;
+use File::Temp;
 use Data::Dumper;
 
 use Bio::EnsEMBL::RNAseqDB;
@@ -97,7 +98,10 @@ sub run_pipeline {
       $reinit_hivedb = '-hive_force_init 1';
       
       # Execute
-      my $pipe_log_msg = `$pipeline_cmd`;
+      my $temp_pipe = File::Temp->new;
+      my $pipe_log = $temp_pipe->filename;
+      my $init_msg = `$pipeline_cmd 2> $pipe_log`;
+      my $pipe_log_msg = slurp $pipe_log;
       
       # Prepare to get the beekeeper commands
       my $beekeeper_cmd;

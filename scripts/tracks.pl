@@ -480,6 +480,7 @@ sub create_start_cmd {
   push @main_line, "-results_dir $opt->{results_dir}";
   #####################################################################################################
   push @main_line, "-aligner $opt->{aligner}";
+  push @main_line, "-tax_id_restrict 0";
   push @main_line, '-run_mode local' if $opt->{aligner} eq 'bowtie2';
   push @main_line, '-bigwig 1';
   push @main_line, '-threads 8';

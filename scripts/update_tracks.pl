@@ -109,7 +109,7 @@ sub match_tracks {
   my @ok_entries;
   ENTRY: for my $entry (@$entries) {
     # For this entry, get the list of tracks
-    my @tracks = $db->get_tracks(sra_ids => $entry->{sra_ids});
+    my @tracks = $db->get_tracks(sra_ids => $entry->{sra_ids}, species => $entry->{species});
     my $sra_list = join(',', @{ $entry->{sra_ids} });
     
     # Check number of tracks found
@@ -202,7 +202,7 @@ sub match_bundles {
   my @ok_entries;
   ENTRY: for my $entry (@$entries) {
     # For this entry, get the list of bundles
-    my @tracks = $db->get_tracks(sra_ids => $entry->{sra_ids});
+    my @tracks = $db->get_tracks(sra_ids => $entry->{sra_ids}, species => $entry->{species});
     my $sra_list = join(',', @{ $entry->{sra_ids} });
     
     # Get the corresponding bundles

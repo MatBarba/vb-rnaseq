@@ -583,6 +583,7 @@ sub get_bundles {
           }
           unshift @url_path, $opt->{files_url} if defined $opt->{files_url};
           my $url  = ''. join('/', @url_path);
+          $url = _cleanup_url($url);
 
           my %file_data = (
             'name'       => $file->path,
@@ -670,6 +671,14 @@ sub get_bundles {
   @groups = sort { $a->{species} cmp $b->{species} } @groups;
   
   return \@groups;
+}
+
+sub _cleanup_url {
+  my ($url) = @_;
+  
+  $url =~ s/%/%25/g;
+  
+  return $url;
 }
 
 sub _get_bundles {

@@ -315,15 +315,10 @@ sub get_samples {
 sub _prepare_hub_activation_link {
   my $self = shift;
   my ($hubs_root, $group) = @_;
-  my $samples = $self->get_samples();
   if ($hubs_root and $group) {
-    my $hub_url = $hubs_root . '/' . $group->{production_name} . '/' . $group->{trackhub_id} . '/hub.txt';
-    my $activation_url = '/' . ucfirst($group->{production_name}) . '/Location/View?'
-    . 'r=' . $samples->{$group->{production_name}} . ';'
-    . 'contigviewbottom=url:' . $hub_url . ';'
-    . 'format=TRACKHUB;'
-    . 'menu=' . $group->{label} . ';'
-    ;
+    my $hub_url = join '/', ($hubs_root, $group->{production_name}, $group->{trackhub_id}, 'hub.txt');
+    my $activation_url = sprintf('/TrackHub?url=%s;species=%s;name=%s;registry=1', $hub_url, ucfirst($group->{production_name}), $group->{label});
+    
     return $activation_url;
   }
   return;

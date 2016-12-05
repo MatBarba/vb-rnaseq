@@ -92,6 +92,7 @@ sub usage {
     
     Input:
     --sra_acc <str>   : SRA accession (e.g. SRP000000 for a study)
+    --species <str>   : production_name for the species to use (optional, in case of ambiguity)
     or
     --file <path>     : path to a file with a list of SRA accessions
     
@@ -114,6 +115,7 @@ sub opt_check {
     "password=s",
     "db=s",
     "sra_acc=s",
+    "species=s",
     "file=s",
     "help",
     "verbose",

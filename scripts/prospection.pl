@@ -22,7 +22,7 @@ use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
-Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
+Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND first_public>=%s AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
 Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=%s&result=read_run&fields=fastq_bytes,submitted_bytes';
 
 ###############################################################################
@@ -204,7 +204,8 @@ sub get_studies_for_taxon {
   my ($taxon_id, $opt) = @_;
   $opt //= {};
   
-  my $url = sprintf($run_info_template, $taxon_id);
+  my $pub_date = $opt->{pub_date} // 1972-01-01;
+  my $url = sprintf($run_info_template, $taxon_id, $pub_date);
   #say $url;
   my $xml = get $url or croak "Download failed for $url";
   my $dom = XML::LibXML->load_xml(string => $xml);
@@ -301,10 +302,13 @@ sub usage {
     
     Actions:
     --list_species    : list the current species in the database
+    --search          : search for new RNA-Seq studies
     
+    Options:
     --species <str>     : production_name to only search for one species
     --antispecies <str> : production_name of species to exclude
-    --add_size        : retrieve total fastq size of files (takes longer)
+    --add_size          : retrieve total fastq size of files (takes longer)
+    --pub_date          : Date of first publication of the runs (to find recent ones)
     
     --help            : show this help message
     --verbose         : show detailed progress
@@ -327,6 +331,7 @@ sub opt_check {
     "antispecies=s",
     "list_species",
     "add_size",
+    "pub_date=s",
     "search",
     "help",
     "verbose",
@@ -339,6 +344,7 @@ sub opt_check {
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
   $opt{password} ||= '';
+  usage("Need an action") if not( $opt{list_species} xor $opt{search});
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

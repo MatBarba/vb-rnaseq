@@ -35,31 +35,16 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 
 my $data = $db->get_new_runs_tracks( $opt{species} );
 if (keys %$data == 0) {
-  die "No track to extract";
+  die "No tracks to align";
 }
 
-if ($opt{run_pipeline}) {
+if ($opt{list}) {
+    my $json = JSON->new->allow_nonref;
+    print $json->pretty->encode($data) . "\n";
+}
+elsif ($opt{run_pipeline}) {
   run_pipeline($db, $data, \%opt);
 }
-
-if (defined $opt{output}) {
-  open my $OUT, '>', $opt{output};
-  if ($opt{format} eq 'json') {
-    my $json = JSON->new->allow_nonref;
-    print $OUT $json->pretty->encode($data) . "\n";
-  }
-  elsif ($opt{format} eq 'pipeline') {
-    my $command_lines = tracks_for_pipeline($data, \%opt);
-    print $OUT join("\n", @$command_lines) if @$command_lines;
-  }
-  elsif ($opt{run_pipeline}) {
-    say "TODO: run pipeline";
-  }
-  else {
-    warn "Unsupported format: $opt{format}\n";
-  }
-}
-
 
 ###############################################################################
 # SUBS
@@ -497,38 +482,35 @@ sub usage {
     $help = "[ $error ]\n";
   }
   $help .= <<'EOF';
-    This script export the list of tracks to create from an RNAseq DB in a JSON format.
+    This script extracts a list of tracks to be aligned and either display the list,
+    or align them with a pipeline.
 
-    Database connection:
+    DATABASE CONNECTION
     --host    <str>   : host name
     --port    <int>   : port
     --user    <str>   : user name
     --password <str>  : password
     --db <str>        : database name
     
-    Tracks filter:
-    --species <str>   : only outputs tracks for a given species (production_name)
+    FILTERS
+    --species <str>   : only use tracks for a given species (production_name)
     
-    The script can either output the list of tracks to create in json format or a list of commands,
-    or run the pipelines themselves.
+    ACTIONS
+    --run_pipeline   : run the pipeline for all new tracks with the config defined below
+    --list           : list the tracks to be aligned (print to STDOUT)
     
-    FILES OUTPUT
-    --format <str>    : output format: json (default), pipeline.
-    --output <path>   : path to the output file
-    
-    Pipeline config (both for the list of commands and running):
-    --registry <path>     : Path a registry file for the pipeline
-    --pipeline_dir <path> : Path to a directory where the pipeline will store its work files
-    --results_dir <path>  : Path to a directory where the pipeline will store its results
-    --fastq_dir <path>    : path to the fastq dir (with one directory per production_name).
+    PIPELINE CONFIG
+    --registry <path>     : Path a registry file
     --aligner <str>       : aligner to use ([hisat2], tophat2, bowtie2, star, bwa).
-    
-    RUN PIPELINE
-    --run_pipeline        : run the pipeline for all new tracks with the config defined above
+    --pipeline_dir <path> : Path to a directory where the pipeline will store its work files
+                            (temp, but can be reused so not deleted)
+    --results_dir <path>  : Path to a directory where the pipeline will store its results
+                            (temp also)
     --final_dir <path>    : path to the directory where the final files will be moved
+                            (the files are copied in a specific directory structure)
+    --fastq_dir <path>    : path to the fastq dir (with one directory per production_name), if any.
     
-    Other:
-    
+    OTHER
     --help            : show this help message
     --verbose         : show detailed progress
     --debug           : show even more information (for debugging purposes)
@@ -553,8 +535,7 @@ sub opt_check {
     "final_dir=s",
     "aligner=s",
     "species=s",
-    "output=s",
-    "format=s",
+    "list",
     "run_pipeline",
     "help",
     "verbose",
@@ -568,18 +549,13 @@ sub opt_check {
   usage("Need --db")     if not $opt{db};
   $opt{aligner} //= 'hisat2';
   $opt{password} //= '';
-  if (defined $opt{format}) {
-    usage("Need --output") if not $opt{output};
-  }
-  if (($opt{format} and $opt{format} eq 'pipeline') or $opt{run_pipeline}) {
+  if ($opt{run_pipeline}) {
     usage("Need --registry") if not $opt{registry};
     usage("Need --pipeline_dir") if not $opt{pipeline_dir};
     usage("Need --results_dir") if not $opt{results_dir};
+    usage("Need --final_dir") if not $opt{final_dir};
   }
-  if ($opt{run_pipeline}) {
-      usage("Need --final_dir") if not $opt{final_dir};
-  }
-  usage("Need --format or --run_pipeline") if not $opt{format} and not $opt{run_pipeline};
+  usage("Need --list --run_pipeline") if not ($opt{list} xor $opt{run_pipeline});
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

@@ -274,6 +274,7 @@ sub tracks_for_pipeline {
     #  all tracks
     my $tracks = $data->{$species};
     my %merged_runs;
+    my %merged_groups;
     TRACK: foreach my $track_id (keys %$tracks) {
       my $track = $tracks->{$track_id};
       my $run_accs = $track->{run_accs};
@@ -286,12 +287,7 @@ sub tracks_for_pipeline {
         if (defined $merge_level and $merge_level ne 'taxon') {
           push @{ $merged_runs{$merge_level} }, @$run_accs;
         } else {
-          # Create a command line for this track
-          push @tracks_lines, create_track_command(
-              run_accs         => $run_accs,
-              merge_level      => 'taxon',
-              merge_id         => $merge_id,
-            );
+          push @{ $merged_groups{$merge_id} }, @$run_accs;
         }
       }
       elsif ($fastqs) {
@@ -315,6 +311,14 @@ sub tracks_for_pipeline {
           push @tracks_lines, create_track_command(
               run_accs         => $merged_runs{$merge_level},
               merge_level      => $merge_level,
+            );
+    }
+    
+    # Special merge groups
+    foreach my $merge_id (keys %merged_runs) {
+          push @tracks_lines, create_track_command(
+              run_accs         => $merged_runs{$merge_id},
+              merge_id         => $merge_id,
             );
     }
     
@@ -352,6 +356,7 @@ sub create_track_cmds {
   
   # Group tracks with the same merge_level (but not taxon)
   my %merged_runs;
+  my %merged_groups;
   
   TRACK: foreach my $track_id (keys %$tracks) {
     my $track       = $tracks->{$track_id};
@@ -379,14 +384,9 @@ sub create_track_cmds {
       if (defined $merge_level and $merge_level ne 'taxon') {
         push @{ $merged_runs{$merge_level} }, @$run_accs;
       
-        # Otherwise, create this one track individually
+      # Otherwise, group the groups
       } else {
-        $merge_level = 'taxon';
-        push @track_cmds, create_track_command(
-          merge_level      => $merge_level,
-          merge_id         => $merge_id,
-          run_accs         => $run_accs,
-        );
+        push @{ $merged_groups{$merge_id} }, @$run_accs;
       }
     }
     
@@ -408,12 +408,42 @@ sub create_track_cmds {
   }
 
   # Create commands for tracks grouped by merge_level
+  my %level_commands;
   foreach my $merge_level (keys %merged_runs) {
-    push @track_cmds, create_track_command(
+    push @{$level_commands{$merge_level}}, create_track_command(
       run_accs         => $merged_runs{$merge_level},
       merge_level      => $merge_level,
     );
   }
+  
+  # Create commands for tracks grouped by merge_id
+  my @merge_line;
+  foreach my $merge_id (keys %merged_groups) {
+    push @merge_line, create_track_command(
+      run_accs         => $merged_groups{$merge_id},
+      merge_id         => $merge_id,
+    );
+  }
+  
+  # Join the merge_group to the rest if there is one level only
+  if (keys %level_commands == 0) {
+      $logger->info('Only merged groups');
+      push @track_cmds, join(' ', @merge_line) if @merge_line;
+  } elsif (keys %level_commands == 1) {
+      $logger->info('One merge level');
+      my ($merge_level) = keys %level_commands;
+      my @level_line = @{$level_commands{$merge_level}};
+      push @level_line, @merge_line;
+      push @track_cmds, join(' ', @level_line) if @level_line;
+  } else {
+      $logger->info('Several merge levels');
+      for my $merge_level (sort keys %level_commands) {
+          my @level_line = @{$level_commands{$merge_level}};
+          push @track_cmds, join(' ', @level_line) if @level_line;
+      }
+      push @track_cmds, join(' ', @merge_line) if @merge_line;
+  }
+  
   return \@track_cmds;
 }
 
@@ -421,11 +451,17 @@ sub create_track_command {
   my %arg = @_;
   
   my @line;
-  push @line, (
-    "-merge_level $arg{merge_level}",
-  );
-  push @line, "-merge_id $arg{merge_id}" if defined $arg{merge_id};
-  push @line, map { "-run $_" } @{$arg{run_accs}};
+  
+  if ($arg{merge_level}) {
+      push @line, (
+          "-merge_level $arg{merge_level}",
+      );
+      push @line, "-merge_id $arg{merge_id}" if defined $arg{merge_id};
+      push @line, map { "-run $_" } @{$arg{run_accs}};
+  }
+  elsif ($arg{merge_id}) {
+      push @line, "-merge_group $arg{merge_id}=" . join(',',  @{$arg{run_accs}});
+  }
   my $command = join ' ', @line;
   return $command;
 }

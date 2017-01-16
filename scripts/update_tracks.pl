@@ -97,10 +97,6 @@ sub update_tracks {
   
   # 3) Annotate tracks
   annotate_tracks($db, $matched_entries) if $opt->{annotate_tracks};
-  
-  # 4) Force regenerate all the merge_ids
-  my $force = 1;
-  $db->regenerate_merge_ids($force);
 }
 
 sub match_tracks {
@@ -146,9 +142,16 @@ sub merge_tracks {
     if (@{$entry->{tracks}} > 1) {
       my $track_id = $db->merge_tracks_by_sra_ids($entry->{sra_ids});
       $entry->{tracks} = [$track_id];
+    } else {
+      $logger->warn("No more than 1 tracks to merge");
     }
     push @merged_entries, $entry;
   }
+  
+  # Force regenerate all the merge_ids
+  my $force = 0;
+  $db->regenerate_merge_ids($force);
+  
   return \@merged_entries;
 }
 
@@ -172,6 +175,10 @@ sub annotate_tracks {
     };
     $db->update_track($track_id, $track_content);
   }
+  
+  # Regenerate the human file name
+  $logger->info("Regenerate human file names");
+  $db->update_file_names();
 }
 
 ###############################################################################

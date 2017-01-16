@@ -44,6 +44,7 @@ my ($groups, $hubs);
 if (
        $opt{create}
     or $opt{register}
+    or $opt{update}
     or $opt{delete}
     or $opt{public_hubs}
     or $opt{private_hubs}
@@ -72,10 +73,23 @@ if ($opt{reg_user} and $opt{reg_pass}) {
 create_hubs($hubs)  if $opt{create};
 list_db_hubs($hubs) if $opt{list_db};
 if ($registry) {
-  if ($opt{register}) {
     $registry->is_public(1) if $opt{public_hubs};
     $registry->is_public(0) if $opt{private_hubs};
-    $registry->register_track_hubs(@$hubs);
+  if ($opt{register}) {
+    # Only register new hubs
+    my @reg_hubs_ids = $registry->get_registered_ids();
+    my %reg_hubs     = map { $_ => 1 } @reg_hubs_ids;
+    my @new_hubs     = grep { not $reg_hubs{$_->id} } @$hubs;
+    if (@new_hubs > 0) {
+        $logger->info((@new_hubs+0)." new hubs to register");
+        $registry->register_track_hubs(@new_hubs);
+    } else {
+        $logger->info("No new hubs to register");
+    }
+  }
+  if ($opt{update}) {
+      # Register all
+      $registry->register_track_hubs(@$hubs);
   }
   delete_hubs($registry, $hubs, \%opt) if $opt{delete};
   
@@ -138,7 +152,11 @@ sub prepare_hubs {
       # Add all tracks to the genome
       my @big_tracks;
       my @bam_tracks;
-      TRACK: for my $track (sort { $a->{id} cmp $b->{id} } @{ $group->{tracks} }) {
+      my $num = 0;
+      TRACK: for my $track (sort by_numbered_title @{ $group->{tracks} }) {
+          #TRACK: for my $track (@{ $group->{tracks} }) {
+        $num++;
+        
         # Get the bigwig file
         my $bigwig = get_file($track, 'bigwig', $assembly_id);
         if (not $bigwig) {
@@ -147,7 +165,7 @@ sub prepare_hubs {
         }
 
         my $big_track = Track->new(
-          track       => $track->{id} . '_bigwig',
+          track       => sprintf("%03d_%s.%s", $num, $track->{id}, 'bigwig'),
           shortLabel  => ($track->{title} // $track->{id}),
           longLabel   => ($track->{description} // $track->{id}),
           bigDataUrl  => $bigwig->{url},
@@ -165,7 +183,7 @@ sub prepare_hubs {
         }
 
         my $bam_track = Track->new(
-          track       => $track->{id} . '_bam',
+          track       => sprintf("%03d_%s.%s", $num, $track->{id}, 'bam'),
           shortLabel  => ($track->{title} // $track->{id}),
           longLabel   => ($track->{description} // $track->{id}),
           bigDataUrl  => $bam->{url},
@@ -227,6 +245,29 @@ sub prepare_hubs {
     }
   }
   return \@hubs;
+}
+
+sub by_numbered_title {
+    my $atitle = $a->{title} // $a->{id};
+    my $btitle = $b->{title} // $b->{id};
+    $atitle =~ s/(\d+?)(th|rd|st)/$1/g;
+    my ($apref, $anum, $asuf ) = $atitle =~ /^(\D*)(\d+)(?:-\d+)?(.*$)/;
+    my ($bpref, $bnum, $bsuf ) = $btitle =~ /^(\D*)(\d+)(?:-\d+)?(.*$)/;
+    $apref = '' if not $apref;
+    $bpref = '' if not $bpref;
+    $asuf  = '' if not $asuf;
+    $bsuf  = '' if not $bsuf;
+    
+    if ($anum and $bnum) {
+        if ($apref eq $bpref and
+            $asuf  eq $bsuf) {
+            $anum <=> $bnum;
+        } else {
+            "$apref $asuf" cmp "$bpref $bsuf";
+        }
+    } else {
+        $atitle cmp $btitle;
+    }
 }
 
 sub get_file {
@@ -301,7 +342,7 @@ sub list_db_hubs {
 sub list_reg_hubs {
   my ($registry, $hubs) = @_;
   
-  my @reg_hubs = $registry->get_all_registered();
+  my @reg_hubs = $registry->get_registered();
   my $num_hubs = @reg_hubs;
   print "$num_hubs track hubs registered\n";
   for my $hub_id (@reg_hubs) {
@@ -371,10 +412,12 @@ sub usage {
     
     Create:
     --create          : create the hub files
+    --email           : email for the track hubs [mandatory]
     
     Register:
-    --register        : register the hub files
+    --register        : register any new track hub
                         (the hub files must exist)
+    --update          : register or update all track hubs
     --hub_server <str>: http/ftp address to the root of the hub files
     --reg_user <str>  : Track Hub Registry user name
     --reg_pass <str>  : Track Hub Registry password
@@ -425,6 +468,7 @@ sub opt_check {
     "email=s",
     "create",
     "register",
+    "update",
     "reg_user=s",
     "reg_pass=s",
     "hub_server=s",
@@ -446,11 +490,11 @@ sub opt_check {
   usage("Need --db")     if not $opt{db};
   usage("Need --hub_root") if $opt{create} and not $opt{hub_root};
   $opt{password} //= '';
-  usage("Need registry user and password") if ($opt{register} or $opt{delete} or $opt{public_hubs} or $opt{private_hubs} or $opt{list_registry} or $opt{list_diff}) and not ($opt{reg_user} and $opt{reg_pass});
-  usage("Need hub server") if $opt{register} and not $opt{hub_server};
+  usage("Need registry user and password") if ($opt{register} or $opt{update} or $opt{delete} or $opt{public_hubs} or $opt{private_hubs} or $opt{list_registry} or $opt{list_diff}) and not ($opt{reg_user} and $opt{reg_pass});
+  usage("Need hub server") if ($opt{register} or $opt{update}) and not $opt{hub_server};
   usage("Select public XOR private") if ($opt{public_hubs} and $opt{private_hubs});
   usage("Select --register with public/private") if ($opt{public_hubs} or $opt{private_hubs}) and not $opt{register};
-  usage("Select an action") if not ($opt{create} or $opt{register} or $opt{delete} or $opt{list_db} or $opt{list_registry} or $opt{list_diff});
+  usage("Select an action") if not ($opt{create} or $opt{register} or $opt{update} or $opt{delete} or $opt{list_db} or $opt{list_registry} or $opt{list_diff});
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

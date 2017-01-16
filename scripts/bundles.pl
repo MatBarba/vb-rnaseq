@@ -157,6 +157,7 @@ sub opt_check {
   $opt{hubs_url} = $opt{files_url} . '/hubs' if $opt{files_url} and not $opt{hubs_url};
   $opt{password} //= '';
   $opt{format} = 'json' if not defined $opt{format};
+  usage("--human_dir can only be used with --format solr") if $opt{human_dir} and not $opt{format} eq 'solr';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};
   return \%opt;

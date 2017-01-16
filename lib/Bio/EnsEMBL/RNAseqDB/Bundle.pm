@@ -484,7 +484,7 @@ sub get_bundles {
       $group{label} = $group{id};
     }
     if (not defined $group{description}) {
-      $logger->warn("WARNING: bundle $group{id} has no description.");
+      $logger->debug("WARNING: bundle $group{id} has no description.");
     }
     
     # Get the data associated with every track

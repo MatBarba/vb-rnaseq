@@ -22,7 +22,8 @@ use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
 
-Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND first_public>=%s AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
+Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
+Readonly my $run_info_date_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND first_public>=%s AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
 Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=%s&result=read_run&fields=fastq_bytes,submitted_bytes';
 
 ###############################################################################
@@ -128,13 +129,15 @@ sub search {
   }
 
   # Find studies from DB that were not found
-  my %not_found;
-  for my $study (keys %$db_study) {
-    $not_found{$study}++ if not exists $completed_studies{$study};
-  }
+  if (not $opt->{pub_date}) {
+      my %not_found;
+      for my $study (keys %$db_study) {
+          $not_found{$study}++ if not exists $completed_studies{$study};
+      }
 
-  for my $missing_study (keys %not_found) {
-    say STDERR "MISSING STUDY: $missing_study";
+      for my $missing_study (keys %not_found) {
+          say STDERR "MISSING STUDY: $missing_study";
+      }
   }
 }
 
@@ -204,8 +207,12 @@ sub get_studies_for_taxon {
   my ($taxon_id, $opt) = @_;
   $opt //= {};
   
-  my $pub_date = $opt->{pub_date} // 1972-01-01;
-  my $url = sprintf($run_info_template, $taxon_id, $pub_date);
+  my $url;
+  if ($opt->{pub_date}) {
+      $url = sprintf($run_info_date_template, $taxon_id, $opt->{pub_date});
+  } else {
+      $url = sprintf($run_info_template, $taxon_id);
+  }
   #say $url;
   my $xml = get $url or croak "Download failed for $url";
   my $dom = XML::LibXML->load_xml(string => $xml);

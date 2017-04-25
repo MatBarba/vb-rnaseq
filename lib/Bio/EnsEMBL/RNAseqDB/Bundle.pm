@@ -317,7 +317,11 @@ sub _prepare_hub_activation_link {
   my ($hubs_root, $group) = @_;
   if ($hubs_root and $group) {
     my $hub_url = join '/', ($hubs_root, $group->{production_name}, $group->{trackhub_id}, 'hub.txt');
-    my $activation_url = sprintf('/TrackHub?url=%s;species=%s;name=%s;registry=1', $hub_url, ucfirst($group->{production_name}), $group->{label});
+    my $name = $group->{label};
+    $name =~ s/[^A-z0-9]+/_/g; # Replace all non alphanumeric chars, otherwise https://jira.vectorbase.org/browse/VB-6331
+    $name =~ s/^_+//;
+    $name =~ s/_+$//;
+    my $activation_url = sprintf('/TrackHub?url=%s;species=%s;name=%s;registry=1', $hub_url, ucfirst($group->{production_name}), $name);
     
     return $activation_url;
   }
@@ -480,7 +484,7 @@ sub get_bundles {
     );
     $group{description} ||= $group{label};
     if (not defined $group{label}) {
-      $logger->warn("WARNING: bundle $group{id} has no label (no auto or manual title). Using the id as label.");
+      $logger->debug("WARNING: bundle $group{id} has no label (no auto or manual title). Using the id as label.");
       $group{label} = $group{id};
     }
     if (not defined $group{description}) {
@@ -538,7 +542,7 @@ sub get_bundles {
         push @description_list, $track_description;
       } else {
         my $track_name = $TRACK_PREFIX . $track->id;
-        $logger->warn("WARNING: Track '$track_name' with title '$title' has no description");
+        $logger->debug("WARNING: Track '$track_name' with title '$title' has no description");
       }
       
       # Add the list of SRA ids to the description anyway

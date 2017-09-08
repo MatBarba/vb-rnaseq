@@ -9,4 +9,5 @@ requires 'Readonly';
 requires 'Log::Log4perl';
 requires 'aliased';
 requires 'namespace::autoclean';
+requires 'HTML::Strip';
 

@@ -158,7 +158,7 @@ sub merge_tracks {
 sub annotate_tracks {
   my ($db, $entries) = @_;
   
-  if (@$entries == 0) {
+  if (not $entries or @$entries == 0) {
     $logger->info("No tracks to annotate");
     return;
   }

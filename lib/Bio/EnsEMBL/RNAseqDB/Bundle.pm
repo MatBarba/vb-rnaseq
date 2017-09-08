@@ -371,6 +371,8 @@ sub format_bundles_for_solr {
       assembly             => $assembly->{name},
       site                 => 'Expression',
       bundle_name          => 'RNA-Seq track groups',
+      bundle               => 'rna-seq_track_groups',
+      entity_type          => 'rna-seq_track_groups',
       pubmed               => [ map { 'PMID:'.$_ } @{$group->{publications_pubmeds}} ],
       hash                 => 'parentDocument',
     );
@@ -397,6 +399,8 @@ sub format_bundles_for_solr {
         id                            => $track->{id},
         site                          => 'Expression',
         bundle_name                   => 'RNA-Seq tracks',
+        bundle                        => 'rna-seq_tracks',
+        entity_type                   => 'rna-seq_tracks',
         species                       => $group->{species},
         label                         => $track->{title},
         description                   => $track->{description},

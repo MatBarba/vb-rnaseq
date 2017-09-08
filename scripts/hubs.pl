@@ -93,8 +93,8 @@ if ($registry) {
   }
   delete_hubs($registry, $hubs, \%opt) if $opt{delete};
   
-  list_reg_hubs($registry)      if $opt{list_registry};
-  diff_hubs($registry, $hubs)   if $opt{list_diff};
+  list_reg_hubs($registry, $opt{species}) if $opt{list_registry};
+  diff_hubs($registry, $hubs, $opt{species})   if $opt{list_diff};
 }
 
 ###############################################################################
@@ -136,7 +136,7 @@ sub prepare_hubs {
     }
     
     my $species_dir = $dir . '/' . $group->{production_name};
-    make_path $species_dir;
+    make_path $species_dir if $opt{create};
     $hub->root_dir( $species_dir );
     
     # Add each assembly
@@ -195,7 +195,7 @@ sub prepare_hubs {
       }
 
       if (@big_tracks == 0) {
-        carp "No track can be used for this group $group->{id}: skip";
+        $logger->warn("No track can be used for this group $group->{id}: skip");
         next GROUP;
         #} elsif (@big_tracks == 1) {
         #$genome->add_track($big_tracks[0]);
@@ -340,21 +340,23 @@ sub list_db_hubs {
 }
 
 sub list_reg_hubs {
-  my ($registry, $hubs) = @_;
+  my ($registry, $species) = @_;
   
   my @reg_hubs = $registry->get_registered();
+  @reg_hubs = grep { $_->{url} =~ /$species\// } @reg_hubs if $species;
   my $num_hubs = @reg_hubs;
   print "$num_hubs track hubs registered\n";
-  for my $hub_id (@reg_hubs) {
-    print "$hub_id\n";
+  for my $hub (@reg_hubs) {
+    print "$hub->{name} = $hub->{shortLabel}\n";
   }
 }
 
 sub diff_hubs {
-  my ($registry, $hubs) = @_;
+  my ($registry, $hubs, $species) = @_;
   
   my @db_hubs  = get_list_db_hubs($hubs);
   my @reg_hubs = $registry->get_registered();
+  @reg_hubs = grep { $_->{url} =~ /$species\// } @reg_hubs if $species;
   
   my %db_hub_hash  = map { $_ => 1 } @db_hubs;
   my %reg_hub_hash = map { $_->{name} => 1 } @reg_hubs;
@@ -493,7 +495,7 @@ sub opt_check {
   usage("Need registry user and password") if ($opt{register} or $opt{update} or $opt{delete} or $opt{public_hubs} or $opt{private_hubs} or $opt{list_registry} or $opt{list_diff}) and not ($opt{reg_user} and $opt{reg_pass});
   usage("Need hub server") if ($opt{register} or $opt{update}) and not $opt{hub_server};
   usage("Select public XOR private") if ($opt{public_hubs} and $opt{private_hubs});
-  usage("Select --register with public/private") if ($opt{public_hubs} or $opt{private_hubs}) and not $opt{register};
+  usage("Select --register with public/private") if ($opt{public_hubs} or $opt{private_hubs}) and not ($opt{register} xor $opt{update});
   usage("Select an action") if not ($opt{create} or $opt{register} or $opt{update} or $opt{delete} or $opt{list_db} or $opt{list_registry} or $opt{list_diff});
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

@@ -24,7 +24,7 @@ my $logger = get_logger();
 
 Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
 Readonly my $run_info_date_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND first_public>=%s AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
-Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=%s&result=read_run&fields=fastq_bytes,submitted_bytes';
+Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=%s&result=read_run&fields=fastq_bytes,submitted_bytes,tax_id';
 
 ###############################################################################
 # MAIN
@@ -68,6 +68,7 @@ if ($opt{search}) {
   exps
   runs
   samps
+  complete
   fastq_bytes
   pubmed
   center
@@ -177,11 +178,14 @@ sub print_study {
     @$experiments+0,
     @$runs+0,
     @$samples+0,
-    $st->{fastq_size} // 0,
+    $st->{fastq_complete} // '-',
+    $st->{fastq_size} // '-',
     $pubmed_id,
     $st->center_name,
     $st->title,
     $abstract,
+    $st->{first_public} // 0,
+    $st->{last_update} // 0,
   );
   say join("\t", @line);
 }
@@ -225,19 +229,34 @@ sub get_studies_for_taxon {
   RUN : foreach my $run ($runs->get_nodelist) {
     my $run_id = $run->findnodes('.//PRIMARY_ID')->shift()->textContent;
     my $xrefs = $run->findnodes('.//XREF_LINK');
+    my $study_id;
     XREF : foreach my $xref ($xrefs->get_nodelist) {
       my $DB = $xref->findnodes('./DB')->shift()->textContent;
       if ($DB eq 'ENA-STUDY') {
-        my $study_id = $xref->findnodes('./ID')->shift()->textContent;
+        $study_id = $xref->findnodes('./ID')->shift()->textContent;
         
         # Commpute the size of the fasta
-        my $run_fastq_size = exists $opt->{add_size} ? get_fastq_size($run_id, $study_id) : 0;
+        my ($run_fastq_size, $right_species) = exists $opt->{add_size} ? get_fastq_size($run_id, $study_id, $taxon_id) : 0;
         
         # Save the count for the study
-        $study{$study_id} += $run_fastq_size;
+        $study{$study_id}{fastq_size} += $run_fastq_size;
+        $study{$study_id}{complete}   += $run_fastq_size > 0 ? 1 : 0;
+        $study{$study_id}{run_count}++ if $right_species;
         if (++$count % 10 == 0) {
           sleep 1;
         }
+      }
+    }
+    
+    my $attributes = $run->findnodes('.//RUN_ATTRIBUTE');
+    ATTR : foreach my $attr ($attributes->get_nodelist) {
+      my $tag = $attr->findnodes('.//TAG')->shift()->textContent;
+      if ($tag eq 'ENA-LAST-UPDATE') {
+        my $value = $attr->findnodes('.//VALUE')->shift()->textContent;
+        $study{$study_id}{last_update} = $value;
+      } elsif ($tag eq 'ENA-FIRST-PUBLIC') {
+        my $value = $attr->findnodes('.//VALUE')->shift()->textContent;
+        $study{$study_id}{first_public} = $value;
       }
     }
   }
@@ -245,8 +264,12 @@ sub get_studies_for_taxon {
   my @studies;
   for my $study_id (keys %study) {
     my $study = get_study($study_id);
-    my $size = $study{$study_id};
-    $study->{fastq_size} = $size;
+    
+    # Proportion of runs with data in the study
+    $study{$study_id}{fastq_complete} = "$study{$study_id}{complete}/$study{$study_id}{run_count}";
+    
+    my $run_study = $study{$study_id};
+    %$study = (%$study, %$run_study);
     push @studies, $study;
   }
   return @studies;
@@ -262,7 +285,7 @@ sub get_study {
 }
 
 sub get_fastq_size {
-  my ($run_id, $study_id) = @_;
+  my ($run_id, $study_id, $db_tax_id) = @_;
   
   my $url = sprintf($fastq_size_template, $run_id);
   my $run_text = get $url or croak "Download failed for $url";
@@ -270,21 +293,35 @@ sub get_fastq_size {
   
   # We only want the second line data
   my @lines = split /\R+/, $run_text;
+  
   if (@lines == 1) {
     say STDERR "$study_id: No fastq data for $run_id";
-    return 0;
+    return (0, 0);
   }
   
   # ena fastq or submitted fastq?
-  my ($ena_fastq, $sub_fastq) = split /\t+/, $lines[1];
+  my ($ena_fastq, $sub_fastq, $sra_tax_id) = split /\t/, $lines[1];
+  
+  # Skip if the species is different that the one requested
+  return 0 if $sra_tax_id and $sra_tax_id != $db_tax_id;
+  
+  # Rare case: no tax_id for the run
+  if (not defined $sra_tax_id) {
+    say STDERR "$study_id - $run_id has no tax_id";
+    return (0, 0);
+  } elsif ($sra_tax_id != $db_tax_id) {
+    say STDERR "$study_id - $run_id is not the tax_id we want";
+    return (0, 0);
+  }
+  
   my $sizes = $ena_fastq ? $ena_fastq : $sub_fastq;
   
   if ($sizes) {
     my $size = sum split(/;/, $sizes);
-    return $size;
+    return ($size, 1);
   } else {
-    carp "No fastq size available for $run_id";
-    return 0;
+    say STDERR "No fastq size available for $run_id in $study_id";
+    return (0, 1);
   }
 }
 

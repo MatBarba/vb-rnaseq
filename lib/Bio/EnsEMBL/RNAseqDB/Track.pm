@@ -172,11 +172,11 @@ sub get_tracks {
   my $track_req = $self->resultset('Track')->search(\%search,
     {
       prefetch => [
-        { 'track_analyses' => ['files', 'assembly'] },
+        { 'track_analyses' => ['files', 'assembly' ] },
         { 'bundle_tracks' => 'bundle' },
         { 'sra_tracks' =>
           { 'run' => [
-              { 'sample' => 'strain' },
+              'sample',
               { 'experiment' => 'study' },
               'private_files',
             ]
@@ -522,7 +522,7 @@ sub merge_tracks_by_sra_ids {
   my $track_text = shift @track_texts;
   
   # Create a new merged track
-  my $assembly_id = $old_tracks[0]->sra_tracks->next->run->sample->strain->assemblies->next->assembly_id;
+  my $assembly_id = $old_tracks[0]->track_analyses->next->assembly->assembly_id;
   my @run_ids = map { map { {run_id => $_->run->run_id} } $_->sra_tracks } @old_tracks;
   my $merger_track = $self->resultset('Track')->create({
       title_auto => $track_title,

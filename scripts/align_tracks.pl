@@ -505,6 +505,8 @@ sub create_start_cmd {
   push @main_line, '-run_mode local' if $opt->{aligner} eq 'bowtie2';
   push @main_line, '-bigwig 1';
   push @main_line, '-threads 8';
+  push @main_line, "-sra_dir $opt->{sra_dir}" if $opt->{sra_dir};
+  #push @main_line, '-hive_force_init 1';
   return join(" ", @main_line);
 }
 
@@ -546,6 +548,8 @@ sub usage {
                             (the files are copied in a specific directory structure)
     --fastq_dir <path>    : path to the fastq dir (with one directory per production_name), if any.
     
+    --sra_dir <path>      : dir with the fastq-dump from NCBI SRA as an alternative to ENA when the files are not synched yet
+    
     OTHER
     --help            : show this help message
     --verbose         : show detailed progress
@@ -573,6 +577,7 @@ sub opt_check {
     "species=s",
     "list",
     "run_pipeline",
+    "sra_dir=s",
     "help",
     "verbose",
     "debug",

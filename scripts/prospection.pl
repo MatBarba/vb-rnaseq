@@ -26,6 +26,31 @@ Readonly my $run_info_template => 'http://www.ebi.ac.uk/ena/data/warehouse/searc
 Readonly my $run_info_date_template => 'http://www.ebi.ac.uk/ena/data/warehouse/search?query="tax_eq(%d) AND first_public>=%s AND library_source="TRANSCRIPTOMIC""&result=read_run&display=xml';
 Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/filereport?accession=%s&result=read_run&fields=fastq_bytes,submitted_bytes,tax_id';
 
+Readonly my @fields => qw(
+  species
+  status
+  accession
+  link_ENA
+  link_SRA
+  JIRA
+  Galaxy
+  exps
+  runs
+  samps
+  fastq_bytes
+  center
+  PMID
+  autopub1
+  autopub2
+  interest
+  title
+  abstract
+  pubmed1
+  pubmed2
+  creation_date
+  update_date
+);
+
 ###############################################################################
 # MAIN
 # Get command line args
@@ -61,20 +86,6 @@ if ($opt{search}) {
   my @search_list = @species;
   say STDERR "Searching for " . (@search_list+0) . " taxa";
   
-  my @fields = qw(
-  species
-  status
-  accession
-  exps
-  runs
-  samps
-  complete
-  fastq_bytes
-  pubmed
-  center
-  title
-  abstract
-  );
   say join "\t", @fields;
   search(\@search_list, \%db_study, \%opt);
 }
@@ -171,22 +182,24 @@ sub print_study {
   my $abstract    = $st->abstract // '';
   $abstract =~ s/ *\R+/ /g;  # Change newlines to spaces
   my $pubmed_id = get_pubmed_id($st) // '';
-  my @line = (
-    $species->binomial_name,
-    $category,
-    $st->accession,
-    @$experiments+0,
-    @$runs+0,
-    @$samples+0,
-    $st->{fastq_complete} // '-',
-    $st->{fastq_size} // '-',
-    $pubmed_id,
-    $st->center_name,
-    $st->title,
-    $abstract,
-    $st->{first_public} // 0,
-    $st->{last_update} // 0,
+  
+  my %line_data = (
+    species       => $species->binomial_name,
+    status        => $category,
+    accession     => $st->accession,
+    exps          => scalar(@$experiments),
+    runs          => scalar(@$runs),
+    samps         => scalar(@$samples),
+    #$st->{fastq_complete} // '-',
+    fastq_bytes   => $st->{fastq_size} // '-',
+    pubmed1       => $pubmed_id,
+    center        => $st->center_name,
+    title         => $st->title,
+    abstract      => $abstract,
+    creation_date => $st->{first_public},
+    update_date   => $st->{last_update},
   );
+  my @line = map { $line_data{$_} // "" } @fields;
   say join("\t", @line);
 }
 
@@ -240,7 +253,7 @@ sub get_studies_for_taxon {
         
         # Save the count for the study
         $study{$study_id}{fastq_size} += $run_fastq_size;
-        $study{$study_id}{complete}   += $run_fastq_size > 0 ? 1 : 0;
+        #$study{$study_id}{complete}   += $run_fastq_size > 0 ? 1 : 0;
         $study{$study_id}{run_count}++ if $right_species;
         if (++$count % 10 == 0) {
           sleep 1;
@@ -266,7 +279,7 @@ sub get_studies_for_taxon {
     my $study = get_study($study_id);
     
     # Proportion of runs with data in the study
-    $study{$study_id}{fastq_complete} = "$study{$study_id}{complete}/$study{$study_id}{run_count}";
+    #$study{$study_id}{fastq_complete} = "$study{$study_id}{complete}/$study{$study_id}{run_count}";
     
     my $run_study = $study{$study_id};
     %$study = (%$study, %$run_study);

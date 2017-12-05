@@ -35,7 +35,7 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 # Retrieve the list of species
 my $species = get_species_from_db($db, \%opt);
 
-print_stats($species, $opt{species});
+print_stats($species, $opt{species}, $opt{all_assemblies});
 
 ###############################################################################
 # SUBS
@@ -52,16 +52,23 @@ sub get_species_from_db {
   $species_search{'track.status'} = 'ACTIVE';
   $species_search{'study.status'} = 'ACTIVE';
   $species_search{'experiment.status'} = 'ACTIVE';
-  $species_search{'runs.status'} = 'ACTIVE';
-  $species_search{'samples.status'} = 'ACTIVE';
+  $species_search{'run.status'} = 'ACTIVE';
+  $species_search{'sample.status'} = 'ACTIVE';
+  #$species_search{'assemblies.latest'} = 1;
   my @species = $db->resultset('Species')->search(
     \%species_search,
     { prefetch =>
       {
         'strains' => 
         [
-          {'assemblies' => { 'track_analyses' => { 'track' => { 'bundle_tracks' => 'bundle' } } } },
-          { 'samples' => { 'runs' => { 'experiment' => 'study' } } },
+          {'assemblies' => { 'track_analyses' => {
+                'track' => {
+                  'bundle_tracks' => 'bundle',
+                  'sra_tracks' => { 'run' => [ 'sample', { 'experiment' => 'study' } ] },
+                },
+              }
+            }
+          },
         ],
       } 
     }
@@ -70,7 +77,7 @@ sub get_species_from_db {
 }
 
 sub print_stats {
-  my ($species, $expected_species) = @_;
+  my ($species, $expected_species, $all_assemblies) = @_;
   my $sp_count = @$species;
   
   say "Species\t$sp_count";
@@ -81,16 +88,18 @@ sub print_stats {
     for my $strain ($sp->strains) {
       my $name = $strain->production_name;
       delete $expected{$name};
-      
-      # Assemblies
-      for my $assembly ($strain->assemblies) {
+
+      ASSEMBLY: for my $assembly ($strain->assemblies) {
+        # Assemblies
+        my $assembly_name = $assembly->assembly;
+        next ASSEMBLY if not $all_assemblies and not $assembly->latest;
         my $old = $assembly->latest ? "" : " (old)";
-        say "$name\t" . $assembly->assembly . $old;
+        say "$name\t" . $assembly_name . $old;
+
+        # SRA stats
+        my $sp_stats = get_stats($assembly);
+        $stats{$name."_".$assembly_name} = $sp_stats;
       }
-      
-      # SRA stats
-      my $sp_stats = get_stats($strain);
-      $stats{$name} = $sp_stats;
     }
   }
   for my $missing_sp (sort keys %expected) {
@@ -102,33 +111,35 @@ sub print_stats {
 }
 
 sub get_stats {
-  my ($strain) = @_;
+  my ($assembly) = @_;
   
   my %count;
+  my %sample_count;
   my %experiment_count;
   my %study_count;
   my %bundle_count;
   
-  for my $s ($strain->samples) {
-    $count{samples}++;
-    for my $r ($s->runs) {
-      $count{runs}++;
-      
-      my $e = $r->experiment;
-      $experiment_count{$e->experiment_id}++;
-      my $s = $e->study;
-      $study_count{$s->study_id}++;
-    }
-  }
-  $count{studies} = scalar keys %study_count;
-  $count{experiments} = scalar keys %experiment_count;
-  
   # Get tracks stats
-  my $assembly = first { $_->latest } $strain->assemblies;
   for my $tra ($assembly->track_analyses) {
     my $tr = $tra->track;
     if ($tr->status eq 'ACTIVE') {
       $count{tracks}++;
+      
+      for my $st ($tr->sra_tracks) {
+
+        for my $r ($st->run) {
+          $count{runs}++;
+
+          my $sa = $r->sample;
+          $sample_count{$sa->sample_id}++;
+          
+          my $e = $r->experiment;
+          $experiment_count{$e->experiment_id}++;
+          
+          my $st = $e->study;
+          $study_count{$st->study_id}++;
+        }
+      }
     }
     
     for my $bun_tr ($tr->bundle_tracks) {
@@ -136,6 +147,9 @@ sub get_stats {
       $bundle_count{$bundle->bundle_id}++;
     }
   }
+  $count{studies} = scalar keys %study_count;
+  $count{experiments} = scalar keys %experiment_count;
+  $count{samples} = scalar keys %sample_count;
   $count{bundles} = scalar keys %bundle_count;
   
   return \%count;
@@ -205,6 +219,7 @@ sub opt_check {
     "db=s",
     "species=s",
     "antispecies=s",
+    "all_assemblies",
     "help",
     "verbose",
     "debug",

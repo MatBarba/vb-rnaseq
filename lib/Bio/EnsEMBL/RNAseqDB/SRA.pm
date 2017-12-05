@@ -322,6 +322,14 @@ sub _get_sample_id {
     my @label_attrib = grep { lc($_->{TAG}) eq 'label' } @$attribs_aref;
     my $label = join(',', map { $_->{VALUE} } @label_attrib);
     
+    # Use the submitter id instead
+    if (not $label) {
+      my $subid_aref = $sample->identifiers()->{SUBMITTER_ID};
+      $subid_aref = [$subid_aref] if not ref($subid_aref) eq 'ARRAY';
+      $label = shift @$subid_aref;
+      $label = $label->{content};
+    }
+    
     # Get biosample accession
     my $identifiers_aref = $sample->identifiers()->{EXTERNAL_ID};
     $identifiers_aref = [$identifiers_aref] if not ref($identifiers_aref) eq 'ARRAY';

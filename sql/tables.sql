@@ -86,6 +86,7 @@ CREATE TRIGGER strain_md5_ins_tr BEFORE INSERT ON strain
 CREATE TABLE assembly (
   assembly_id               INT(10) UNSIGNED NOT NULL UNIQUE AUTO_INCREMENT PRIMARY KEY,
   strain_id                 INT(10) UNSIGNED NOT NULL,
+  production_name           VARCHAR(64) NOT NULL,
   assembly                  VARCHAR(32),
   assembly_accession        VARCHAR(32),
   sample_location           VARCHAR(128),

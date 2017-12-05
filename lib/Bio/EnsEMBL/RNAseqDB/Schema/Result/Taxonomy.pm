@@ -21,6 +21,7 @@ __PACKAGE__->table_class("DBIx::Class::ResultSource::View");
 =cut
 
 __PACKAGE__->table("taxonomy");
+__PACKAGE__->result_source_instance->view_definition("select `vb_rnaseqdb`.`species`.`binomial_name` AS `binomial_name`,`vb_rnaseqdb`.`species`.`taxon_id` AS `taxon_id`,`vb_rnaseqdb`.`strain`.`production_name` AS `production_name`,`vb_rnaseqdb`.`strain`.`strain` AS `strain`,`vb_rnaseqdb`.`assembly`.`strain_id` AS `strain_id`,`vb_rnaseqdb`.`strain`.`status` AS `status`,`vb_rnaseqdb`.`assembly`.`assembly` AS `assembly`,`vb_rnaseqdb`.`assembly`.`assembly_accession` AS `assembly_accession` from ((`vb_rnaseqdb`.`assembly` left join `vb_rnaseqdb`.`strain` on((`vb_rnaseqdb`.`assembly`.`strain_id` = `vb_rnaseqdb`.`strain`.`strain_id`))) left join `vb_rnaseqdb`.`species` on((`vb_rnaseqdb`.`strain`.`species_id` = `vb_rnaseqdb`.`species`.`species_id`))) where `vb_rnaseqdb`.`assembly`.`latest`");
 
 =head1 ACCESSORS
 
@@ -100,8 +101,8 @@ __PACKAGE__->add_columns(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7uSuP/uuZ8BrlZcjA1Hg9A
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qMm+LgcPy9dqooY7wwe/8A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

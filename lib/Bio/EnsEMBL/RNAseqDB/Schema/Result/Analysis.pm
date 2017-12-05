@@ -149,8 +149,8 @@ __PACKAGE__->belongs_to(
   {
     is_deferrable => 1,
     join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
   },
 );
 
@@ -166,12 +166,12 @@ __PACKAGE__->belongs_to(
   "track_analysis",
   "Bio::EnsEMBL::RNAseqDB::Schema::Result::TrackAnalysis",
   { track_analysis_id => "track_analysis_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:epdv7PMq2jGkEyM9f4BplA
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ligRqDPN3WgBrr0tVzMVIQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

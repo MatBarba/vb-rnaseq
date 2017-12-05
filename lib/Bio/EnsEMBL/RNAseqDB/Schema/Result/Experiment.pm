@@ -194,12 +194,12 @@ __PACKAGE__->belongs_to(
   "study",
   "Bio::EnsEMBL::RNAseqDB::Schema::Result::Study",
   { study_id => "study_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:G83c+IhQdbHw/iA07Gz+hw
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RzXPBNWXEkB8IUpp6cZzAQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

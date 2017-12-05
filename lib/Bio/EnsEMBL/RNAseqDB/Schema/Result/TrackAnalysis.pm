@@ -125,7 +125,7 @@ __PACKAGE__->belongs_to(
   "assembly",
   "Bio::EnsEMBL::RNAseqDB::Schema::Result::Assembly",
   { assembly_id => "assembly_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
 =head2 files
@@ -155,12 +155,12 @@ __PACKAGE__->belongs_to(
   "track",
   "Bio::EnsEMBL::RNAseqDB::Schema::Result::Track",
   { track_id => "track_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9v2Ttg7BbcoMy2QntKhw2w
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:P829ytxn5FwIHTsjsUbv6g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

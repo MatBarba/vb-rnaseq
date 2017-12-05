@@ -110,7 +110,7 @@ __PACKAGE__->belongs_to(
   "run",
   "Bio::EnsEMBL::RNAseqDB::Schema::Result::Run",
   { run_id => "run_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
 =head2 track
@@ -125,12 +125,12 @@ __PACKAGE__->belongs_to(
   "track",
   "Bio::EnsEMBL::RNAseqDB::Schema::Result::Track",
   { track_id => "track_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:17J0RNSStudS0bfJoU3ozA
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zLqHprHZ9SW3CPFxuPbByQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

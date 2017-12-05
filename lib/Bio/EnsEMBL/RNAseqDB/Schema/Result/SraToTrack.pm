@@ -21,6 +21,7 @@ __PACKAGE__->table_class("DBIx::Class::ResultSource::View");
 =cut
 
 __PACKAGE__->table("sra_to_track");
+__PACKAGE__->result_source_instance->view_definition("select `vb_rnaseqdb`.`study`.`study_id` AS `study_id`,`vb_rnaseqdb`.`study`.`study_sra_acc` AS `study_sra_acc`,`vb_rnaseqdb`.`study`.`study_private_acc` AS `study_private_acc`,`vb_rnaseqdb`.`experiment`.`experiment_id` AS `experiment_id`,`vb_rnaseqdb`.`experiment`.`experiment_sra_acc` AS `experiment_sra_acc`,`vb_rnaseqdb`.`experiment`.`experiment_private_acc` AS `experiment_private_acc`,`vb_rnaseqdb`.`run`.`run_id` AS `run_id`,`vb_rnaseqdb`.`run`.`run_sra_acc` AS `run_sra_acc`,`vb_rnaseqdb`.`run`.`run_private_acc` AS `run_private_acc`,`vb_rnaseqdb`.`run`.`sample_id` AS `sample_id`,`vb_rnaseqdb`.`sample`.`sample_sra_acc` AS `sample_sra_acc`,`vb_rnaseqdb`.`sample`.`sample_private_acc` AS `sample_private_acc`,`vb_rnaseqdb`.`sample`.`title` AS `sample_title`,`vb_rnaseqdb`.`sample`.`description` AS `sample_description`,`vb_rnaseqdb`.`sra_track`.`track_id` AS `track_id`,`vb_rnaseqdb`.`track`.`status` AS `track_status`,`vb_rnaseqdb`.`track`.`merge_level` AS `merge_level`,`vb_rnaseqdb`.`track`.`merge_id` AS `merge_id`,`vb_rnaseqdb`.`track`.`merge_text` AS `merge_text`,`taxonomy`.`production_name` AS `production_name` from ((((((`vb_rnaseqdb`.`study` left join `vb_rnaseqdb`.`experiment` on((`vb_rnaseqdb`.`study`.`study_id` = `vb_rnaseqdb`.`experiment`.`study_id`))) left join `vb_rnaseqdb`.`run` on((`vb_rnaseqdb`.`experiment`.`experiment_id` = `vb_rnaseqdb`.`run`.`experiment_id`))) left join `vb_rnaseqdb`.`sample` on((`vb_rnaseqdb`.`run`.`sample_id` = `vb_rnaseqdb`.`sample`.`sample_id`))) left join `vb_rnaseqdb`.`sra_track` on((`vb_rnaseqdb`.`run`.`run_id` = `vb_rnaseqdb`.`sra_track`.`run_id`))) left join `vb_rnaseqdb`.`track` on((`vb_rnaseqdb`.`sra_track`.`track_id` = `vb_rnaseqdb`.`track`.`track_id`))) left join `vb_rnaseqdb`.`taxonomy` on((`vb_rnaseqdb`.`sample`.`strain_id` = `taxonomy`.`strain_id`)))");
 
 =head1 ACCESSORS
 
@@ -215,8 +216,8 @@ __PACKAGE__->add_columns(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ztW4uTZ/r0Yo6qYCNMNxtA
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:u4WLrN9vn0p9hUuZzo8RWQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

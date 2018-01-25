@@ -49,6 +49,9 @@ sub get_species_from_db {
     my @anti = split ',', $opt->{antispecies};
     $species_search{'-not'} = [ map { { "strains.production_name" => $_ } } @anti ];
   }
+  if ($opt->{from_date}) {
+    $species_search{'study.date'} = { ">=" => $opt->{from_date} };
+  }
   $species_search{'track.status'} = 'ACTIVE';
   $species_search{'study.status'} = 'ACTIVE';
   $species_search{'experiment.status'} = 'ACTIVE';
@@ -197,6 +200,7 @@ sub usage {
     --db <str>        : database name
     
     Options:
+    --from_date <str>   : only display studies added after this date (must be ISO format e.g. 2017-01-01)
     --species <str>     : production_name to only search for one species
     --antispecies <str> : production_name of species to exclude
     
@@ -220,10 +224,11 @@ sub opt_check {
     "species=s",
     "antispecies=s",
     "all_assemblies",
+    "from_date:s",
     "help",
     "verbose",
     "debug",
-  );
+  ) or usage();
 
   usage()                if $opt{help};
   usage("Need --host")   if not $opt{host};

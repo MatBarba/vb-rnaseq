@@ -52,8 +52,10 @@ my $bundles = $db->get_bundles({
     species     => $opt{species},
     files_url   => $opt{files_url},
 });
+$logger->info((@$bundles+0) . " bundles");
 
 my @metatracks = convert_for_Webapollo(@$bundles);
+
 for my $metatrack (@metatracks) {
   my $track = $metatrack->{track};
   my $species = $metatrack->{production_name};
@@ -132,7 +134,7 @@ sub convert_for_Webapollo {
 
         $track_data{metadata} = \%metadata;
         my %metatrack = (
-          production_name => $group->{production_name},
+          production_name => $assembly_data->{production_name},
           track           => \%track_data,
           file_name       => $file->{name}
         );

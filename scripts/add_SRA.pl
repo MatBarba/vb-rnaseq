@@ -29,10 +29,11 @@ my @sras = ();
 
 # Add a single SRA accession from the command-line
 if ($opt{sra_acc}) {
+  my @sra_list = split(/,/, $opt{sra_acc});
   if ($opt{species}) {
-    push @sras, [$opt{sra_acc}, $opt{species}];
+    push @sras, map { [$_, $opt{species}] } @sra_list;
   } else {
-    push @sras, [$opt{sra_acc}];
+    push @sras, map { [$_] } @sra_list;
   }
 }
 # Or add a list from a file (more efficient)
@@ -91,7 +92,7 @@ sub usage {
     --db <str>        : database name
     
     Input:
-    --sra_acc <str>   : SRA accession (e.g. SRP000000 for a study)
+    --sra_acc <str>   : SRA accession list (e.g. SRP000000,SRP00001 for 2 studies)
     --species <str>   : production_name for the species to use (optional, in case of ambiguity)
     or
     --file <path>     : path to a file with a list of SRA accessions

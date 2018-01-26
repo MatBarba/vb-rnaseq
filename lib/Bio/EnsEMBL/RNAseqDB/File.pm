@@ -50,19 +50,16 @@ sub get_all_files {
   
   my $files_req = $self->resultset('File')->search(\%search,
     {
-      prefetch  => { track_analysis => [
-        { track => { sra_tracks => { run => { sample => { strain => 'species' } } } } },
-        'assembly'
-        ],
-      },
-  });
+      prefetch  => { track_analysis => 'assembly' },
+    },
+  );
   
   my @files;
   foreach my $file ($files_req->all) {
-    my @sra_tracks = $file->track_analysis->track->sra_tracks;
+    my $assembly = $file->track_analysis->assembly;
     my $file_obj = {
       path            => $file->path,
-      production_name => $sra_tracks[0]->run->sample->strain->production_name,
+      production_name => $assembly->production_name,
       file_id         => $file->file_id,
       md5             => $file->md5,
       human_name      => $file->human_name,
@@ -212,7 +209,7 @@ sub make_human_readable_name {
   if ($title) {
     $title =~ s/ /_/g;
   } else {
-    carp "No title defined for for $filename";
+    $logger->warn("No title defined for $filename");
   }
   
   my $file_extension = '';

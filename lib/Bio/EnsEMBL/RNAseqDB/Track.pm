@@ -126,7 +126,7 @@ sub get_tracks {
   $filter{$me.'.status'} = uc($pars{status}) if $pars{status};
   
   # Species
-  $filter{'strain.production_name'} = $pars{species} if $pars{species};
+  $filter{'assembly.production_name'} = $pars{species} if $pars{species};
   
   # Assemblies: one, latest, or all?
   if ($pars{assembly}) {
@@ -176,7 +176,7 @@ sub get_tracks {
         { 'bundle_tracks' => 'bundle' },
         { 'sra_tracks' =>
           { 'run' => [
-              'sample',
+              { 'sample' => 'strain' },
               { 'experiment' => 'study' },
               'private_files',
             ]
@@ -228,7 +228,11 @@ sub guess_track_text {
     my (@titles, @descriptions);
     for my $track_run (@track_runs) {
       my $sample = $track_runs[0]->run->sample;
-      push @titles, $sample->title if $sample->title;
+      if ($sample->label) {
+        push @titles, $sample->label;
+      } elsif ($sample->title) {
+        push @titles, $sample->title;
+      }
       push @descriptions, $sample->description if $sample->description;
     }
 
@@ -274,6 +278,7 @@ sub get_new_runs_tracks {
   my %new_track = ();
   for my $track (@tracks) {
     my $track_id = $track->track_id;
+    my $assembly = $track->track_analyses->next->assembly;
     $logger->debug("Check track $track_id as new run track");
 
     for my $sra_track ($track->sra_tracks) {
@@ -282,11 +287,11 @@ sub get_new_runs_tracks {
       # Private file?
       if (defined $run->run_private_acc) {
         my @fastq = map { $_->path } $run->private_files->all;
-        $self->_add_new_runs_track(\%new_track, $track_id, $run, \@fastq);
+        $self->_add_new_runs_track(\%new_track, $track_id, $run, $assembly, \@fastq);
       }
       # Otherwise, the SRA accessions will suffice
       else {
-        $self->_add_new_runs_track(\%new_track, $track_id, $run);
+        $self->_add_new_runs_track(\%new_track, $track_id, $run, $assembly);
       }
     }
   }
@@ -302,12 +307,13 @@ sub get_new_runs_tracks {
 # 4 = (optional) array ref of fastq paths (for private runs only)
 sub _add_new_runs_track {
   my $self = shift;
-  my ($track_list, $track_id, $run, $fastqs) = @_;
+  my ($track_list, $track_id, $run, $assembly, $fastqs) = @_;
 
   $logger->debug("Generating track to add ($track_id)");
   my $strain = $run->sample->strain;
-  my $production_name = $strain->production_name;
+  my $production_name = $assembly->production_name;
   my $taxon_id        = $strain->species->taxon_id;
+  my $assembly_name   = $assembly->assembly;
 
   my $track_data = $track_list->{$production_name}->{$track_id};
 
@@ -322,6 +328,7 @@ sub _add_new_runs_track {
       merge_level => $merge_level,
       merge_id => $merge_id,
       taxon_id => $taxon_id,
+      assembly => $assembly_name,
       fastqs => $fastqs
     };
   }
@@ -484,7 +491,7 @@ sub merge_tracks_by_sra_ids {
   # Get the list of tracks associated with them
   my @old_tracks = $self->get_tracks(sra_ids => $sra_accs);
   my @old_track_ids = map { $_->track_id } @old_tracks;
-  $logger->debug("Run_ids to merge: " . join(',', @old_track_ids));
+  $logger->debug("Run_ids to merge for " . join(",", @$sra_accs) . ": " . join(',', @old_track_ids));
   
   # Check that there are multiple tracks to merge, abort otherwise
   my $n_tracks = scalar @old_track_ids;

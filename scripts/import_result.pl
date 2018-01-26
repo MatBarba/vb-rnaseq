@@ -92,6 +92,7 @@ sub guess_assembly {
   my $data = shift;
   
   my $file = $data->{bw_file};
+  croak("Can't get bigwig path from cmds file.") if not $file;
   my $assembly;
   if ($file =~ /_([A-Z][a-z]{3}[A-Z]\d)\.bw/) {
     $assembly = $1;

@@ -27,7 +27,7 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 
 # Add a single species from the command-line
 my $species_added = 0;
-if ($opt{production_name} and $opt{taxon_id}) {
+if ($opt{production_name} and defined($opt{taxon_id})) {
   my %species = (
     production_name    => $opt{production_name},
     binomial_name      => $opt{binomial_name},
@@ -103,6 +103,8 @@ sub usage {
     --taxon_id <str>        : NCBI taxonomic id
     --strain <str>          : Strain name (optional)
     --sample_location <str> : Sample location (optional)
+    --assembly <str>        : Assembly name in the databases
+    --assembly_accession <str> : INSDC assembly accession (GCA)
     or
     --file <path>     : path to a file with a list of SRA run accessions
     
@@ -129,6 +131,8 @@ sub opt_check {
     "taxon_id=s",
     "strain=s",
     "sample_location=s",
+    "assembly=s",
+    "assembly_accession=s",
     "file=s",
     "help",
     "verbose",
@@ -140,7 +144,7 @@ sub opt_check {
   usage("Need --port") if not $opt{port};
   usage("Need --user") if not $opt{user};
   usage("Need --db") if not $opt{db};
-  usage("Need --species and --taxon_id, or --file") if not (($opt{production_name} and $opt{taxon_id}) xor $opt{file});
+  usage("Need --species and --taxon_id, or --file") if not (($opt{production_name} and defined($opt{taxon_id})) xor $opt{file});
   $opt{password} ||= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

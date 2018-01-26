@@ -39,7 +39,7 @@ if (keys %$data == 0) {
 }
 
 if ($opt{list}) {
-    my $json = JSON->new->allow_nonref;
+    my $json = JSON->new->allow_nonref->canonical;
     print $json->pretty->encode($data) . "\n";
 }
 elsif ($opt{run_pipeline}) {
@@ -107,12 +107,13 @@ sub run_pipeline {
         my $dbname = $1;
         
         # Extract the beekeeper command
-        if ($pipe_log_msg =~ /-url (mysql:\/\/\w+:\w+@[\w\-\.]+:\d+\/\w+) -sql 'CREATE DATABASE'/) {
+        if ($pipe_log_msg =~ /-url \'?(mysql:\/\/\w+:\w+@[\w\-\.]+:\d+\/\w+)\'? -sql 'CREATE DATABASE'/) {
           $logger->info("A Hive DB already exists ($dbname): We will first finish it before continuing");
           my $hive_url = $1;
+          $hive_url .= ";reconnect_when_lost=1";
           
           # Create the beekeeper commands
-          $beekeeper_cmd = "beekeeper.pl -url $hive_url -reg_conf $opt{registry}";
+          $beekeeper_cmd = "beekeeper.pl -url '$hive_url' -reg_conf '$opt{registry}'";
           $logger->info($pipe_log_msg);
           
           # Flag to rerun the current track when the previously unfinished one is completed
@@ -137,7 +138,7 @@ sub run_pipeline {
       
       # RUN!
       `$beekeeper_cmd -run &> $pipe_log`;
-      $logger->info("$beekeeper_cmd -run");
+      $logger->info("$beekeeper_cmd -run -can_respecialize 1");
       my $status = 'running';
       my $prev_status_line = '';
       
@@ -157,10 +158,10 @@ sub run_pipeline {
           my @lines = split /[\r\n]+/, $run_msg;
           my (@working, @ready);
           for my $line (@lines) {
-            if ($line =~ /^(?<module>\w+)\s*\(.+, jobs\([^\)]+(?<num_jobs>\d+)i[^\)]+\)/) {
+            if ($line =~ /^(?<module>\w+)\s*\(.+, jobs\([^\)]+?(?<num_jobs>\d+)i[^\)]+\)/) {
               push @working, "$+{module} ($+{num_jobs})";
             }
-            if ($line =~ /^(?<module>\w+)\s*\(.+, jobs\([^\)]+(?<num_jobs>\d+)r[^\)]+\)/) {
+            if ($line =~ /^(?<module>\w+)\s*\(.+, jobs\([^\)]+?(?<num_jobs>\d+)r[^\)]+\)/) {
               push @ready, "$+{module} ($+{num_jobs})";
             }
           }
@@ -182,7 +183,7 @@ sub run_pipeline {
         }
         else {
           sleep 60;
-          `$beekeeper_cmd -run &> $pipe_log`;
+          `$beekeeper_cmd -run -can_respecialize 1 &> $pipe_log`;
           
           # Print the status, but only if the status changed
           if ($status_line ne $prev_status_line) {
@@ -212,12 +213,10 @@ sub copy_files {
   
   my $res_dir  = "$opt->{results_dir}/$opt->{aligner}/$species";
   return if not -e $res_dir;
-  my $ini_dir  = "$opt->{final_dir}/ini/$species";
   my $big_dir  = "$opt->{final_dir}/bigwig/$species";
   my $bam_dir  = "$opt->{final_dir}/bam/$species";
   my $json_dir = "$opt->{final_dir}/cmds/$species";
   
-  make_path $ini_dir  if not -d $ini_dir;
   make_path $big_dir  if not -d $big_dir;
   make_path $bam_dir  if not -d $bam_dir;
   make_path $json_dir if not -d $json_dir;
@@ -227,14 +226,12 @@ sub copy_files {
   
   my @res_files = readdir $res_dh;
   closedir $res_dh;
-  my @ini_files  = grep { /\.ini$/        } @res_files;
   my @big_files  = grep { /\.bw$/         } @res_files;
   my @bam_files  = grep { /\.bam$/        } @res_files;
   my @json_files = grep { /\.cmds\.json$/ } @res_files;
   
   # Copy bigwig, bam file and index, and json cmds (As long as the files do not already exist!)
   $logger->info("Copy files from $species in the final dir $opt->{final_dir}... ");
-  map { copy "$res_dir/$_",        "$ini_dir/$_"        if not -s "$ini_dir/$_"        } @ini_files;
   map { copy "$res_dir/$_",        "$big_dir/$_"        if not -s "$big_dir/$_"        } @big_files;
   map { copy "$res_dir/$_",        "$bam_dir/$_"        if not -s "$bam_dir/$_"        } @bam_files;
   map { copy "$res_dir/$_".'.bai', "$bam_dir/$_".'.bai' if not -s "$bam_dir/$_".'.bai' } @bam_files;
@@ -245,7 +242,6 @@ sub copy_files {
   chmod 0444, glob "$bam_dir/*.bam";
   chmod 0444, glob "$bam_dir/*.bai";
   chmod 0444, glob "$json_dir/*.cmds.json";
-  chmod 0444, glob "$ini_dir/*.ini";
   
   $logger->info("done");
   
@@ -330,23 +326,21 @@ sub tracks_for_pipeline {
 }
 
 sub is_already_aligned {
-  my ($species, $merge_id, $opt) = @_;
+  my ($species, $merge_id, $assembly, $opt) = @_;
   
   my $dir = "$opt->{final_dir}/cmds/$species";
-  my $path = "$dir/$merge_id*.json";
-  my @files = glob($path);
-  
-  return @files;
+  my $path = "$dir/${merge_id}_${assembly}.cmds.json";
+  $logger->debug("Check for already_aligned $path");
+  return -s $path;
 }
 
 sub is_already_finished {
-  my ($species, $merge_id, $opt) = @_;
+  my ($species, $merge_id, $assembly, $opt) = @_;
   
   my $dir = "$opt->{results_dir}/$opt->{aligner}/$species";
-  my $path = "$dir/$merge_id*.json";
-  my @files = glob($path);
-  
-  return @files;
+  my $path = "$dir/${merge_id}_${assembly}.cmds.json";
+  $logger->debug("Check for already_finished $path");
+  return -s $path;
 }
 
 sub create_track_cmds {
@@ -364,17 +358,18 @@ sub create_track_cmds {
     my $fastqs      = $track->{fastqs};
     my $merge_level = $track->{merge_level};
     my $merge_id    = $track->{merge_id};
+    my $assembly    = $track->{assembly};
     
     # Check if the track has already been created (json file exists)
-    if (is_already_aligned($species, $merge_id, $opt)) {
-      $logger->warn("Track $merge_id from $species is already aligned and copied");
+    if (is_already_aligned($species, $merge_id, $assembly, $opt)) {
+      $logger->warn("Track $merge_id from $species ($assembly) is already aligned and copied");
       next TRACK;
     }
-    elsif (is_already_finished($species, $merge_id, $opt)) {
-      $logger->warn("Track $merge_id from $species is already aligned, but the files were not copied");
+    elsif (is_already_finished($species, $merge_id, $assembly, $opt)) {
+      $logger->warn("Track $merge_id from $species ($assembly) is already aligned, but the files were not copied");
       next TRACK;
     } else {
-      $logger->info("Track $merge_id from $species will be aligned");
+      $logger->info("Track $merge_id from $species ($assembly) will be aligned");
     }
 
     # Normal track with SRA accessions
@@ -436,7 +431,7 @@ sub create_track_cmds {
       push @level_line, @merge_line;
       push @track_cmds, join(' ', @level_line) if @level_line;
   } else {
-      $logger->info('Several merge levels');
+      $logger->info('Several merge levels (' .join(", ", sort keys %level_commands). ')');
       for my $merge_level (sort keys %level_commands) {
           my @level_line = @{$level_commands{$merge_level}};
           push @track_cmds, join(' ', @level_line) if @level_line;
@@ -506,7 +501,7 @@ sub create_start_cmd {
   push @main_line, '-bigwig 1';
   push @main_line, '-threads 8';
   push @main_line, "-sra_dir $opt->{sra_dir}" if $opt->{sra_dir};
-  #push @main_line, '-hive_force_init 1';
+  push @main_line, '-hive_force_init 1' if $opt->{reinit};
   return join(" ", @main_line);
 }
 
@@ -550,6 +545,8 @@ sub usage {
     
     --sra_dir <path>      : dir with the fastq-dump from NCBI SRA as an alternative to ENA when the files are not synched yet
     
+    --reinit              : force reinit the pipeline and do not try to continue a previous one
+    
     OTHER
     --help            : show this help message
     --verbose         : show detailed progress
@@ -577,6 +574,7 @@ sub opt_check {
     "species=s",
     "list",
     "run_pipeline",
+    "reinit",
     "sra_dir=s",
     "help",
     "verbose",

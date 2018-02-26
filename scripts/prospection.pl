@@ -28,27 +28,18 @@ Readonly my $fastq_size_template => 'http://www.ebi.ac.uk/ena/data/warehouse/fil
 
 Readonly my @fields => qw(
   species
+  creation
+  update
   status
   accession
-  link_ENA
-  link_SRA
-  JIRA
-  Galaxy
+  PMID
   exps
   runs
   samps
-  fastq_bytes
   center
-  PMID
-  autopub1
-  autopub2
-  interest
+  comment
   title
   abstract
-  pubmed1
-  pubmed2
-  creation_date
-  update_date
 );
 
 ###############################################################################
@@ -196,14 +187,12 @@ sub print_study {
     exps          => scalar(@$experiments),
     runs          => scalar(@$runs),
     samps         => scalar(@$samples),
-    #$st->{fastq_complete} // '-',
-    fastq_bytes   => $st->{fastq_size} // '-',
-    pubmed1       => $pubmed_id,
+    PMID          => $pubmed_id,
     center        => $st->center_name,
     title         => $st->title,
     abstract      => $abstract,
-    creation_date => $st->{first_public},
-    update_date   => $st->{last_update},
+    creation      => $st->{first_public},
+    update        => $st->{last_update},
   );
   my @line = map { $line_data{$_} // "" } @fields;
   say join("\t", @line);
@@ -255,7 +244,8 @@ sub get_studies_for_taxon {
         $study_id = $xref->findnodes('./ID')->shift()->textContent;
         
         # Save the count for the study
-        $study{$study_id}{run_count}++ if $right_species;
+        $study{$study_id}{run_count}++;
+        
         if (++$count % 10 == 0) {
           sleep 1;
         }

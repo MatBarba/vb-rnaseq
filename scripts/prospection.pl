@@ -254,12 +254,7 @@ sub get_studies_for_taxon {
       if ($DB eq 'ENA-STUDY') {
         $study_id = $xref->findnodes('./ID')->shift()->textContent;
         
-        # Commpute the size of the fasta
-        my ($run_fastq_size, $right_species) = exists $opt->{add_size} ? get_fastq_size($run_id, $study_id, $taxon_id) : 0;
-        
         # Save the count for the study
-        $study{$study_id}{fastq_size} += $run_fastq_size;
-        #$study{$study_id}{complete}   += $run_fastq_size > 0 ? 1 : 0;
         $study{$study_id}{run_count}++ if $right_species;
         if (++$count % 10 == 0) {
           sleep 1;
@@ -303,47 +298,6 @@ sub get_study {
   return $study->[0];
 }
 
-sub get_fastq_size {
-  my ($run_id, $study_id, $db_tax_id) = @_;
-  
-  my $url = sprintf($fastq_size_template, $run_id);
-  my $run_text = get $url or croak "Download failed for $url";
-  sleep 0.5;
-  
-  # We only want the second line data
-  my @lines = split /\R+/, $run_text;
-  
-  if (@lines == 1) {
-    say STDERR "$study_id: No fastq data for $run_id";
-    return (0, 0);
-  }
-  
-  # ena fastq or submitted fastq?
-  my ($ena_fastq, $sub_fastq, $sra_tax_id) = split /\t/, $lines[1];
-  
-  # Skip if the species is different that the one requested
-  return 0 if $sra_tax_id and $sra_tax_id != $db_tax_id;
-  
-  # Rare case: no tax_id for the run
-  if (not defined $sra_tax_id) {
-    say STDERR "$study_id - $run_id has no tax_id";
-    return (0, 0);
-  } elsif ($sra_tax_id != $db_tax_id) {
-    say STDERR "$study_id - $run_id is not the tax_id we want";
-    return (0, 0);
-  }
-  
-  my $sizes = $ena_fastq ? $ena_fastq : $sub_fastq;
-  
-  if ($sizes) {
-    my $size = sum split(/;/, $sizes);
-    return ($size, 1);
-  } else {
-    say STDERR "No fastq size available for $run_id in $study_id";
-    return (0, 1);
-  }
-}
-
 ###############################################################################
 # Parameters and usage
 # Print a simple usage note
@@ -370,7 +324,6 @@ sub usage {
     Options:
     --species <str>     : production_name to only search for one species
     --antispecies <str> : production_name of species to exclude
-    --add_size          : retrieve total fastq size of files (takes longer)
     --pub_date          : Date of first publication of the runs (to find recent ones)
     
     --help            : show this help message
@@ -393,7 +346,6 @@ sub opt_check {
     "species=s",
     "antispecies=s",
     "list_species",
-    "add_size",
     "pub_date=s",
     "search",
     "help",

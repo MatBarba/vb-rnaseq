@@ -66,7 +66,7 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 # Retrieve the list of species
 my @species = get_species_from_db($db, \%opt);
 my @db_studies = get_studies_from_db($db, \%opt);
-my %db_study = map { ($_->study_sra_acc || $_->study_private_acc) => 1 } @db_studies;
+my %db_study = map { ($_->study_sra_acc || $_->study_private_acc) => $_->date } @db_studies;
 
 # List the species
 if ($opt{list_species}) {
@@ -164,13 +164,19 @@ sub search_taxon {
   say STDERR (@studies+0) . " studies found";
   
   # Only print the studies that are not in the DB
-  map { print_study($_, $species, 'inDB') } grep { $db_study{$_->accession} } @studies;
+  map { print_study($_, $species, format_date($db_study{$_->accession})) } grep { $db_study{$_->accession} } @studies;
   map { print_study($_, $species, 'NEW ') } grep { not $db_study{$_->accession} } @studies;
   
   # Mark those studies as completed
   for my $study (@studies) {
     $completed->{ $study->accession }++;
   }
+}
+
+sub format_date {
+  my ($date) = @_;
+  $date =~ s/^(\d{4}-\d{2}-\d{2}).+$/$1/;
+  return $date;
 }
 
 sub print_study {

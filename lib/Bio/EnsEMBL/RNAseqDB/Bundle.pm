@@ -320,10 +320,8 @@ sub _prepare_hub_activation_link {
   
   if ($hubs_root and $group) {
     
-    # The species dir name in the url is not the production_name because a hub groups all strains
-    my $species = lcfirst($group->{species});
-    $species =~ s/ /_/g;
-    my $hub_url = join '/', ($hubs_root, $species, $group->{trackhub_id}, 'hub.txt');
+    # The species dir name in the url is not the production_name of the strain
+    my $hub_url = join '/', ($hubs_root, $group->{production_name}, $group->{trackhub_id}, 'hub.txt');
     
     my $assembly_name = $assembly_data->{production_name};
     my $name = $group->{label};

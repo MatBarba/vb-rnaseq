@@ -489,7 +489,7 @@ sub create_start_cmd {
   my @main_line = ();
   push @main_line, 'init_pipeline.pl';
   push @main_line, 'Bio::EnsEMBL::EGPipeline::PipeConfig::ShortReadAlignment_conf';
-  push @main_line, '$(mysql-hive-ensrw details script)';
+  push @main_line, '$(eg-h-w details script)';
   #####################################################################################################
   push @main_line, "-registry $opt->{registry}";
   push @main_line, "-pipeline_dir $opt->{pipeline_dir}";

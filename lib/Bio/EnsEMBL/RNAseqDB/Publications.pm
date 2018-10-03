@@ -106,9 +106,13 @@ sub _get_publication_id {
   # No publication with this pubmed_id: let's insert it
   my $pub_data = _get_pubmed_data($pubmed_id);
   
-  my $pub_insert = $self->resultset('Publication')->create( $pub_data );
-  $logger->debug("ADD publication $pubmed_id");
-  return $pub_insert->id;
+  if ($pub_data) {
+      my $pub_insert = $self->resultset('Publication')->create( $pub_data );
+      $logger->debug("ADD publication $pubmed_id");
+      return $pub_insert->id;
+  } else {
+      $logger->warn("No publication retrieved: skipped");
+  }
 }
 
 sub _get_pubmed_data {
@@ -117,7 +121,7 @@ sub _get_pubmed_data {
   
   my %data = (pubmed_id => $pubmed_id);
   
-  my $REST_URL = 'http://www.ebi.ac.uk/europepmc/webservices/rest/search?resulttype=core&format=json&query=ext_id:';
+  my $REST_URL = 'https://www.ebi.ac.uk/europepmc/webservices/rest/search?resultType=core&format=json&query=ext_id:';
   my $url = $REST_URL . $pubmed_id;
   $logger->debug( "Get data from $url" );
   my $pub_content = get $url;

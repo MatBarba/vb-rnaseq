@@ -110,14 +110,14 @@ sub match_tracks {
     
     # Check number of tracks found
     if (@tracks == 0) {
-      $logger->warn("No track found for the following SRAs: $sra_list");
+      $logger->warn("No track found for ".$entry->{species}." for the following SRAs: $sra_list");
       next ENTRY;
     }
     elsif (@tracks > 1) {
-      $logger->warn("More than 1 track found for the following SRAs: $sra_list");
+      $logger->warn("More than 1 track found for ".$entry->{species}." for the following SRAs: $sra_list");
     }
     else {
-      $logger->debug("One track found for the following SRAs: $sra_list = track_id " . $tracks[0]->track_id);
+      $logger->debug("One track found for ".$entry->{species}." for the following SRAs: $sra_list = track_id " . $tracks[0]->track_id);
     }
     
     # Store the list of tracks

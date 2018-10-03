@@ -342,7 +342,12 @@ sub _get_sample_id {
     # Get the correct species_id
     my $strain_id;
     if ($species) {
-      $strain_id = $self->resultset('Strain')->find({ production_name => $species })->strain_id;
+      my $strain = $self->resultset('Strain')->find({ production_name => $species });
+      if ($strain) {
+          $strain_id = $strain->strain_id;
+      } else {
+          die "No strain found for species $species";
+      }
     } else {
       $strain_id = $self->_get_strain_id($taxon_id, $strain);
     }

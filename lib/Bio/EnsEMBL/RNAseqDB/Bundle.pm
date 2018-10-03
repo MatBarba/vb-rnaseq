@@ -466,6 +466,23 @@ sub format_bundles_for_solr {
       $solr_track{cvterms}  = \@cvterms  if @cvterms;
       #$solr_track{cvterms_ss_urls}  = \@cvterms_urls;
       
+      # Add commands
+      if ($opt->{commands_dir}) {
+          my @path = split /\//, $opt->{commands_dir};
+          my $commands_dir_name = pop @path;
+          my @url_path = (
+              $opt->{files_url},
+              $commands_dir_name,
+              $assembly->{production_name},
+          );
+          my $command_file_name = $track->{id} . ".txt";
+          push @url_path, $command_file_name;
+          my $command_url  = ''. join('/', @url_path);
+          $command_url = _cleanup_url($command_url);
+          $solr_track{command_s_url} = $command_url;
+          $solr_track{command_s} = "Generation commands";
+      }
+      
       push @{ $solr_group{$SOLR_CHILDREN} }, \%solr_track;
     }
     # Check if there are any data: don't add the group otherwise
@@ -611,9 +628,11 @@ sub get_bundles {
           );
           push @files, \%file_data;
         }
+        
         my %track_assembly_data = (
           files    => \@files,
           aligner  => _determine_aligner($track_analysis->analyses),
+          commands => _determine_commands($track_analysis->analyses),
           production_name => $assembly->production_name,
         );
         $assemblies{ $assembly_name } = \%track_assembly_data;
@@ -774,6 +793,32 @@ sub create_human_symlinks {
   }
 }
 
+sub create_commands_files {
+  my $self = shift;
+  my ($groups, $commands_dir) = @_;
+  
+  return if not $groups;
+  return if not defined $commands_dir;
+  
+  # Create symlinks...
+  for my $group (@$groups) {
+    for my $track (@{ $group->{tracks} }) {
+      for my $assembly (keys %{ $track->{assemblies} }) {
+        my $assembly_data = $track->{assemblies}->{ $assembly };
+        my $species      = $assembly_data->{production_name};
+        my $sp_dir       = "$commands_dir/$species";
+        make_path $sp_dir;
+        my $command_path = "$sp_dir/" . $track->{id} . ".txt";
+        open my $command_fh, ">", $command_path;
+        foreach my $cmd (@{ $assembly_data->{commands} }) {
+            print $command_fh "$cmd\n";
+        }
+        close $command_fh;
+      }
+    }
+  }
+}
+
 sub _determine_aligner {
   my @analyses = @_;
   
@@ -786,6 +831,13 @@ sub _determine_aligner {
   } else {
     return "(undefined aligner)";
   }
+}
+
+sub _determine_commands {
+  my @analyses = @_;
+  
+  my @commands = map { $_->command } @analyses;
+  return \@commands;
 }
 
 sub _format_publications {

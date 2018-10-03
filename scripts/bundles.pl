@@ -44,6 +44,7 @@ my $bundles = $db->get_bundles({
   species   => $opt{species},
   files_url => $opt{files_url},
   human_dir => $opt{human_dir},
+  commands_dir => $opt{commands_dir},
 });
 
 if ($opt{format} eq 'solr') {
@@ -51,12 +52,17 @@ if ($opt{format} eq 'solr') {
   # Create the human readable symlinks
   $db->create_human_symlinks($bundles, $opt{human_dir});
   
+  # Create the commands files
+  $db->create_commands_files($bundles, $opt{commands_dir});
+  
   # Format the bundles for Solr output
   $logger->info("Format for Solr");
   my $solr_bundles = $db->format_bundles_for_solr({
       bundles   => $bundles,
       hubs_url  => $opt{hubs_url},
       human_dir => $opt{human_dir},
+      files_url => $opt{files_url},
+      commands_dir => $opt{commands_dir},
     });
   $bundles = $solr_bundles;
 }
@@ -143,6 +149,7 @@ sub opt_check {
     "output=s",
     "format=s",
     "human_dir=s",
+    "commands_dir=s",
     "help",
     "verbose",
     "debug",

@@ -104,25 +104,18 @@ sub run_pipeline {
       }
       # Not complete because there is already a hive DB!
       elsif ($pipe_log_msg =~ /Can't create database '(\w+)'; database exists/) {
-        my $dbname = $1;
-        
-        # Extract the beekeeper command
-        if ($pipe_log_msg =~ /-url \'?(mysql:\/\/\w+:\w+@[\w\-\.]+:\d+\/\w+)\'? -sql 'CREATE DATABASE'/) {
-          $logger->info("A Hive DB already exists ($dbname): We will first finish it before continuing");
-          my $hive_url = $1;
-          $hive_url .= ";reconnect_when_lost=1";
-          
+          $logger->debug("DB exists: force init");
+          my $dbname = $1;
+          my $hive_uri = `eg-h-w details url`;
+          chomp $hive_uri;
+          my $hive_url = "$hive_uri$dbname;reconnect_when_lost=1";
+
           # Create the beekeeper commands
           $beekeeper_cmd = "beekeeper.pl -url '$hive_url' -reg_conf '$opt{registry}'";
           $logger->info($pipe_log_msg);
-          
+
           # Flag to rerun the current track when the previously unfinished one is completed
           $toredo = 1;
-        } else {
-          $logger->error($pipe_log_msg);
-          $logger->error($init_msg);
-          die "A Hive DB already exists ($dbname), but I can't find its url. Aborting.";
-        }
       }
       else {
         $logger->error("PIPELINE STDERR: {\n$pipe_log_msg}");
@@ -138,7 +131,7 @@ sub run_pipeline {
       
       # RUN!
       `$beekeeper_cmd -run &> $pipe_log`;
-      $logger->info("$beekeeper_cmd -run -can_respecialize 1");
+      $logger->info("$beekeeper_cmd -run");
       my $status = 'running';
       my $prev_status_line = '';
       
@@ -150,7 +143,8 @@ sub run_pipeline {
         if ($run_msg =~ /(total over .+ total\))/) {
           # Get status line
           $status_line = $1;
-          if ($status_line =~ /total over (?<analyses>\d+) analyses :\s+(?<completeness>[0-9\.]+)% complete \(<\s+(?<cpu_hrs>[0-9\.]+)\s+CPU_hrs\) \((?<to_do>\d+) to_do \+ (?<done>\d+) done \+ (?<failed>\d+) failed = (?<total>\d+) total\)/) {
+          
+          if ($status_line =~ /total over (?<analyses>\d+) analyses :\s+(?<completeness>[0-9\.]+)% complete \(<\s+(?<cpu_hrs>[0-9\.]+)\s+CPU_hrs\) \((?<to_do>\d+) to_do \+ (?<done>\d+) done \+ (?<failed>\d+) failed.* = (?<total>\d+) total\)/) {
             %status = %+;
           }
           
@@ -183,7 +177,7 @@ sub run_pipeline {
         }
         else {
           sleep 60;
-          `$beekeeper_cmd -run -can_respecialize 1 &> $pipe_log`;
+          `$beekeeper_cmd -run &> $pipe_log`;
           
           # Print the status, but only if the status changed
           if ($status_line ne $prev_status_line) {

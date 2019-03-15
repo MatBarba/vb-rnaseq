@@ -51,6 +51,7 @@ sub add_assembly {
     sample_location => $sample,
     latest   => 0,
     strain_id => $old_latest->strain_id,
+    production_name => $species,
   });
   croak("Couldn't add the new assembly '$assembly' for '$species'") if not $old_latest;
   

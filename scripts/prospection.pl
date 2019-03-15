@@ -67,7 +67,7 @@ if ($opt{list_species}) {
       for my $ass ($str->assemblies) {
         my $latest = $ass->latest;
         my $last_flag = $latest ? '' : ' (old)';
-        say STDERR sprintf("%s\t%s\t%s%s", $sp->taxon_id, $str->production_name, $ass->assembly, $last_flag);
+        $logger->info(sprintf("%s\t%s\t%s%s", $sp->taxon_id, $str->production_name, $ass->assembly, $last_flag));
       }
     }
   }
@@ -75,7 +75,7 @@ if ($opt{list_species}) {
 
 if ($opt{search}) {
   my @search_list = @species;
-  say STDERR "Searching for " . (@search_list+0) . " taxa";
+  $logger->info("Searching for " . (@search_list+0) . " taxa");
   
   say join "\t", @fields;
   search(\@search_list, \%db_study, \%opt);
@@ -139,7 +139,7 @@ sub search {
       }
 
       for my $missing_study (keys %not_found) {
-          say STDERR "MISSING STUDY: $missing_study";
+          $logger->warn("MISSING STUDY: $missing_study");
       }
   }
 }
@@ -147,16 +147,19 @@ sub search {
 sub search_taxon {
   my ($species, $db_study, $completed, $opt) = @_;
   
-  say STDERR "Searching for RNAseq studies for " . $species->binomial_name . "... ";
+  $logger->info("Searching for RNAseq studies for " . $species->binomial_name . "... ");
   
   my @strains = $species->strains;
   my @studies = get_studies_for_taxon($species->taxon_id, $opt);
   
-  say STDERR (@studies+0) . " studies found";
+  $logger->info((@studies+0) . " studies found");
   
   # Only print the studies that are not in the DB
+  $logger->debug("Print known studies");
   map { print_study($_, $species, format_date($db_study{$_->accession})) } grep { $db_study{$_->accession} } @studies;
+  $logger->debug("Print new studies");
   map { print_study($_, $species, 'NEW ') } grep { not $db_study{$_->accession} } @studies;
+  $logger->debug("All studies printed for $species");
   
   # Mark those studies as completed
   for my $study (@studies) {
@@ -172,6 +175,8 @@ sub format_date {
 
 sub print_study {
   my ($st, $species, $category) = @_;
+
+  $logger->debug("Print study " . $st->accession);
   
   my $experiments = $st->experiments;
   my $runs        = $st->runs;

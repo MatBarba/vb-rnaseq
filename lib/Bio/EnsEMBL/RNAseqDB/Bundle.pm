@@ -428,7 +428,10 @@ sub format_bundles_for_solr {
       $solr_track{sample_accessions_ss_urls} = $track->{samples_urls} if $track->{samples_urls};
       
       # Add associated files
+      my $file_name = '';
       for my $file (@{ $assembly_data->{files} }) {
+        $file_name = $file->{name};
+
         if ($file->{type} eq 'bigwig') {
           $solr_track{bigwig_s} = defined $opt->{human_dir} ? $file->{human_name} : $file->{name};
           $solr_track{bigwig_s_url} = $file->{url};
@@ -449,6 +452,7 @@ sub format_bundles_for_solr {
           }
         }
       }
+      $file_name =~ s/\..+$//g;
       
       # Add keywords
       my @keywords;
@@ -481,6 +485,21 @@ sub format_bundles_for_solr {
           $command_url = _cleanup_url($command_url);
           $solr_track{command_s_url} = $command_url;
           $solr_track{command_s} = "Generation commands";
+      }
+
+      # Add htseq-count link
+      {
+        my $id;
+        my $assembly_name;
+        my @url_path = (
+          $opt->{files_url},
+          'htseqcount',
+          $assembly->{production_name},
+          "$file_name.htseq.gz"
+        );
+        my $htseq_url = join('/', @url_path);
+        $solr_track{htseqcount_s_url} = $htseq_url;
+        $solr_track{htseqcount_s} = "HT-Seq count";
       }
       
       push @{ $solr_group{$SOLR_CHILDREN} }, \%solr_track;

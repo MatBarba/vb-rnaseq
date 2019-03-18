@@ -106,7 +106,7 @@ sub run_pipeline {
       elsif ($pipe_log_msg =~ /Can't create database '(\w+)'; database exists/) {
           $logger->debug("DB exists: force init");
           my $dbname = $1;
-          my $hive_uri = `eg-h-w details url`;
+          my $hive_uri = `h2-w details url`;
           chomp $hive_uri;
           my $hive_url = "$hive_uri$dbname;reconnect_when_lost=1";
 
@@ -483,7 +483,7 @@ sub create_start_cmd {
   my @main_line = ();
   push @main_line, 'init_pipeline.pl';
   push @main_line, 'Bio::EnsEMBL::EGPipeline::PipeConfig::ShortReadAlignment_conf';
-  push @main_line, '$(eg-h-w details script)';
+  push @main_line, '$(h2-w details script)';
   #####################################################################################################
   push @main_line, "-registry $opt->{registry}";
   push @main_line, "-pipeline_dir $opt->{pipeline_dir}";

@@ -76,6 +76,13 @@ __PACKAGE__->table("bundle");
   extra: {list => ["ACTIVE","RETIRED"]}
   is_nullable: 1
 
+=head2 assembly_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -112,6 +119,13 @@ __PACKAGE__->add_columns(
     extra => { list => ["ACTIVE", "RETIRED"] },
     is_nullable => 1,
   },
+  "assembly_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -142,6 +156,26 @@ __PACKAGE__->add_unique_constraint("drupal_node_id", ["drupal_node_id"]);
 
 =head1 RELATIONS
 
+=head2 assembly
+
+Type: belongs_to
+
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Assembly>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "assembly",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Assembly",
+  { assembly_id => "assembly_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
+);
+
 =head2 bundle_tracks
 
 Type: has_many
@@ -158,8 +192,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5rbDmkJGgPfXE6Q7Sx1BvQ
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2019-03-20 14:25:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WPtyVnZ3byeFbckfFf6Gug
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

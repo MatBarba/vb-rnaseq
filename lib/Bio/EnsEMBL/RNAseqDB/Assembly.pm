@@ -69,6 +69,13 @@ sub add_assembly {
     $nadded++;
   }
 
+  # Also update the bundles to the latest assembly
+  my $old_assembly = $old_latest->assembly_id;
+  my $old_bundles = $self->resultset('Bundle')->search({assembly_id => $old_assembly});
+  for my $bundle ($old_bundles->all) {
+      $bundle->update({ assembly_id => $new_latest->assembly_id });
+  }
+
   # Retire the old latest assembly
   $old_latest->update({ latest => 0 });
   $new_latest->update({ latest => 1 });

@@ -107,9 +107,9 @@ sub _get_publication_id {
   my $pub_data = _get_pubmed_data($pubmed_id);
   
   if ($pub_data) {
-      my $pub_insert = $self->resultset('Publication')->create( $pub_data );
-      $logger->debug("ADD publication $pubmed_id");
-      return $pub_insert->id;
+    my $pub_insert = $self->resultset('Publication')->create( $pub_data );
+    $logger->debug("ADD publication $pubmed_id");
+    return $pub_insert->id;
   } else {
       $logger->warn("No publication retrieved: skipped");
   }
@@ -149,6 +149,10 @@ sub _get_pubmed_data {
   $data{title}    = $pub->{title};
   $data{abstract} = $pub->{abstractText};
   $data{authors}  = join(', ', map { $_->{fullName} } @{ $pub->{authorList}->{author} });
+
+  $data{abstract} =~ s/\P{ASCII}/?/g;
+  $data{title} =~ s/\P{ASCII}/?/g;
+  $data{authors} =~ s/\P{ASCII}/?/g;
   
   return \%data;
 }

@@ -314,8 +314,9 @@ sub _get_sample_id {
     
     # Get strain
     my @strain_attrib = grep {
-      lc($_->{TAG}) eq 'strain' and $_->{VALUE} ne 'missing'
+      lc($_->{TAG}) eq 'strain' and defined $_->{VALUE} and $_->{VALUE} ne 'missing'
     } @$attribs_aref;
+    $logger->warn("No strain for this sample! " . $sample->accession()) if not @strain_attrib;
     my $strain = join(',', map { $_->{VALUE} } @strain_attrib);
     
     # Get sample label
@@ -337,6 +338,10 @@ sub _get_sample_id {
     my $biosample_acc = $biosample_href->{content};
     
     # Get taxon_id
+    if (not $sample->taxon()) {
+      $logger->warn("This sample has no taxon id! " . $sample->accession());
+      return;
+    }
     my $taxon_id = $sample->taxon()->taxon_id();
     
     # Get the correct species_id
@@ -359,10 +364,12 @@ sub _get_sample_id {
     }
     
     $logger->info("ADDING sample " . $sample->accession() . "");
+    my $title = $sample->title(); $title =~ s/\P{ASCII}/?/g if $title;
+    my $description = $sample->description(); $description =~ s/\P{ASCII}/?/g if $description;
     my $insertion = $self->resultset('Sample')->create({
         sample_sra_acc    => $sample->accession(),
-        title             => $sample->title(),
-        description       => $sample->description(),
+        title             => $title,
+        description       => $description,
         taxon_id          => $taxon_id,
         strain            => $strain,
         strain_id         => $strain_id,

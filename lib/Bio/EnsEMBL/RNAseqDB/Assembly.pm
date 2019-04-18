@@ -26,11 +26,13 @@ sub add_assembly {
   my %args = @_;
   
   my $species      = $args{species};
+  my $production_name = $args{production_name} // $species;
   my $assembly     = $args{assembly};
   my $assembly_acc = $args{assembly_accession};
   my $sample       = $args{sample};
+  my $do_not_retire = $args{do_not_retire};
   
-  croak("Can't add assembly without a production_name") if not defined $species;
+  croak("Can't add assembly without a species") if not defined $species;
   croak("Can't add assembly without an assembly name")  if not defined $assembly;
   carp( "Adding assembly without an assembly accession (GCA)") if not defined $assembly_acc;
   carp( "Adding assembly without a sample region")      if not defined $sample;
@@ -51,7 +53,7 @@ sub add_assembly {
     sample_location => $sample,
     latest   => 0,
     strain_id => $old_latest->strain_id,
-    production_name => $species,
+    production_name => $production_name,
   });
   croak("Couldn't add the new assembly '$assembly' for '$species'") if not $old_latest;
   
@@ -70,14 +72,16 @@ sub add_assembly {
   }
 
   # Also update the bundles to the latest assembly
-  my $old_assembly = $old_latest->assembly_id;
-  my $old_bundles = $self->resultset('Bundle')->search({assembly_id => $old_assembly});
-  for my $bundle ($old_bundles->all) {
-      $bundle->update({ assembly_id => $new_latest->assembly_id });
+  if (not $do_not_retire) {
+    my $old_assembly = $old_latest->assembly_id;
+    my $old_bundles = $self->resultset('Bundle')->search({assembly_id => $old_assembly});
+    for my $bundle ($old_bundles->all) {
+        $bundle->update({ assembly_id => $new_latest->assembly_id });
+    }
   }
 
   # Retire the old latest assembly
-  $old_latest->update({ latest => 0 });
+  $old_latest->update({ latest => 0 }) unless $do_not_retire;
   $new_latest->update({ latest => 1 });
   
   return $nadded;

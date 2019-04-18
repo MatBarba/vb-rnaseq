@@ -29,12 +29,14 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 # Add an assembly
 my $added = $db->add_assembly(
   species            => $opt{species},
+  production_name    => $opt{production_name},
   assembly           => $opt{assembly},
   assembly_accession => $opt{accession},
   sample             => $opt{sample},
+  do_not_retire      => $opt{do_not_retire}
 );
 
-$logger->info("New assembly $opt{assembly} added for $opt{species}");
+$logger->info("New assembly $opt{assembly} added for $opt{production_name}");
 
 ###############################################################################
 # Parameters and usage
@@ -60,6 +62,9 @@ sub usage {
     --assembly <str>  : New assembly
     --accession <str> : GCA accession (recommended for track hubs)
     --sample <str>    : sample region (recommended for track hubs)
+
+    --production_name <str> : Assembly production name if different from species
+    --do_not_replace  : use as an alt assembly, don't retire the other ones
     
     Other:
     --help            : show this help message
@@ -80,13 +85,15 @@ sub opt_check {
     "password=s",
     "db=s",
     "species=s",
+    "production_name=s",
     "assembly=s",
     "accession=s",
     "sample=s",
+    "do_not_replace",
     "help",
     "verbose",
     "debug",
-  );
+  ) or usage();
 
   usage()              if $opt{help};
   usage("Need --host") if not $opt{host};

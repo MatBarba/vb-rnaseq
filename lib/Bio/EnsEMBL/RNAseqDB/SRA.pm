@@ -316,7 +316,7 @@ sub _get_sample_id {
     my @strain_attrib = grep {
       lc($_->{TAG}) eq 'strain' and defined $_->{VALUE} and $_->{VALUE} ne 'missing'
     } @$attribs_aref;
-    $logger->warn("No strain for this sample! " . $sample->accession()) if not @strain_attrib;
+    #$logger->warn("No strain for this sample! " . $sample->accession()) if not @strain_attrib;
     my $strain = join(',', map { $_->{VALUE} } @strain_attrib);
     
     # Get sample label
@@ -344,22 +344,12 @@ sub _get_sample_id {
     }
     my $taxon_id = $sample->taxon()->taxon_id();
     
-    # Get the correct species_id
-    my $strain_id;
-    if ($species) {
-      my $strain = $self->resultset('Strain')->find({ production_name => $species });
-      if ($strain) {
-          $strain_id = $strain->strain_id;
-      } else {
-          die "No strain found for species $species";
-      }
-    } else {
-      $strain_id = $self->_get_strain_id($taxon_id, $strain);
-    }
+    # Get the correct strain_id
+    my $strain_id = $self->_get_strain_id($taxon_id, $strain);
     
-    # No species id? Failed to add
+    # No strain id? Failed to add
     if (not defined $strain_id) {
-      $logger->info("Skip sample because the species ($taxon_id, $strain) could not be found in the species table");
+      $logger->info("Skip sample because the strain ($taxon_id, $strain) could not be found in the strain/species table");
       return;
     }
     
@@ -664,13 +654,13 @@ sub _get_strain_id {
       my $sp_ids_match = scalar(keys %species_ids);
       
       if ($sp_ids_match == 1) {
-        $logger->info("Matched species: $taxon_id, $strain => $species_id_list[0]");
+        $logger->info("Matched strain: $taxon_id, $strain => $species_id_list[0]");
         return $species_id_list[0];
       }
       # Several possibilities?
       elsif ($sp_ids_match > 1) {
         my $sp_list = join(', ', @species_id_list);
-        $logger->warn("WARNING: Several species match the taxon_id: $taxon_id, $strain ($sp_list). Using $species_id_list[0] (please check!)");
+        $logger->warn("WARNING: Several strains match the taxon_id: $taxon_id, $strain ($sp_list). Using $species_id_list[0] (please check!)");
         return $species_id_list[0];
         return;
       }

@@ -79,7 +79,7 @@ sub _add_runs_from {
   my @rows = $req->all;
   my $num = scalar @rows;
   if ($num == 1) {
-    $logger->debug("$table " . $acc . " has 1 id already.");
+    $logger->debug("$table " . $acc . " has 1 id already ($species).");
     
     # Stop if trying to insert a run
     if ($table eq 'run') {
@@ -95,12 +95,12 @@ sub _add_runs_from {
     ($sra) = @{ $adaptor->get_by_accession($acc) };
   }
   catch {
-    $logger->warn("WARNING: Could not retrieve SRA data for $acc");
+    $logger->warn("WARNING: Could not retrieve SRA data for $acc ($species)");
     return 0;
   };
   
   if (not defined $sra) {
-    $logger->warn("$table impossible to get: " . $acc);
+    $logger->warn("$table impossible to get: " . $acc . " ($species)");
     return 0;
   }
   
@@ -108,7 +108,7 @@ sub _add_runs_from {
   my $total = 0;
   RUN: for my $run (@{ $sra->runs() }) {
     if (not _is_run_transcriptomic($run)) {
-      $logger->debug("Skip run " . $run->accession() . " because it is not transcriptomic");
+      $logger->debug("Skip run " . $run->accession() . " for $species because it is not transcriptomic");
       next RUN;
     }
     my $num_inserted = $self->_add_run( $run->accession(), $species );
@@ -152,7 +152,7 @@ sub _add_run {
   my @run_rows = $run_req->all;
   my $num_run = scalar @run_rows;
   if ($num_run == 1) {
-    $logger->debug("Run " . $run_acc . " has 1 id already.");
+    $logger->debug("Run " . $run_acc . " has 1 id already ($species).");
     return 0;
   }
   
@@ -164,12 +164,12 @@ sub _add_run {
     ($run) = @{ $run_adaptor->get_by_accession($run_acc) };
   }
   catch {
-    $logger->warn("WARNING: Could not retrieve SRA data for $run_acc");
+    $logger->warn("WARNING: Could not retrieve SRA data for $run_acc ($species)");
     return 0;
   };
   
   if (not defined $run) {
-    $logger->warn("Run impossible to get: " . $run_acc);
+    $logger->warn("Run impossible to get: " . $run_acc . " ($species)");
     return 0;
   }
   
@@ -349,7 +349,7 @@ sub _get_sample_id {
     
     # No strain id? Failed to add
     if (not defined $strain_id) {
-      $logger->info("Skip sample because the strain ($taxon_id, $strain) could not be found in the strain/species table");
+      $logger->info("Skip sample because the species/strain ($taxon_id, $strain) could not be found in the strain/species table (for $species)");
       return;
     }
     

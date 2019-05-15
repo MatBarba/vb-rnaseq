@@ -204,6 +204,11 @@ sub _get_bundle_tracks_links {
 sub _inactivate_bundles_for_tracks {
   my ($self, $track_ids_aref) = @_;
   
+  if( @$track_ids_aref == 0) {
+    $logger->warn("No track ids to inactivate bundles");
+    return;
+  }
+
   # 1) Get the tracks-bundles links
   my @conditions = map { { 'track_id' => $_ } } @$track_ids_aref;
   my $links = $self->_get_bundle_tracks_links(\@conditions);
@@ -222,7 +227,7 @@ sub inactivate_bundles {
   
   my %bundles_hash = map { $_ => 1 } @bundle_ids;
   @bundle_ids = sort keys %bundles_hash;
-  $logger->debug("Inactivate the bundles: " . join(',', @bundle_ids));
+  $logger->info("Inactivate the bundles: " . join(',', @bundle_ids));
   my @bundle_searches = map { { bundle_id => $_ } } @bundle_ids;
   my $tracks_update = $self->resultset('Bundle')->search(
       \@bundle_searches

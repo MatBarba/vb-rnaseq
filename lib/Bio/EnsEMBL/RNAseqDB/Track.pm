@@ -590,14 +590,19 @@ sub inactivate_tracks_by_sra_ids {
   
   # Get the list of tracks associated with them
   my @track_ids = map { $_->track_id } $self->get_tracks(sra_ids => $sra_accs);
-  
-  # Check that the number of tracks is the same as the number of provided accessions
-  my $n_tracks = scalar @track_ids;
-  my $n_sras   = scalar @$sra_accs;
-  if ($n_tracks != $n_sras) {
-    $logger->warn("Not the same number of tracks ($n_tracks) and SRA accessions ($n_sras). Abort inactivation.");
+
+  if (@track_ids == 0) {
+    $logger->info("No tracks to inactivate");
     return;
   }
+  
+  # Check that the number of tracks is the same as the number of provided accessions
+  #my $n_tracks = scalar @track_ids;
+  #my $n_sras   = scalar @$sra_accs;
+  #if ($n_tracks != $n_sras) {
+  #  $logger->warn("Not the same number of tracks ($n_tracks) and SRA accessions ($n_sras). Abort inactivation.");
+  #  return;
+  #}
   
   # All is well: inactivate
   $self->inactivate_tracks(\@track_ids, 'RETIRED');
@@ -615,13 +620,13 @@ sub inactivate_tracks {
   $status ||= 'RETIRED';
   
   my @tracks = map { { track_id => $_ } } @$track_ids_aref;
-  $logger->debug(sprintf "Inactivated tracks: %s", join(',', @$track_ids_aref));
+  $logger->info(sprintf "Inactivated tracks: %s", join(',', @$track_ids_aref));
   my $tracks_update = $self->resultset('Track')->search(\@tracks)->update({
     status => $status,
   });
 
   # Also inactivate corresponding bundles
-  #$self->_inactivate_bundles_for_tracks($track_ids_aref);
+  $self->_inactivate_bundles_for_tracks($track_ids_aref);
 }
 
 ## PRIVATE METHOD

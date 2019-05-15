@@ -46,8 +46,8 @@ sub _add_track {
     return;
   }
   
-  # Get the latest assembly for these runs
-  # NB: we're only going to align tracks against the latest version
+  # Get the latest assemblies for these runs
+  # NB: we're only going to align tracks against the latest versions
   my $ass_req = $self->resultset('Assembly')->search({
     'runs.run_id' => $run_id,
     latest => 1
@@ -55,9 +55,9 @@ sub _add_track {
   {
     prefetch  => { 'strain' => { 'samples' => 'runs' } }
   });
-  my $assembly_id = $ass_req->next->assembly_id;
+  my @assembly_ids = map { $_->assembly_id } $ass_req->all;
   
-  # Insert a new track and a link sra_track
+  # Insert a new track, a link sra_track, and 1 track_analyses per assembly
   $logger->info("ADDING track for $run_id");
   
   # Add the track itself
@@ -67,11 +67,7 @@ sub _add_track {
           run_id => $run_id,
         }
       ],
-      track_analyses  => [
-        {
-          assembly_id => $assembly_id
-        }
-      ]
+      track_analyses  => [ map { {assembly_id => $_} } @assembly_ids],
   });
   
   # Add the link from the run to the track
@@ -165,8 +161,8 @@ sub get_tracks {
     %search = %filter if %filter;
   }
   use Data::Dumper;
-  #$logger->debug(Dumper \%pars);
-  #$logger->debug(Dumper \%search);
+  $logger->debug(Dumper \%pars);
+  $logger->debug(Dumper \%search);
   
   # Actual request with filters
   my $track_req = $self->resultset('Track')->search(\%search,
@@ -273,25 +269,29 @@ sub get_new_runs_tracks {
     aligned => 0,
     all_assemblies => 1,
   );
-  $logger->debug((@tracks+0) . " tracks to consider as new");
+  $logger->info((@tracks+0) . " tracks to consider as new");
   
   my %new_track = ();
   for my $track (@tracks) {
     my $track_id = $track->track_id;
-    my $assembly = $track->track_analyses->next->assembly;
-    $logger->debug("Check track $track_id as new run track");
 
-    for my $sra_track ($track->sra_tracks) {
-      my $run = $sra_track->run;
-      
-      # Private file?
-      if (defined $run->run_private_acc) {
-        my @fastq = map { $_->path } $run->private_files->all;
-        $self->_add_new_runs_track(\%new_track, $track_id, $run, $assembly, \@fastq);
-      }
-      # Otherwise, the SRA accessions will suffice
-      else {
-        $self->_add_new_runs_track(\%new_track, $track_id, $run, $assembly);
+    # Get all possible assemblies
+    for my $ta ($track->track_analyses) {
+      my $assembly = $ta->assembly;
+      $logger->debug("Check track $track_id as new run track for ".$assembly->assembly);
+
+      for my $sra_track ($track->sra_tracks) {
+        my $run = $sra_track->run;
+        
+        # Private file?
+        if (defined $run->run_private_acc) {
+          my @fastq = map { $_->path } $run->private_files->all;
+          $self->_add_new_runs_track(\%new_track, $track_id, $run, $assembly, \@fastq);
+        }
+        # Otherwise, the SRA accessions will suffice
+        else {
+          $self->_add_new_runs_track(\%new_track, $track_id, $run, $assembly);
+        }
       }
     }
   }
@@ -529,17 +529,13 @@ sub merge_tracks_by_sra_ids {
   my $track_text = shift @track_texts;
   
   # Create a new merged track
-  my $assembly_id = $old_tracks[0]->track_analyses->next->assembly->assembly_id;
+  my @assembly_ids = map { $_->assembly_id } $old_tracks[0]->track_analyses;
   my @run_ids = map { map { {run_id => $_->run->run_id} } $_->sra_tracks } @old_tracks;
   my $merger_track = $self->resultset('Track')->create({
       title_auto => $track_title,
       text_auto => $track_text,
       sra_tracks => \@run_ids,
-      track_analyses  => [
-        {
-          assembly_id => $assembly_id
-        }
-      ]
+      track_analyses  => [ map { {assembly_id => $_} } @assembly_ids],
   });
   my $merged_track_id = $merger_track->track_id;
   $logger->debug(sprintf "Merged in track %d", $merged_track_id);

@@ -44,8 +44,10 @@ if ($opt{file}) {
 # Add all runs for those SRA accessions
 my $runs_added = 0;
 for my $sra_acc (@sras) {
-  my $acc = shift @$sra_acc;
-  my $species = shift @$sra_acc;
+  my ($acc, $species) = @$sra_acc;
+
+  $logger->info("Add $acc for $species");
+
   my $added = $db->add_sra($acc, $species);
   $runs_added += $added;
 }

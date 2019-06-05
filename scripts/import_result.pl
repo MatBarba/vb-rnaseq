@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 
+use v5.14;
 use strict;
 use warnings;
 use Readonly;
@@ -30,20 +31,149 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
   $opt{password}
 );
 
-# Get the list of json files
-$logger->debug("Get json files");
-my %tracks_results;
-for my $json_file (glob $opt{json_files}) {
-  my $json_content = slurp $json_file;
-  my $json_data = decode_json($json_content);
-  %tracks_results = ( %tracks_results, %$json_data );
+my @species = ();
+
+# Get the list of files in the directory
+my %files = get_files_from_dir($opt{dir});
+
+# Get the list of expected new tracks from DB
+my %old_aligned = get_aligned_tracks($db);
+my %new_aligned = get_non_aligned_tracks($db);
+
+# Check old aligned track
+my @old;
+my @new;
+my @unknown;
+for my $base_path (sort keys %files) {
+  if (exists $old_aligned{$base_path}) {
+    push @old, $base_path;
+    delete $old_aligned{$base_path};
+  } elsif (exists $new_aligned{$base_path}) {
+    push @new, $base_path;
+  } else {
+    push @unknown, $base_path;
+  }
 }
 
-# Add those tracks to the database
-add_tracks_results($db, \%tracks_results);
+$logger->info("Old aligned files correct: " . scalar(@old)) if @old;
+$logger->info("New aligned files correct: " . scalar(@new)) if @new;
+$logger->info("Unknown files: " . scalar(@unknown)) if @unknown;
+my @remaining_old = sort keys %old_aligned;
+
+if ($opt{unknown}) {
+  for my $u (@unknown) { say $u }
+}
+
+if ($opt{import}) {
+  $logger->info("Import new aligned data to db");
+  
+  my %tracks_results;
+  for my $name (@new) {
+    my $json_file;
+    if ($files{$name} and $files{$name}{cmds}) {
+      $logger->debug("$name has: " . join(", ", sort keys %{$files{$name}}));
+      $json_file = $files{$name}{cmds};
+    } else {
+      $logger->warn("No files data for $name");
+      next;
+    }
+
+    my $json_content = slurp $json_file;
+    my $json_data = decode_json($json_content);
+    %tracks_results = ( %tracks_results, %$json_data );
+  }
+
+  # Add those tracks to the database
+  add_tracks_results($db, \%tracks_results);
+}
 
 ###############################################################################
 # MAIN FUNCTIONS
+
+sub get_files_from_dir {
+  my ($dir) = @_;
+  
+  my %files;
+
+  for my $type (qw(bam bigwig cmds)) {
+    $logger->info("Load files of type $type");
+    
+    my $tdir = "$dir/$type";
+    opendir(my $dh, $tdir);
+    while (my $sp = readdir $dh) {
+      next if $sp =~ /^\./;
+
+      my $sp_dir = "$tdir/$sp";
+      $logger->debug($sp_dir);
+
+      opendir(my $spdh, $sp_dir);
+      while (my $file = readdir $spdh) {
+        next if $file =~ /^\./;
+        next if $file =~ /bam\.bai$/;
+        my $base_path = "$sp/$file";
+        $base_path =~ s/\.(bam|bw|cmds.*)$//;
+        $base_path =~ s/_([A-Z][a-z]{3,4}[A-Z][0-9])$//;  # Also remove the assembly?
+        $logger->debug($base_path);
+
+        if (not exists $files{$base_path}) {
+          $files{$base_path} = {};
+        }
+        my $file_path = "$sp_dir/$file";
+        $files{$base_path}{$type} = $file_path;
+      }
+    }
+  }
+
+  $logger->info(scalar(keys %files) . " tracks files");
+  return %files;
+}
+
+sub get_non_aligned_tracks {
+  my ($db) = @_;
+
+  # Get the list of tracks already aligned from DB
+  my @tracks = $db->get_tracks(aligned => 0, all_assemblies => 1);
+
+  my %unknown;
+  for my $track (@tracks) {
+    my $merge_id = $track->merge_id;
+
+    # Get all possible assemblies
+    for my $ta ($track->track_analyses) {
+      my $assembly = $ta->assembly;
+      my $production_name = $assembly->production_name;
+
+      my $track_basepath = "$production_name/${merge_id}";
+      $unknown{$track_basepath}++;
+    }
+  }
+  $logger->info(scalar(keys %unknown) . " known unaligned tracks");
+  return %unknown;
+}
+
+sub get_aligned_tracks {
+  my ($db) = @_;
+
+  # Get the list of tracks already aligned from DB
+  my @tracks = $db->get_tracks(aligned => 1, all_assemblies => 1);
+
+  my %known;
+  for my $track (@tracks) {
+    my $merge_id = $track->merge_id;
+
+    # Get all possible assemblies
+    for my $ta ($track->track_analyses) {
+      my $assembly = $ta->assembly;
+      my $production_name = $assembly->production_name;
+
+      my $track_basepath = "$production_name/${merge_id}";
+      $known{$track_basepath}++;
+    }
+  }
+  $logger->info(scalar(keys %known) . " known aligned tracks");
+  return %known;
+}
+
 sub add_tracks_results {
   my ($db, $results_href) = @_;
   
@@ -128,7 +258,12 @@ sub usage {
     --password <str>  : password
     --db <str>        : database name
     
-    --json_files <path> : path to the files to add to the database (to use a joker, use double quotes)
+    --dir <path> : directory where each bam, bigwig, commands dirs are stored
+
+    ACTION:
+    (By default: report)
+    --import          : import any known, new aligned track
+    --unknown         : list all files that are unknown in the final_dir
     
     --help            : show this help message
     --verbose         : show detailed progress
@@ -147,18 +282,21 @@ sub opt_check {
     "user=s",
     "password=s",
     "db=s",
-    "json_files=s",
+    "dir=s",
+    "import",
+    "unknown",
+    "import",
     "help",
     "verbose",
     "debug",
-  );
+  ) or usage();
 
   usage()                if $opt{help};
   usage("Need --host")   if not $opt{host};
   usage("Need --port")   if not $opt{port};
   usage("Need --user")   if not $opt{user};
   usage("Need --db")     if not $opt{db};
-  usage("Need --json_files")   if not $opt{json_files};
+  usage("Need --dir")   if not $opt{dir};
   $opt{password} ||= '';
   Log::Log4perl->easy_init($INFO) if $opt{verbose};
   Log::Log4perl->easy_init($DEBUG) if $opt{debug};

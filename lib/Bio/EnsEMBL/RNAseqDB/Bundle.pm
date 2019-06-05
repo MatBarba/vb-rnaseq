@@ -851,7 +851,7 @@ sub _determine_aligner {
   if (@alignments) {
     my $aligner = $alignments[0]->analysis_description->name;
     my $version = $alignments[0]->version;
-    return "$aligner $version";
+    return $version ? "$aligner $version" : $aligner;
   } else {
     return "(undefined aligner)";
   }

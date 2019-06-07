@@ -522,218 +522,306 @@ sub format_bundles_for_solr {
 }
 
 sub get_bundles {
-  my $self = shift;
-  my ($opt) = @_;
+  my ($self, $opt) = @_;
   
-  my @groups;
-  
+  # Get generic data from the database
   my $bundles = $self->_get_bundles($opt);
   
-  my %done;
+  # Extract and format the data
+  my @groups;
   DRU: for my $bundle ($bundles->all) {
-    next DRU if $done{ $bundle->bundle_id }++;
+    #next DRU if $done{ $bundle->bundle_id }++;
+    
+    # Collect general metadata and species
+    my %metadata = _get_bundle_metadata($bundle);
+    my %species = _get_bundle_species($bundle);
+    my %tracks_data = $self->_get_bundle_tracks($bundle, $opt);
 
-    # Get the data associated with every track
-    my $bundle_tracks = $bundle->bundle_tracks;
-
-    my $analysis = $bundle_tracks->first->track->track_analyses->first;
-
-    # Prepare species data
-    my $strain = $analysis->assembly->strain;
-    my %species = (
-      species            => $strain->species->binomial_name,
-      strain             => $strain->strain,
-      production_name    => $strain->production_name,
-    );
-    my $assembly = $analysis->assembly->assembly;
-
+    # Collect all data for this group
     my %group = (
-      id              => $GROUP_PREFIX . $bundle->bundle_id,
-      label           => $bundle->title_manual || $bundle->title_auto,
-      description     => $bundle->text_manual  || $bundle->text_auto,
+      %metadata,
+      %species,
+      %tracks_data,
     );
-    $group{description} ||= $group{label};
-    if (not defined $group{label}) {
-      $logger->debug("WARNING: bundle $group{id} has no label (no auto or manual title). Using the id as label.");
-      $group{label} = $group{id};
-    }
-    if (not defined $group{description}) {
-      $logger->debug("WARNING: bundle $group{id} has no description.");
-    }
-    %group = ( %group, %species );
-    my %publications;
-
-    # Use a better label if possible
-    $group{trackhub_id} = $group{id};
-    if ( $bundle_tracks->all == 1 ) {
-      my ($track) = $bundle_tracks->all;
-      $group{trackhub_id} = $track->track->merge_text;
-
-      # Simplify name if it has more than 2 elements
-      $group{trackhub_id} =~ s/^([^_]+)_.+_([^-]+)$/$1-$2/;
-      $group{trackhub_id} = $GROUP_PREFIX . $group{trackhub_id};
-    }
-
-    # Add the tracks data
-    TRACK: foreach my $bundle_track ($bundle_tracks->all) {
-      my $track = $bundle_track->track;
-      my $track_id = $track->track_id;
-
-      # Define title
-      my $title = $track->title_manual // $track->title_auto;
-      if (not $title) {
-        my $merge = $track->merge_text;
-
-        if ($merge =~ /_/) {
-          my ($first) = split /_/, $merge;
-          $title = "$first-...";
-        } else {
-          $title = $merge;
-        }
-      }
-
-      # Define description
-      my @description_list;
-      my $track_description = $track->text_manual || $track->text_auto;
-
-      # warn if no default description for this track
-      if ($track_description) {
-        push @description_list, $track_description;
-      } else {
-        my $track_name = $TRACK_PREFIX . $track->id;
-        $logger->debug("WARNING: Track '$track_name' with title '$title' has no description");
-      }
-
-      # Add the list of SRA ids to the description anyway
-      my $merge = $track->merge_text;
-      $merge =~ s/(.R[PXRS]\d{6,8})/<a href="http:\/\/www.ebi.ac.uk\/ena\/data\/view\/$1">$1<\/a>/g;
-      if ($merge =~ s/_/, /g) {
-        push @description_list, "Merged RNA-Seq data from: $merge";
-      } else {
-        push @description_list, "RNA-Seq data from $merge";
-      }
-      my $description = join("<br>", @description_list);
-
-      my %track_data = (
-        title       => $title,
-        description => $description,
-        id          => $TRACK_PREFIX . $track->track_id,
-        merge_text  => $track->merge_text,
-      );
-
-      my %assemblies;
-      foreach my $track_analysis ($track->track_analyses) {
-        my $assembly = $track_analysis->assembly;
-        my $assembly_name = $assembly->assembly;
-        my @files;
-        FILE: foreach my $file ($track_analysis->files) {
-          my @url_path = (
-            $file->type eq 'bai' ? 'bam' : $file->type,
-            $assembly->production_name,
-          );
-          my $human_dir = $opt->{human_dir};
-          if ($human_dir) {
-            my @path = split /\//, $human_dir;
-            my $human_dir_name = pop @path;
-            unshift @url_path, $human_dir_name;
-            push @url_path, $file->human_name;
-          } else {
-            push @url_path, $file->path;
-          }
-          unshift @url_path, $opt->{files_url} if defined $opt->{files_url};
-          my $url  = ''. join('/', @url_path);
-          $url = _cleanup_url($url);
-
-          my %file_data = (
-            'name'       => $file->path,
-            'human_name' => $file->human_name,
-            'url'        => $url,
-            'type'       => ''. $file->type,
-          );
-          push @files, \%file_data;
-        }
-        
-        my %track_assembly_data = (
-          files    => \@files,
-          aligner  => _determine_aligner($track_analysis->analyses),
-          commands => _determine_commands($track_analysis->analyses),
-          production_name => $assembly->production_name,
-        );
-        $assemblies{ $assembly_name } = \%track_assembly_data;
-
-        # Also add this information for the whole bundle
-        my $ass_accession = $assembly->assembly_accession;
-        if (not exists $group{assemblies}->{ $assembly_name }) {
-          my %bundle_assembly_data = (
-            accession => $ass_accession,
-            latest    => $assembly->latest,
-            production_name => $assembly->production_name,
-          );
-          $group{assemblies}->{ $assembly_name } = \%bundle_assembly_data;
-        }
-      }
-      $track_data{assemblies} = \%assemblies;
-
-      # Get the SRA accessions
-      my (%runs, %experiments, %studies, %samples);
-      my @track_runs = $track->sra_tracks->all;
-      my $private = 0;
-      for my $track_run (@track_runs) {
-        my $run = $track_run->run;
-
-        # Accessions
-        my $run_acc    = $run->run_sra_acc                      // $run->run_private_acc;
-        my $exp_acc    = $run->experiment->experiment_sra_acc   // $run->experiment->experiment_private_acc;
-        my $study_acc  = $run->experiment->study->study_sra_acc // $run->experiment->study->study_private_acc;
-        my $sample_acc = $run->sample->sample_sra_acc           // $run->sample->sample_private_acc;
-
-        $runs{        $run_acc    }++;
-        $experiments{ $exp_acc    }++;
-        $studies{     $study_acc  }++;
-        $samples{     $sample_acc }++;
-        $private = 1 if $run_acc =~ /^$PREFIX/;
-
-        # Associated publications
-        my @study_pubs = $run->experiment->study->study_publications->all;
-        my %track_publications = _format_publications(\@study_pubs);
-        %publications = (%publications, %track_publications);
-      }
-
-      my $accession_name = $private ? 'private_accessions' : 'sra_accessions';
-      my %accessions = (
-        runs        => [sort keys %runs],
-        experiments => [sort keys %experiments],
-        studies     => [sort keys %studies],
-        samples     => [sort keys %samples],
-      );
-      %track_data = (%track_data, %accessions);
-      if (not $private) {
-        my %accessions_urls = (
-          runs_urls        => [map { $SRA_URL_ROOT . $_ } sort keys %runs],
-          experiments_urls => [map { $SRA_URL_ROOT . $_ } sort keys %experiments],
-          studies_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %studies],
-          samples_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %samples],
-        );
-        %track_data = (%track_data, %accessions_urls);
-      }
-
-      # Finally, get the keywords
-      my $keywords = $self->get_vocabulary_for_track_id($track_id);
-      $track_data{keywords} = $keywords;
-
-      # Save the track in the bundle
-      push @{ $group{tracks} }, \%track_data;
-
-      # Add all collected publications
-      %group = (%group, %publications);
-    }
-    @{ $group{tracks} } = sort { $a->{title} cmp $b->{title} } @{ $group{tracks} };
-
     push @groups, \%group;
   }
+
+  # Reorder the bundles
   @groups = sort { $a->{species} cmp $b->{species} } @groups;
   
   return \@groups;
+}
+
+sub _get_bundle_metadata {
+  my ($bundle) = @_;
+
+  # Prepare the general metadata for this group
+  my %metadata = (
+    id              => $GROUP_PREFIX . $bundle->bundle_id,
+    label           => $bundle->title_manual || $bundle->title_auto,
+    description     => $bundle->text_manual  || $bundle->text_auto,
+  );
+  $metadata{description} ||= $metadata{label};
+  if (not defined $metadata{label}) {
+    $logger->debug("WARNING: bundle $metadata{id} has no label (no auto or manual title). Using the id as label.");
+    $metadata{label} = $metadata{id};
+  }
+  if (not defined $metadata{description}) {
+    $logger->debug("WARNING: bundle $metadata{id} has no description.");
+  }
+
+  # Use a better label if possible
+  $metadata{trackhub_id} = $metadata{id};
+  my $bundle_tracks = $bundle->bundle_tracks;
+  if ( $bundle_tracks->all == 1 ) {
+    my ($track) = $bundle_tracks->all;
+    $metadata{trackhub_id} = $track->track->merge_text;
+
+    # Simplify name if it has more than 2 elements
+    $metadata{trackhub_id} =~ s/^([^_]+)_.+_([^-]+)$/$1-$2/;
+    $metadata{trackhub_id} = $GROUP_PREFIX . $metadata{trackhub_id};
+  }
+
+  return %metadata;
+}
+
+sub _get_bundle_species {
+  my ($bundle) = @_;
+
+  # Prepare the species/strain data for this bundle
+  # Get the species for the bundle, and the strains
+  my $bspecies = $bundle->species;
+  my $strains = $bspecies->strains;
+
+  # There will be one group per strain
+
+  # Get the data associated with every track
+  my $bundle_tracks = $bundle->bundle_tracks;
+
+  my $analysis = $bundle_tracks->first->track->track_analyses->first;
+
+  # Prepare species data
+  my $strain = $analysis->assembly->strain;
+  my %species = (
+    species            => $strain->species->binomial_name,
+    strain             => $strain->strain,
+    production_name    => $strain->production_name,
+  );
+  my $assembly = $analysis->assembly->assembly;
+  
+  return %species;
+}
+
+
+
+
+
+sub _get_bundle_tracks {
+  my ($self, $bundle, $opt) = @_;
+
+  my (@tracks, %publications, %bundle_assemblies);
+
+  # Add the tracks data
+  TRACK: foreach my $track (map { $_->track } $bundle->bundle_tracks->all) {
+
+    # Prepare track data
+    my $track_id = $track->track_id;
+    my %track_metadata = (
+      title       => _make_track_title($track),
+      description => _make_track_description($track),
+      id          => $TRACK_PREFIX . $track->track_id,
+      merge_text  => $track->merge_text,
+    );
+
+    my %track_assemblies;
+    foreach my $track_analysis ($track->track_analyses) {
+      my $assembly = $track_analysis->assembly;
+      my $assembly_name = $assembly->assembly;
+
+      # Get files
+      my @files = _get_track_files($track_analysis, $assembly, $opt);
+
+      my %track_assembly_data = (
+        files    => \@files,
+        aligner  => _determine_aligner($track_analysis->analyses),
+        commands => _determine_commands($track_analysis->analyses),
+        production_name => $assembly->production_name,
+      );
+      $track_assemblies{ $assembly_name } = \%track_assembly_data;
+
+      # Also add this information for the whole bundle
+      my $ass_accession = $assembly->assembly_accession;
+      if (not exists $bundle_assemblies{ $assembly_name }) {
+        my %bundle_assembly_data = (
+          accession => $ass_accession,
+          latest    => $assembly->latest,
+          production_name => $assembly->production_name,
+        );
+        $bundle_assemblies{ $assembly_name } = \%bundle_assembly_data;
+      }
+    }
+
+    my ($sra_data, $sra_publications) = _get_bundle_sra($track);
+    %publications = (%publications, %$sra_publications);
+
+    # Save the track in the bundle
+    my %track_data = (
+      %track_metadata,
+      %$sra_data,
+      keywords => $self->get_vocabulary_for_track_id($track_id),
+      assemblies => \%track_assemblies,
+    );
+    push @tracks, \%track_data;
+  }
+
+  # Reorder tracks
+  @tracks = sort { $a->{title} cmp $b->{title} } @tracks;
+
+  my %tracks_data = (
+    tracks => \@tracks,
+    publications => \%publications,
+    assemblies => \%bundle_assemblies,
+  );
+  
+  return %tracks_data;
+}
+
+
+
+
+
+
+sub _make_track_title {
+  my ($track) = @_;
+
+  my $title = $track->title_manual // $track->title_auto;
+  if (not $title) {
+    my $merge = $track->merge_text;
+
+    if ($merge =~ /_/) {
+      my ($first) = split /_/, $merge;
+      $title = "$first-...";
+    } else {
+      $title = $merge;
+    }
+  }
+
+  return $title;
+}
+
+sub _make_track_description {
+  my ($track) = @_;
+
+  # Define description
+  my @description_list;
+  my $track_description = $track->text_manual || $track->text_auto;
+
+  # warn if no default description for this track
+  if ($track_description) {
+    push @description_list, $track_description;
+  } else {
+    my $track_name = $TRACK_PREFIX . $track->id;
+    $logger->debug("WARNING: Track '$track_name' has no description");
+  }
+
+  # Add the list of SRA ids to the description anyway
+  my $merge = $track->merge_text;
+  $merge =~ s/(.R[PXRS]\d{6,8})/<a href="http:\/\/www.ebi.ac.uk\/ena\/data\/view\/$1">$1<\/a>/g;
+  if ($merge =~ s/_/, /g) {
+    push @description_list, "Merged RNA-Seq data from: $merge";
+  } else {
+    push @description_list, "RNA-Seq data from $merge";
+  }
+  my $description = join("<br>", @description_list);
+
+  return $description;
+}
+
+sub _get_track_files {
+  my ($track_analysis, $assembly, $opt) = @_;
+
+      my @files;
+      FILE: foreach my $file ($track_analysis->files) {
+        my @url_path = (
+          $file->type eq 'bai' ? 'bam' : $file->type,
+          $assembly->production_name,
+        );
+        my $human_dir = $opt->{human_dir};
+        if ($human_dir) {
+          my @path = split /\//, $human_dir;
+          my $human_dir_name = pop @path;
+          unshift @url_path, $human_dir_name;
+          push @url_path, $file->human_name;
+        } else {
+          push @url_path, $file->path;
+        }
+        unshift @url_path, $opt->{files_url} if defined $opt->{files_url};
+        my $url  = ''. join('/', @url_path);
+        $url = _cleanup_url($url);
+
+        my %file_data = (
+          'name'       => $file->path,
+          'human_name' => $file->human_name,
+          'url'        => $url,
+          'type'       => ''. $file->type,
+        );
+        push @files, \%file_data;
+      }
+
+  return @files;
+}
+
+sub _get_bundle_sra {
+  my ($track) = @_;
+
+  my %publications;
+  my (%runs, %experiments, %studies, %samples);
+  my @track_runs = $track->sra_tracks->all;
+  my $private = 0;
+  for my $track_run (@track_runs) {
+    my $run = $track_run->run;
+
+    # Accessions
+    my $run_acc    = $run->run_sra_acc                      // $run->run_private_acc;
+    my $exp_acc    = $run->experiment->experiment_sra_acc   // $run->experiment->experiment_private_acc;
+    my $study_acc  = $run->experiment->study->study_sra_acc // $run->experiment->study->study_private_acc;
+    my $sample_acc = $run->sample->sample_sra_acc           // $run->sample->sample_private_acc;
+
+    $runs{        $run_acc    }++;
+    $experiments{ $exp_acc    }++;
+    $studies{     $study_acc  }++;
+    $samples{     $sample_acc }++;
+    $private = 1 if $run_acc =~ /^$PREFIX/;
+
+    # Associated publications
+    my @study_pubs = $run->experiment->study->study_publications->all;
+    my %track_publications = _format_publications(\@study_pubs);
+    %publications = (%publications, %track_publications);
+  }
+
+  my %accessions = (
+    runs        => [sort keys %runs],
+    experiments => [sort keys %experiments],
+    studies     => [sort keys %studies],
+    samples     => [sort keys %samples],
+  );
+
+  my %accessions_urls;
+  if (not $private) {
+    %accessions_urls = (
+      runs_urls        => [map { $SRA_URL_ROOT . $_ } sort keys %runs],
+      experiments_urls => [map { $SRA_URL_ROOT . $_ } sort keys %experiments],
+      studies_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %studies],
+      samples_urls     => [map { $SRA_URL_ROOT . $_ } sort keys %samples],
+    );
+  }
+  
+  my %sra_data = (
+    %accessions,
+    %accessions_urls
+  );
+
+  return \%sra_data, \%publications;
 }
 
 sub _cleanup_url {

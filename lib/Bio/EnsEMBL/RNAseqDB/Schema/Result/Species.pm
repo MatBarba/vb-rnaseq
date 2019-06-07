@@ -134,6 +134,21 @@ __PACKAGE__->add_unique_constraint("taxon_id", ["taxon_id"]);
 
 =head1 RELATIONS
 
+=head2 bundles
+
+Type: has_many
+
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Bundle>
+
+=cut
+
+__PACKAGE__->has_many(
+  "bundles",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Bundle",
+  { "foreign.species_id" => "self.species_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 samples
 
 Type: has_many
@@ -165,8 +180,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07047 @ 2019-06-05 13:40:03
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4A4ZzZW81KWdepKSGdzKJg
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2019-06-07 11:48:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3VBn3FE55nmBse3LnGBIKw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

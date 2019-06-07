@@ -53,7 +53,7 @@ sub _add_track {
     latest => 1
   },
   {
-    prefetch  => { 'strain' => { 'samples' => 'runs' } }
+    prefetch  => { 'strain' => { 'species' => { 'samples' => 'runs' } } }
   });
   my @assembly_ids = map { $_->assembly_id } $ass_req->all;
   
@@ -172,7 +172,7 @@ sub get_tracks {
         { 'bundle_tracks' => 'bundle' },
         { 'sra_tracks' =>
           { 'run' => [
-              { 'sample' => 'strain' },
+              { 'sample' => 'species' },
               { 'experiment' => 'study' },
               'private_files',
             ]
@@ -310,9 +310,9 @@ sub _add_new_runs_track {
   my ($track_list, $track_id, $run, $assembly, $fastqs) = @_;
 
   $logger->debug("Generating track to add ($track_id)");
-  my $strain = $run->sample->strain;
+  my $species = $run->sample->species;
   my $production_name = $assembly->production_name;
-  my $taxon_id        = $strain->species->taxon_id;
+  my $taxon_id        = $species->taxon_id;
   my $assembly_name   = $assembly->assembly;
 
   my $track_data = $track_list->{$production_name}->{$track_id};

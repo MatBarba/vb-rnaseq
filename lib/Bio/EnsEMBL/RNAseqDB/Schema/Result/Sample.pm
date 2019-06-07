@@ -63,13 +63,6 @@ __PACKAGE__->table("sample");
   data_type: 'text'
   is_nullable: 1
 
-=head2 strain_id
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
 =head2 biosample_acc
 
   data_type: 'varchar'
@@ -107,6 +100,19 @@ __PACKAGE__->table("sample");
   extra: {list => ["ACTIVE","RETIRED"]}
   is_nullable: 1
 
+=head2 species_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 strain_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -129,13 +135,6 @@ __PACKAGE__->add_columns(
   { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 1 },
   "strain",
   { data_type => "text", is_nullable => 1 },
-  "strain_id",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
   "biosample_acc",
   { data_type => "varchar", is_nullable => 1, size => 15 },
   "biosample_group_acc",
@@ -158,6 +157,15 @@ __PACKAGE__->add_columns(
     extra => { list => ["ACTIVE", "RETIRED"] },
     is_nullable => 1,
   },
+  "species_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "strain_id",
+  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -239,24 +247,29 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 strain
+=head2 species
 
 Type: belongs_to
 
-Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Strain>
+Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Species>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "strain",
-  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Strain",
-  { strain_id => "strain_id" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
+  "species",
+  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Species",
+  { species_id => "species_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "CASCADE",
+    on_update     => "CASCADE",
+  },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mHUlvBrBx46gTZoNfcJD5g
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2019-06-05 14:38:27
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KAD8kxwN30cAXCKosgO+tA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

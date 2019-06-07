@@ -151,21 +151,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 samples
-
-Type: has_many
-
-Related object: L<Bio::EnsEMBL::RNAseqDB::Schema::Result::Sample>
-
-=cut
-
-__PACKAGE__->has_many(
-  "samples",
-  "Bio::EnsEMBL::RNAseqDB::Schema::Result::Sample",
-  { "foreign.strain_id" => "self.strain_id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 species
 
 Type: belongs_to
@@ -182,8 +167,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gEA1XmCF351lEWhCelzP/Q
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2019-06-05 14:34:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WkLmC7q+iiUsB7PV6C0R6A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

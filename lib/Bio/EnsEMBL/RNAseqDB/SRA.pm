@@ -345,11 +345,11 @@ sub _get_sample_id {
     my $taxon_id = $sample->taxon()->taxon_id();
     
     # Get the correct strain_id
-    my $strain_id = $self->_get_strain_id($taxon_id, $strain);
+    my $species_id = $self->_get_species_id($taxon_id);
     
-    # No strain id? Failed to add
-    if (not defined $strain_id) {
-      $logger->info("Skip sample because the species/strain ($taxon_id, $strain) could not be found in the strain/species table (for $species)");
+    # No species id? Failed to add
+    if (not defined $species_id) {
+      $logger->info("Skip sample because the species ($taxon_id) could not be found in the species table (for $species)");
       return;
     }
     
@@ -362,7 +362,7 @@ sub _get_sample_id {
         description       => $description,
         taxon_id          => $taxon_id,
         strain            => $strain,
-        strain_id         => $strain_id,
+        species_id         => $species_id,
         biosample_acc     => $biosample_acc,
         label             => $label,
       });

@@ -534,16 +534,19 @@ sub get_bundles {
     
     # Collect general metadata and species
     my %metadata = _get_bundle_metadata($bundle);
-    my %species = _get_bundle_species($bundle);
-    my %tracks_data = $self->_get_bundle_tracks($bundle, $opt);
 
-    # Collect all data for this group
-    my %group = (
-      %metadata,
-      %species,
-      %tracks_data,
-    );
-    push @groups, \%group;
+    for my $strain ($bundle->species->strains) {
+      my %strain = _get_bundle_strain_data($strain);
+      my %tracks_data = $self->_get_bundle_tracks($bundle, $strain, $opt);
+
+      # Collect all data for this group
+      my %group = (
+        %metadata,
+        %strain,
+        %tracks_data,
+      );
+      push @groups, \%group;
+    }
   }
 
   # Reorder the bundles
@@ -585,41 +588,24 @@ sub _get_bundle_metadata {
   return %metadata;
 }
 
-sub _get_bundle_species {
-  my ($bundle) = @_;
+sub _get_bundle_strain_data {
+  my ($strain) = @_;
 
-  # Prepare the species/strain data for this bundle
-  # Get the species for the bundle, and the strains
-  my $bspecies = $bundle->species;
-  my $strains = $bspecies->strains;
+    my %species = (
+      species            => $strain->species->binomial_name,
+      strain             => $strain->strain,
+      production_name    => $strain->production_name,
+    );
 
-  # There will be one group per strain
-
-  # Get the data associated with every track
-  my $bundle_tracks = $bundle->bundle_tracks;
-
-  my $analysis = $bundle_tracks->first->track->track_analyses->first;
-
-  # Prepare species data
-  my $strain = $analysis->assembly->strain;
-  my %species = (
-    species            => $strain->species->binomial_name,
-    strain             => $strain->strain,
-    production_name    => $strain->production_name,
-  );
-  my $assembly = $analysis->assembly->assembly;
-  
-  return %species;
+    return %species;
 }
 
-
-
-
-
 sub _get_bundle_tracks {
-  my ($self, $bundle, $opt) = @_;
+  my ($self, $bundle, $strain, $opt) = @_;
 
   my (@tracks, %publications, %bundle_assemblies);
+
+  my %allowed_assemblies = map { $_->assembly => 1 } $strain->assemblies;
 
   # Add the tracks data
   TRACK: foreach my $track (map { $_->track } $bundle->bundle_tracks->all) {
@@ -634,9 +620,10 @@ sub _get_bundle_tracks {
     );
 
     my %track_assemblies;
-    foreach my $track_analysis ($track->track_analyses) {
+    TA: foreach my $track_analysis ($track->track_analyses) {
       my $assembly = $track_analysis->assembly;
       my $assembly_name = $assembly->assembly;
+      next TA if not $allowed_assemblies{$assembly_name};
 
       # Get files
       my @files = _get_track_files($track_analysis, $assembly, $opt);
@@ -685,11 +672,6 @@ sub _get_bundle_tracks {
   
   return %tracks_data;
 }
-
-
-
-
-
 
 sub _make_track_title {
   my ($track) = @_;

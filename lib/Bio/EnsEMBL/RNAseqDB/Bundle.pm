@@ -364,7 +364,7 @@ sub format_bundles_for_solr {
   # Alter the structure and names to create a valid Solr json for indexing
   my %done;
   GROUP: for my $group (@$groups) {
-    next GROUP if $done{ $group->{trackhub_id} }++;
+    next GROUP if $done{ $group->{trackhub_id} };
     # Select the latest assembly data
     my $as_data = $group->{assemblies};
     my $assembly;
@@ -529,13 +529,14 @@ sub get_bundles {
   
   # Extract and format the data
   my @groups;
+  my %done;
   DRU: for my $bundle ($bundles->all) {
-    #next DRU if $done{ $bundle->bundle_id }++;
+    next DRU if $done{ $bundle->bundle_id }++;
     
     # Collect general metadata and species
     my %metadata = _get_bundle_metadata($bundle);
 
-    for my $strain ($bundle->species->strains) {
+    STRAIN: for my $strain ($bundle->species->strains) {
       my %strain = _get_bundle_strain_data($strain);
       my %tracks_data = $self->_get_bundle_tracks($bundle, $strain, $opt);
 
@@ -545,8 +546,11 @@ sub get_bundles {
         %strain,
         %tracks_data,
       );
+      next STRAIN if not $group{assemblies} or keys %{$group{assemblies}} == 0;
       push @groups, \%group;
     }
+
+    $done{$bundle->bundle_id}++;
   }
 
   # Reorder the bundles
@@ -647,6 +651,7 @@ sub _get_bundle_tracks {
         $bundle_assemblies{ $assembly_name } = \%bundle_assembly_data;
       }
     }
+    next TRACK if scalar keys %track_assemblies == 0;
 
     my ($sra_data, $sra_publications) = _get_bundle_sra($track);
     %publications = (%publications, %$sra_publications);

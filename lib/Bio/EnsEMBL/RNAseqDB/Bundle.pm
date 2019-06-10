@@ -671,7 +671,7 @@ sub _get_bundle_tracks {
 
   my %tracks_data = (
     tracks => \@tracks,
-    publications => \%publications,
+    %publications,
     assemblies => \%bundle_assemblies,
   );
   

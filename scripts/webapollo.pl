@@ -55,6 +55,7 @@ my $bundles = $db->get_bundles({
 $logger->info((@$bundles+0) . " bundles");
 
 my @metatracks = convert_for_Webapollo(@$bundles);
+$logger->info((@metatracks+0) . " formatted bundles");
 
 for my $metatrack (@metatracks) {
   my $track = $metatrack->{track};
@@ -67,6 +68,7 @@ for my $metatrack (@metatracks) {
 
 ###############################################################################
 # SUB
+use Data::Dumper;
 
 sub convert_for_Webapollo {
   my @bundles = @_;
@@ -80,65 +82,69 @@ sub convert_for_Webapollo {
   for my $group (@bundles) {
     my $nt = @{ $group->{tracks} };
     $logger->debug("Group = $group->{trackhub_id} ($nt tracks)");
-    my ($assembly_name) = grep { $group->{assemblies}->{$_}->{latest} } keys %{$group->{assemblies}};
-    
-    foreach my $track (@{ $group->{tracks} }) {
-      my $assembly_data = $track->{assemblies}->{$assembly_name};
-      my @files = @{$assembly_data->{files}};
-      my $nf = @files;
-      $logger->debug("Track = $track->{id} ($nf files)");
-      FILE: foreach my $file (@files) {
-        next FILE if not $allowed_type_category{ $file->{type} };
-        
-        my %track_data = (
-          label     => $file->{name},
-        );
-        
-        # Guess the SRA source
-        my ($accession_type, $source);
-        my $study = $track->{studies}->[0];
-        if ($study =~ /^$PREFIX/) {
-          $source = $PRIVATE_SOURCE;
-          $accession_type = $PREFIX . '_study_accession';
-        } elsif ($study =~ /^E/) {
-          $accession_type = 'ERA_study_accession';
-        } elsif ($study =~ /^D/) {
-          $accession_type = 'DRA_study_accession';
-        } else {
-          $accession_type = 'SRA_study_accession';
+
+    for my $assembly_name (sort keys %{$group->{assemblies}}) {
+      # Apollo only uses the latest assembly version
+      next if not $group->{assemblies}->{$assembly_name}->{latest};
+
+      foreach my $track (@{ $group->{tracks} }) {
+        my $assembly_data = $track->{assemblies}->{$assembly_name};
+        my @files = @{$assembly_data->{files}};
+        my $nf = @files;
+        $logger->debug("Track = $track->{id} ($nf files)");
+        FILE: foreach my $file (@files) {
+          next FILE if not $allowed_type_category{ $file->{type} };
+
+          my %track_data = (
+            label     => $file->{name},
+          );
+
+          # Guess the SRA source
+          my ($accession_type, $source);
+          my $study = $track->{studies}->[0];
+          if ($study =~ /^$PREFIX/) {
+            $source = $PRIVATE_SOURCE;
+            $accession_type = $PREFIX . '_study_accession';
+          } elsif ($study =~ /^E/) {
+            $accession_type = 'ERA_study_accession';
+          } elsif ($study =~ /^D/) {
+            $accession_type = 'DRA_study_accession';
+          } else {
+            $accession_type = 'SRA_study_accession';
+          }
+
+          my %metadata = (
+            $accession_type     => join(', ', @{ $track->{studies} }),
+            caption             => $track->{title},
+            category            => $allowed_type_category{ $file->{type} },
+            display             => 'off',
+            description         => $track->{description},
+            version             => $assembly_name,
+            source_url          => $file->{url},
+            source_type         => $file->{type},
+            source              => $source // $track->{merge_text},
+          );
+          $metadata{pubmed}      = join(', ', @{ $group->{publications_pubmeds} }) if @{ $group->{publications_pubmeds} };
+          $metadata{description} =~ s/(<br>.*)?( ?Merged )?RNA-Seq data from.+$//;
+          $metadata{description} ||= $track->{title};
+          $metadata{description} = "$metadata{$accession_type} $metadata{description}";
+          my $abbrev = @{ $group->{publications_abbrevs} } ? join(', ',  @{ $group->{publications_abbrevs} }) : '';
+          $metadata{description} .= " ($abbrev)" if $abbrev;
+          $metadata{source}      =~ s/_/, /g;
+
+          # Strip any HTML-like tags
+          my $hstripper             = HTML::Strip->new();
+          $metadata{description} = $hstripper->parse( $metadata{description} );
+          $hstripper->eof;
+
+          $track_data{metadata} = \%metadata;
+          my %metatrack = (
+            production_name => $assembly_data->{production_name},
+            track           => \%track_data,
+            file_name       => $file->{name}
+          );
+          push @metatracks, \%metatrack;
         }
-
-        my %metadata = (
-          $accession_type     => join(', ', @{ $track->{studies} }),
-          caption             => $track->{title},
-          category            => $allowed_type_category{ $file->{type} },
-          display             => 'off',
-          description         => $track->{description},
-          version             => $assembly_name,
-          source_url          => $file->{url},
-          source_type         => $file->{type},
-          source              => $source // $track->{merge_text},
-        );
-        $metadata{pubmed}      = join(', ', @{ $group->{publications_pubmeds} }) if @{ $group->{publications_pubmeds} };
-        $metadata{description} =~ s/(<br>.*)?( ?Merged )?RNA-Seq data from.+$//;
-        $metadata{description} ||= $track->{title};
-        $metadata{description} = "$metadata{$accession_type} $metadata{description}";
-        my $abbrev = @{ $group->{publications_abbrevs} } ? join(', ',  @{ $group->{publications_abbrevs} }) : '';
-        $metadata{description} .= " ($abbrev)" if $abbrev;
-        $metadata{source}      =~ s/_/, /g;
-        
-        # Strip any HTML-like tags
-        my $hstripper             = HTML::Strip->new();
-        $metadata{description} = $hstripper->parse( $metadata{description} );
-        $hstripper->eof;
-
-        $track_data{metadata} = \%metadata;
-        my %metatrack = (
-          production_name => $assembly_data->{production_name},
-          track           => \%track_data,
-          file_name       => $file->{name}
-        );
-        push @metatracks, \%metatrack;
       }
     }
   }

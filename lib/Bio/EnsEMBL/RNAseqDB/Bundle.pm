@@ -376,7 +376,7 @@ sub format_bundles_for_solr {
     }
     
     my %solr_group = (
-      id                   => $group->{trackhub_id},
+      id                   => $group->{trackhub_id}.'_'.$assembly->{name},
       label                => $group->{label},
       description          => $group->{description},
       species              => $group->{species},
@@ -409,7 +409,7 @@ sub format_bundles_for_solr {
       }
       
       my %solr_track = (
-        id                            => $track->{id},
+        id                            => $track->{id} . '_' . $assembly->{name},
         site                          => 'Expression',
         bundle_name                   => 'RNA-Seq tracks',
         bundle                        => 'rna-seq_tracks',
@@ -417,7 +417,7 @@ sub format_bundles_for_solr {
         species                       => $group->{species},
         label                         => $track->{title},
         description                   => $track->{description},
-        url                           => $SEARCH_ROOT . $group->{trackhub_id},
+        url                           => $SEARCH_ROOT . $group->{trackhub_id} . '_' . $assembly->{name},
         
         run_accessions_ss             => $track->{runs},
         experiment_accessions_ss      => $track->{experiments},

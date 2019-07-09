@@ -424,6 +424,7 @@ sub format_bundles_for_solr {
         study_accessions_ss           => $track->{studies},
         sample_accessions_ss          => $track->{samples},
         
+        strategy_s                    => $track->{strategy},
         aligner_s                     => $assembly_data->{aligner},
       );
       
@@ -621,6 +622,7 @@ sub _get_bundle_tracks {
       description => _make_track_description($track),
       id          => $TRACK_PREFIX . $track->track_id,
       merge_text  => $track->merge_text,
+      strategy    => $track->strategy,
     );
 
     my %track_assemblies;
@@ -691,6 +693,9 @@ sub _make_track_title {
     } else {
       $title = $merge;
     }
+  }
+  if ($track->strategy ne 'RNA-Seq') {
+    $title = "(" . $track->strategy . ") $title";
   }
 
   return $title;

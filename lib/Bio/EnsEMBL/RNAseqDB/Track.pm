@@ -59,9 +59,13 @@ sub _add_track {
   
   # Insert a new track, a link sra_track, and 1 track_analyses per assembly
   $logger->info("ADDING track for $run_id");
+
+  # Need to get the strategy from the experiment
+  my $strategy = $self->_get_strategy_for_run($run_id);
   
   # Add the track itself
   my $track_insertion = $self->resultset('Track')->create({
+      strategy => $strategy,
       sra_tracks => [
         {
           run_id => $run_id,
@@ -80,6 +84,19 @@ sub _add_track {
   $self->guess_track_text($track_id);
   
   return 1;
+}
+
+sub _get_strategy_for_run {
+  my ($self, $run_id) = @_;
+
+  my $exp = $self->resultset('Experiment')->search({
+      prefetch => 'run',
+      'run.run_id' => $run_id,
+    });
+
+  if ($exp) {
+    return $exp->strategy;
+  }
 }
 
 ###############################################################################

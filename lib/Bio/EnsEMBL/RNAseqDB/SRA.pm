@@ -234,13 +234,71 @@ sub _get_experiment_id {
     
     if (defined $study_id) {
       $logger->info("ADDING experiment " . $experiment->accession() . "");
+      my $strategy = _get_experiment_strategy($experiment);
       my $insertion = $self->resultset('Experiment')->create({
           experiment_sra_acc     => $experiment->accession(),
           title                  => $experiment->title(),
+          strategy               => $strategy,
           study_id               => $study_id,
         });
       return $insertion->id();
     }
+  }
+}
+
+sub _get_experiment_strategy {
+  my ($exp) = @_;
+
+  my $design = $exp->design();
+  my $strategy = $design->{LIBRARY_DESCRIPTOR}->{LIBRARY_STRATEGY};
+  return $strategy;
+}
+
+sub regenerate_experiments_strategy {
+  my ($self) = @_;
+
+  # Prepare ENA adaptor
+  my $exp_adaptor = get_adaptor( 'experiment' );
+
+  # Update strategy for all experiments
+  my $n = 0;
+  EXP: for my $exp ($self->resultset('Experiment')->search({status=>'ACTIVE'})) {
+    my $exp_sra_id = $exp->experiment_sra_acc;
+    if (not $exp_sra_id) {
+      $logger->warn("No sra id for experiment");
+      next EXP;
+    }
+    $logger->debug("Get strategy for $exp_sra_id");
+    my $exp_ena;
+    try {
+      ($exp_ena) = @{ $exp_adaptor->get_by_accession($exp_sra_id) };
+    }
+    catch {
+      $logger->warn("WARNING: Could not retrieve SRA data for $exp_sra_id");
+      next EXP;
+    };
+    my $strategy = _get_experiment_strategy($exp_ena);
+
+    # Only update if the strategy differs
+    if ($strategy ne $exp->strategy) {
+      $exp->update({ strategy => $strategy });
+      $n++;
+    }
+  }
+
+  return $n;
+}
+
+sub regenerate_tracks_strategy {
+  my ($self) = @_;
+
+  # Update strategy for all tracks
+  my $tracks = $self->resultset('Track')->search(
+     { 'me.status' => 'ACTIVE' },
+    { prefetch => { sra_tracks => { run => 'experiment' } } },
+  );
+  for my $t ($tracks->all) {
+    $t->update({ 'strategy' => $t->sra_tracks->first->run->experiment->strategy });
   }
 }
 

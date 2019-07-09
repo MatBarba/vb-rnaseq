@@ -87,6 +87,13 @@ __PACKAGE__->table("track");
   extra: {list => ["ACTIVE","RETIRED","MERGED"]}
   is_nullable: 1
 
+=head2 strategy
+
+  data_type: 'char'
+  default_value: 'RNA-Seq'
+  is_nullable: 1
+  size: 12
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -130,6 +137,13 @@ __PACKAGE__->add_columns(
     default_value => "ACTIVE",
     extra => { list => ["ACTIVE", "RETIRED", "MERGED"] },
     is_nullable => 1,
+  },
+  "strategy",
+  {
+    data_type => "char",
+    default_value => "RNA-Seq",
+    is_nullable => 1,
+    size => 12,
   },
 );
 
@@ -222,8 +236,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07045 @ 2016-09-28 14:36:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RKUhmaScVEMnJezUEXocYQ
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2019-07-09 12:00:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2D7wIygD3CxuCH663zkPwg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

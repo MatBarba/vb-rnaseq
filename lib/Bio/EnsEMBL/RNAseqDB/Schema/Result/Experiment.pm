@@ -74,6 +74,13 @@ __PACKAGE__->table("experiment");
   extra: {list => ["ACTIVE","RETIRED"]}
   is_nullable: 1
 
+=head2 strategy
+
+  data_type: 'char'
+  default_value: 'RNA-Seq'
+  is_nullable: 1
+  size: 12
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -112,6 +119,13 @@ __PACKAGE__->add_columns(
     default_value => "ACTIVE",
     extra => { list => ["ACTIVE", "RETIRED"] },
     is_nullable => 1,
+  },
+  "strategy",
+  {
+    data_type => "char",
+    default_value => "RNA-Seq",
+    is_nullable => 1,
+    size => 12,
   },
 );
 
@@ -198,8 +212,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07047 @ 2017-12-05 09:59:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RzXPBNWXEkB8IUpp6cZzAQ
+# Created by DBIx::Class::Schema::Loader v0.07047 @ 2019-07-09 12:00:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OkFf4NMyj92zbO/ctK53jg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

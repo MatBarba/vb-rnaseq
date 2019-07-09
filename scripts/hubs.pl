@@ -41,6 +41,9 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 
 # Retrieve the data (but only if we need it)
 my ($groups, $hubs);
+
+my $antispecies = $opt{antispecies} ? [split /,/, $opt{antispecies}] : [];
+
 if (
        $opt{create}
     or $opt{register}
@@ -54,6 +57,7 @@ if (
   $logger->info("Retrieving the track bundles...");
   $groups = $db->get_bundles({
       species     => $opt{species},
+      antispecies => $antispecies,
       files_url   => $opt{files_url},
     });
 
@@ -465,6 +469,7 @@ sub opt_check {
     "db=s",
     "registry=s",
     "species=s",
+    "antispecies=s",
     "files_url=s",
     "hub_root=s",
     "email=s",

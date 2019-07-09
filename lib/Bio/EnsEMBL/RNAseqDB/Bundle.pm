@@ -829,6 +829,8 @@ sub _get_bundles {
       'track.status' => 'ACTIVE',
   };
   $search->{'strain.production_name'} = $opt->{species} if $opt->{species};
+  $search->{'strain.production_name'} = { 'not_in' => $opt->{antispecies} } if $opt->{antispecies} and @{$opt->{antispecies}} > 0;
+
   my $bundles = $self->resultset('Bundle')->search(
     $search,
     {

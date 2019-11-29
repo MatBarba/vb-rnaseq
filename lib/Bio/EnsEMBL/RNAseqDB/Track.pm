@@ -340,10 +340,14 @@ sub _add_new_runs_track {
   } else {
     my ($merge_level, $merge_id) = $self->get_track_level($track_id);
     my $run_accs = defined $run->run_sra_acc ? [$run->run_sra_acc] : undef;
+    my $study_acc = $run->experiment->study->study_sra_acc;
+    my $sample_acc = $run->sample->sample_sra_acc;
     $track_data = {
       run_accs => $run_accs,
       merge_level => $merge_level,
       merge_id => $merge_id,
+      study_acc => $study_acc,
+      sample_acc => $sample_acc,
       taxon_id => $taxon_id,
       assembly => $assembly_name,
       fastqs => $fastqs

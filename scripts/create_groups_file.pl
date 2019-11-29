@@ -43,7 +43,11 @@ if ($opt{list}) {
     print $json->pretty->encode($data) . "\n";
 }
 elsif ($opt{groups_file}) {
-  make_groups_file($data, $opt{groups_file}, $opt{one_run_line});
+  if ($opt{brc4}) {
+    make_brc4_groups_file($data, $opt{groups_file});
+  } else {
+    make_groups_file($data, $opt{groups_file}, $opt{one_run_line});
+  }
 }
 
 ###############################################################################
@@ -76,6 +80,26 @@ sub make_groups_file {
   return $groups_file;
 }
 
+sub make_brc4_groups_file {
+  my ($data, $groups_file) = @_;
+
+  open my $outfile, ">", $groups_file;
+
+  for my $species (sort keys %$data) {
+    for my $track_id (sort keys %{$data->{$species}}) {
+      my $tdata = $data->{$species}->{$track_id};
+      my $run_ids = join(",", @{$tdata->{run_accs}});
+      my $study_id = $tdata->{study_acc};
+      my $sample_name = $tdata->{sample_acc};
+      
+      my @line = ($species, $study_id, $sample_name, $run_ids);
+      print $outfile join("\t", @line) . "\n";
+    }
+  }
+  close $outfile;
+
+  return $groups_file;
+}
 ###############################################################################
 # Parameters and usage
 # Print a simple usage note
@@ -99,6 +123,7 @@ sub usage {
     FILTERS
     --species <str>   : only use tracks for a given species (production_name)
     --one_run_line    : write one run per line instead of merged
+    -- brc4           : export groups file compatible with brc4 pipeline
     
     ACTIONS
     --groups_file <path> : create a groups file for the SRA alignment pipeline
@@ -126,6 +151,7 @@ sub opt_check {
     "list",
     "groups_file=s",
     "one_run_line",
+    "brc4",
     "help",
     "verbose",
     "debug",

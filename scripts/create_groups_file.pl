@@ -43,14 +43,14 @@ if ($opt{list}) {
     print $json->pretty->encode($data) . "\n";
 }
 elsif ($opt{groups_file}) {
-  make_groups_file($data, $opt{groups_file});
+  make_groups_file($data, $opt{groups_file}, $opt{one_run_line});
 }
 
 ###############################################################################
 # SUBS
 
 sub make_groups_file {
-  my ($data, $groups_file) = @_;
+  my ($data, $groups_file, $run_line) = @_;
 
   open my $outfile, ">", $groups_file;
 
@@ -59,9 +59,16 @@ sub make_groups_file {
       my $tdata = $data->{$species}->{$track_id};
       my $run_ids = $tdata->{run_accs};
       my $merge_id = $tdata->{merge_id};
-
-      my @line = ($species, $merge_id, join(",", @$run_ids));
-      print $outfile join("\t", @line) . "\n";
+      
+      if ($run_line) {
+        for my $run_id (@$run_ids) {
+          my @line = ($species, $run_id, $run_id, $merge_id);
+        print $outfile join("\t", @line) . "\n";
+        }
+      } else {
+        my @line = ($species, $merge_id, join(",", @$run_ids));
+        print $outfile join("\t", @line) . "\n";
+      }
     }
   }
   close $outfile;
@@ -91,6 +98,7 @@ sub usage {
     
     FILTERS
     --species <str>   : only use tracks for a given species (production_name)
+    --one_run_line    : write one run per line instead of merged
     
     ACTIONS
     --groups_file <path> : create a groups file for the SRA alignment pipeline
@@ -117,6 +125,7 @@ sub opt_check {
     "species=s",
     "list",
     "groups_file=s",
+    "one_run_line",
     "help",
     "verbose",
     "debug",

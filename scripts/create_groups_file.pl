@@ -33,7 +33,9 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
   $opt{password}
 );
 
-my $data = $db->get_new_runs_tracks( $opt{species} );
+my @species = $opt{species} ? split /,/, $opt{species} : ();
+my @antispecies = $opt{antispecies} ? split /,/, $opt{antispecies} : ();
+my $data = $db->get_new_runs_tracks(\@species, \@antispecies);
 if (keys %$data == 0) {
   die "No tracks to align";
 }
@@ -122,6 +124,7 @@ sub usage {
     
     FILTERS
     --species <str>   : only use tracks for a given species (production_name)
+    --species <str>   : only use tracks for a given species (production_name)
     --one_run_line    : write one run per line instead of merged
     -- brc4           : export groups file compatible with brc4 pipeline
     
@@ -148,6 +151,7 @@ sub opt_check {
     "password=s",
     "db=s",
     "species=s",
+    "antispecies=s",
     "list",
     "groups_file=s",
     "one_run_line",

@@ -279,7 +279,11 @@ sub guess_track_text {
 #              {production_name => { taxon_id => 0, sra => ['']} }
 sub get_new_runs_tracks {
   my $self = shift;
-  my ($species) = @_;
+  my ($species, $antispecies) = @_;
+  
+  if ($antispecies and @$antispecies > 0) {
+    $species = { 'not_in' => $antispecies };
+  }
   
   my @tracks = $self->get_tracks(
     species => $species,

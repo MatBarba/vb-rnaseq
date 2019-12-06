@@ -153,17 +153,28 @@ sub clean_name {
 sub make_eupath_xml {
   my ($hubs, $species, $output_dir) = @_;
 
-  print("Work on $species\n");
-
   make_path($output_dir);
   my $sp_dir = catdir($output_dir, $species);
   make_path($sp_dir);
+  my $sp_file = catfile($output_dir, $species . ".xml");
 
+  print("Work on $sp_file\n");
+  my $output = new IO::File(">$sp_file");
+  my $wr = new XML::Writer( OUTPUT => $output, DATA_MODE => 'true', DATA_INDENT => 2 );
+  $wr->startTag("datasets");
 
   for my $exp (@$hubs) {
     # Write to the experiment file
     print_experiment_file($species, $sp_dir, $exp);
+
+    $wr->startTag("dataset", class => "rnaSeqExperiment");
+    add_prop($wr, "projetName", '$$projectName$$');
+    add_prop($wr, "organismAbbrev", '$$organismAbbrev$$');
+    add_prop($wr, "name", $exp->{name});
+    $wr->endTag("dataset");
   }
+  $wr->endTag("datasets");
+  $wr->end();
 
   return;
 }

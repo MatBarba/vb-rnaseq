@@ -16,11 +16,14 @@ use File::Temp;
 use Data::Dumper;
 use IO::File;
 use XML::Writer;
+use JSON qw(decode_json);
 
 use Bio::EnsEMBL::RNAseqDB;
 use Log::Log4perl qw( :easy );
 Log::Log4perl->easy_init($WARN);
 my $logger = get_logger();
+
+use Data::Dumper;
 
 ###############################################################################
 # MAIN
@@ -37,17 +40,73 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 my @assemblies = $db->get_assemblies(%opt);
 for my $assembly (@assemblies) {
   my $species = $assembly->production_name;
-  my @exps = get_eupath_experiments_species($db, $species);
-  if (@exps == 0) {
+  print("Work on species $species\n");
+  my $exps = get_eupath_experiments_species($db, $species);
+  if (@$exps == 0) {
     warn "No experiments to export for $species";
     next;
   }
 
-  make_eupath_xml(\@exps, $species, $opt{out});
+  $exps = add_alignments_metadata($exps, $opt{alignments}, $species);
+
+  make_eupath_xml($exps, $species, $opt{out});
 }
 
 ###############################################################################
 # SUBS
+
+sub add_alignments_metadata {
+  my ($exps, $aln_dir, $species) = @_;
+  return $exps if not $aln_dir;
+
+  # Get alignment metadata for each experiment
+  my %runs;
+  my @metadata_files = glob("$aln_dir/$species/*/*/metadata.json");
+  for my $json_path (@metadata_files) {
+    open my $json, "<", $json_path;
+    my $line = <$json>;
+    close $json;
+    my $meta = decode_json($line);
+    $runs{ $meta->{sraQueryString} } = $meta;
+
+  }
+
+  # Match all the runs to each exp
+  for my $exp (@$exps) {
+    for my $sample (@{ $exp->{samples} }) {
+      my $exp_runs = $sample->{runs};
+
+      # Check each exp_run
+      my ($is_paired, $is_stranded) = (0, 0);
+      my ($is_not_paired, $is_not_stranded) = (0, 0);
+
+      for my $exp_run (@$exp_runs) {
+        if (exists $runs{ $exp_run }) {
+          my $match_run = $runs{ $exp_run };
+          if ($match_run->{hasPairedEnds}) { $is_paired++ } else { $is_not_paired++ }
+          if ($match_run->{isSrandSpecific}) { $is_stranded++ } else { $is_not_stranded++ }
+        }
+        else {
+          warn("Missing run $exp_run in alignment");
+        }
+      }
+
+      # Check that the experiment is homogeneous
+      if ($is_paired * $is_not_paired == 0 and $is_paired + $is_not_paired > 0) {
+        $exp->{is_paired} = $is_paired ? 1 : 0;
+      } else {
+          warn("Runs are not homogeneously paired: $is_paired vs $is_not_paired (for @$exp_runs)");
+      }
+      if ($is_stranded * $is_not_stranded == 0 and $is_stranded + $is_not_stranded > 0) {
+        $exp->{is_stranded} = $is_stranded ? 1 : 0;
+      } else {
+          warn("Runs are not homogeneously stranded: $is_stranded vs $is_not_stranded (for @$exp_runs)");
+      }
+    }
+  }
+
+  return $exps;
+}
 
 sub get_eupath_experiments_species {
   my ($db, $species) = @_;
@@ -97,7 +156,7 @@ sub get_eupath_experiments_species {
     push @experiments, $exp;
   }
   
-  return @experiments;
+  return \@experiments;
 }
 
 sub get_study {
@@ -185,7 +244,6 @@ sub make_eupath_experiment_xml {
 sub print_experiments_species_file {
   my ($hubs, $sp_file) = @_;
 
-  print("Work on $sp_file\n");
   my $output = new IO::File(">$sp_file");
   my $wr = new XML::Writer( OUTPUT => $output, DATA_MODE => 'true', DATA_INDENT => 2 );
   $wr->startTag("datasets");
@@ -199,9 +257,9 @@ sub print_experiments_species_file {
     # TODO
     # version (date)
     # limitNU (default hisat2?)
-    # hasPairedEnds (from alignment metadata)
-    # isStrandSpecific (from alignment metadata)
-    # alignWithCdsCoordinates (false)
+    add_prop($wr, "hasPairedEnds", $exp->{is_paired} ? "true" : "false");
+    add_prop($wr, "isStrandSpecific", $exp->{is_stranded} ? "true" : "false");
+    add_prop($wr, "alignWithCdsCoordinates", "false");
     $wr->endTag("dataset");
   }
   $wr->endTag("datasets");
@@ -276,7 +334,7 @@ sub print_analysis_file {
   $wr->endTag("property");
 
   # TODO: use alignment metadata here
-  $exp->{is_strand_specific} = 0;
+  $exp->{is_strand_specific} = $exp->{is_stranded};
   $wr->startTag("property", name => "isStrandSpecific", value => $exp->{is_strand_specific});
   $wr->endTag("property");
 
@@ -394,7 +452,7 @@ sub add_tag {
   my ($wr, $tag, $value, $cdata) = @_;
 
   $wr->startTag($tag);
-  $value = "![CDATA[$value]]" if $value and $cdata;
+  $value = "![CDATA[$value]]" if ($value and $cdata);
   $wr->characters($value);
   $wr->endTag($tag);
 }
@@ -417,6 +475,9 @@ sub usage {
     --user    <str>   : user name
     --password <str>  : password
     --db <str>        : database name
+
+    RNASEQ FILES
+    --alignments <path>: path to a directory with RNA-Seq alignments, with metadata json files
     
     FILTERS
     --species <str>   : only use tracks for a given species (production_name)
@@ -443,6 +504,7 @@ sub opt_check {
     "user=s",
     "password=s",
     "db=s",
+    "alignments=s",
     "species=s",
     "antispecies=s",
     "out=s",

@@ -49,7 +49,7 @@ for my $assembly (@assemblies) {
 
   $exps = add_alignments_metadata($exps, $opt{alignments}, $species);
 
-  make_eupath_xml($exps, $species, $opt{out});
+  make_eupath_xml($exps, $species, $opt{out}, \%opt);
 }
 
 ###############################################################################
@@ -140,8 +140,8 @@ sub get_eupath_experiments_species {
   my @experiments;
   for my $b ($bundles->all) {
     # Experiment name = study_name
-    my $study = get_study($b);
-    my $exp_name = $study;
+    my ($study_name, $study) = get_study($b);
+    my $exp_name = $study_name;
     $exp_name =~ s/[() -]+/_/g;
     $exp_name =~ s/_+$//;
 
@@ -149,7 +149,11 @@ sub get_eupath_experiments_species {
     my @samples = get_samples($b);
 
     my $exp = {
+      study_id => $study->study_sra_acc,
       name => $exp_name,
+      title => $exp_name . " " . $study->title,
+      abstract => $study->abstract,
+      date => simple_date($study->date),
       samples => \@samples,
     };
 
@@ -159,27 +163,42 @@ sub get_eupath_experiments_species {
   return \@experiments;
 }
 
+sub simple_date {
+  my ($date) = @_;
+
+  $date =~ s/^(\d{4}-\d{2}-\d{2}).*$/$1/;
+  return $date;
+}
+
 sub get_study {
   my ($bundle) = @_;
 
-  my %study;
+  my %studies_hash;
   for my $bt ($bundle->bundle_tracks->all) {
     my $track = $bt->track;
     for my $st ($track->sra_tracks->all) {
       my $run = $st->run;
-      $study{ $run->experiment->study->study_sra_acc }++;
+      my $study = $run->experiment->study;
+      $studies_hash{$study->study_sra_acc} = $study;
     }
   }
 
-  if (keys(%study) == 1) {
-    my ($study_id) = keys(%study);
-    return $study_id;
+  my @studies = sort { $a->study_sra_acc cmp $b->study_sra_acc } values %studies_hash;
+
+  my $study_name;
+  my $study;
+
+  if (@studies == 1) {
+    $study = $studies[0];
+    ($study_name) = $studies[0]->study_sra_acc;
   } else {
-    my @studies = keys(%study);
-    my $study_id = $studies[0] . "_" . $studies[-1];
-    warn("More thant one study for the bundle: $study_id");
-    return $study_id;
+    $study = $studies[0];
+    my $first_study = $studies[0];
+    my $last_study = $studies[-1];
+    $study_name = $first_study->study_sra_acc . "_" . $last_study->study_sra_acc;
+    warn("More thant one study for the bundle: $study_name");
   }
+  return ($study_name, $study);
 }
 
 sub get_samples {
@@ -211,14 +230,14 @@ sub clean_name {
 }
 
 sub make_eupath_xml {
-  my ($hubs, $species, $output_dir) = @_;
+  my ($hubs, $species, $output_dir, $opt) = @_;
   
   my $exp_dir = catfile($output_dir, 'experiments');
   my $aconfig_dir = catfile($output_dir, 'analysis_configs');
   my $presenter_dir = catfile($output_dir, 'presenters');
   make_eupath_experiment_xml($hubs, $species, $exp_dir);
   make_eupath_analysis_config_xml($hubs, $species, $aconfig_dir);
-  make_eupath_presenter_xml($hubs, $species, $presenter_dir);
+  make_eupath_presenter_xml($hubs, $species, $presenter_dir, $opt);
 }
 
 sub make_eupath_experiment_xml {
@@ -256,7 +275,8 @@ sub print_experiments_species_file {
 
     # TODO
     # version (date)
-    # limitNU (default hisat2?)
+    add_prop($wr, "version", $exp->{date});
+    add_prop($wr, "limitNU", 5);  # Default value -k from hisat2
     add_prop($wr, "hasPairedEnds", $exp->{is_paired} ? "true" : "false");
     add_prop($wr, "isStrandSpecific", $exp->{is_stranded} ? "true" : "false");
     add_prop($wr, "alignWithCdsCoordinates", "false");
@@ -311,6 +331,7 @@ sub print_analysis_file {
   my ($species, $sp_dir, $exp) = @_;
 
   my $exp_name = $exp->{name};
+  my $exp_title = $exp->{title};
   my $exp_file = catfile($sp_dir, $exp_name . ".xml");
     
   # Init XML
@@ -320,7 +341,7 @@ sub print_analysis_file {
   $wr->startTag("step", class => "ApiCommonData::Load::RnaSeqAnalysis");
 
   # Set up name
-  $wr->startTag("property", name => "profileSetName", value => $exp_name);
+  $wr->startTag("property", name => "profileSetName", value => $exp_title);
   $wr->endTag("property");
 
   # List samples
@@ -333,7 +354,7 @@ sub print_analysis_file {
   } 
   $wr->endTag("property");
 
-  # TODO: use alignment metadata here
+  # Use alignment metadata here
   $exp->{is_strand_specific} = $exp->{is_stranded};
   $wr->startTag("property", name => "isStrandSpecific", value => $exp->{is_strand_specific});
   $wr->endTag("property");
@@ -345,7 +366,7 @@ sub print_analysis_file {
 }
 
 sub make_eupath_presenter_xml {
-  my ($hubs, $species, $output_dir) = @_;
+  my ($hubs, $species, $output_dir, $opt) = @_;
 
   make_path($output_dir);
 
@@ -354,14 +375,14 @@ sub make_eupath_presenter_xml {
   make_path($sp_dir);
   for my $exp (@$hubs) {
     # Write to the presenter file
-    print_presenter_file($species, $sp_dir, $exp);
+    print_presenter_file($species, $sp_dir, $exp, $opt);
   }
 
   return;
 }
 
 sub print_presenter_file {
-  my ($species, $sp_dir, $exp) = @_;
+  my ($species, $sp_dir, $exp, $opt) = @_;
 
   my $exp_name = $exp->{name};
   my $exp_file = catfile($sp_dir, $exp_name . ".xml");
@@ -372,11 +393,11 @@ sub print_presenter_file {
   $wr->startTag("datasetPresenter", name => $exp_name);
 
   my $cdata = 1;
-  add_tag($wr, "displayName", $exp_name, $cdata);
-  add_tag($wr, "shortDisplayName", "", $cdata);
+  add_tag($wr, "displayName", $exp->{title}, $cdata);
+  add_tag($wr, "shortDisplayName", $exp_name, $cdata);
   add_tag($wr, "shortAttribution", "", $cdata);
   add_tag($wr, "summary", "", $cdata);
-  add_tag($wr, "description", "", $cdata);
+  add_tag($wr, "description", $exp->{abstract}, $cdata);
 
   add_tag($wr, "protocol", "");
   add_tag($wr, "caveat", "");
@@ -384,7 +405,7 @@ sub print_presenter_file {
   add_tag($wr, "releasePolicy", "");
 
   # History
-  $wr->startTag('history', buildNumber => "");
+  $wr->startTag('history', buildNumber => $opt->{build} ? $opt->{build} : "");
   $wr->endTag('history');
 
   # Contacts
@@ -394,7 +415,7 @@ sub print_presenter_file {
   # Link
   $wr->startTag('link');
   add_tag($wr, "text", "SRA project id");
-  add_tag($wr, "url", "https://...");
+  add_tag($wr, "url", "https://www.ncbi.nlm.nih.gov/sra/?term=" . $exp->{study_id});
   $wr->endTag('link');
 
   add_tag($wr, "pubmedid", "");
@@ -485,6 +506,9 @@ sub usage {
     
     ACTIONS
     --out <path>      : create xml files in this directory
+
+    PRESENTER DATA
+    --build <str>     : build that the dataset is part of
     
     OTHER
     --help            : show this help message
@@ -508,6 +532,7 @@ sub opt_check {
     "species=s",
     "antispecies=s",
     "out=s",
+    "build=s",
     "help",
     "verbose",
     "debug",

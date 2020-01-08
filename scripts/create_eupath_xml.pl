@@ -296,10 +296,82 @@ sub make_eupath_presenter_xml {
   make_path($sp_dir);
   for my $exp (@$hubs) {
     # Write to the presenter file
-#    print_presenter_file($species, $sp_dir, $exp);
+    print_presenter_file($species, $sp_dir, $exp);
   }
 
   return;
+}
+
+sub print_presenter_file {
+  my ($species, $sp_dir, $exp) = @_;
+
+  my $exp_name = $exp->{name};
+  my $exp_file = catfile($sp_dir, $exp_name . ".xml");
+    
+  # Init XML
+  my $output = new IO::File(">$exp_file");
+  my $wr = new XML::Writer( OUTPUT => $output, DATA_MODE => 'true', DATA_INDENT => 2 );
+  $wr->startTag("datasetPresenter", name => $exp_name);
+
+  my $cdata = 1;
+  add_tag($wr, "displayName", $exp_name, $cdata);
+  add_tag($wr, "shortDisplayName", "", $cdata);
+  add_tag($wr, "shortAttribution", "", $cdata);
+  add_tag($wr, "summary", "", $cdata);
+  add_tag($wr, "description", "", $cdata);
+
+  add_tag($wr, "protocol", "");
+  add_tag($wr, "caveat", "");
+  add_tag($wr, "acknowledgement", "");
+  add_tag($wr, "releasePolicy", "");
+
+  # History
+  $wr->startTag('history', buildNumber => "");
+  $wr->endTag('history');
+
+  # Contacts
+  add_tag($wr, "primaryContactId", "");
+  add_tag($wr, "contactId", "");  # Can be repeated
+
+  # Link
+  $wr->startTag('link');
+  add_tag($wr, "text", "SRA project id");
+  add_tag($wr, "url", "https://...");
+  $wr->endTag('link');
+
+  add_tag($wr, "pubmedid", "");
+
+  # Template
+  $wr->startTag('templateInjector', className => "org.apidb.apicommon.model.datasetInjector.RNASeq");
+  add_prop($wr, "switchStrandsGBrowse", "false");
+  add_prop($wr, "switchStrandsProfiles", "false");
+  add_prop($wr, "isEuPathDBSite", "true");
+  add_prop($wr, "isAlignedToAnnotatedGenome", "true");
+  add_prop($wr, "isTimeSeries", "false"); # TODO
+  add_prop($wr, "showIntronJunctions", "true");
+  add_prop($wr, "includeInUnifiedJunctions", "true");
+  add_prop($wr, "hasMultipleSamples", "true");  # TODO
+  add_prop($wr, "hasFishersExactTestData", "false");
+  add_prop($wr, "optionalQuestionDescription", "");
+  # Graph
+  add_prop($wr, "graphType", "line");
+  add_prop($wr, "graphColor", "brown");
+  add_prop($wr, "graphForceXLabelsHorizontal", "");
+  add_prop($wr, "graphBottomMarginSize", "");
+  add_prop($wr, "graphSampleLabels", "");
+  add_prop($wr, "graphPriorityOrderGrouping", "0");
+  add_prop($wr, "graphXAxisSamplesDescription", "<![CDATA[]]>");
+  add_prop($wr, "isDESeq", "false");
+  add_prop($wr, "isDEGseq", "false");
+  add_prop($wr, "includeProfileSimilarity", "false");
+  add_prop($wr, "profileTimeShift", "");
+
+  $wr->endTag('templateInjector');
+
+
+  # End XML
+  $wr->endTag("datasetPresenter");
+  $wr->end;
 }
 
 sub add_prop {
@@ -316,6 +388,15 @@ sub add_value {
   $wr->startTag("value");
   $wr->characters($value);
   $wr->endTag("value");
+}
+
+sub add_tag {
+  my ($wr, $tag, $value, $cdata) = @_;
+
+  $wr->startTag($tag);
+  $value = "![CDATA[$value]]" if $value and $cdata;
+  $wr->characters($value);
+  $wr->endTag($tag);
 }
 
 ###############################################################################

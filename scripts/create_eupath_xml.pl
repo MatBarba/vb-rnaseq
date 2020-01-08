@@ -145,6 +145,7 @@ sub clean_name {
   my ($str) = @_;
 
   $str =~ s/[ ().]/_/g;
+  $str =~ s/[\/,]//g; # Remove commas and slashes
   $str =~ s/_+$|^_+//g;
 
   return $str;
@@ -152,11 +153,37 @@ sub clean_name {
 
 sub make_eupath_xml {
   my ($hubs, $species, $output_dir) = @_;
+  
+  my $exp_dir = catfile($output_dir, 'experiments');
+  my $aconfig_dir = catfile($output_dir, 'analysis_configs');
+  my $presenter_dir = catfile($output_dir, 'presenters');
+  make_eupath_experiment_xml($hubs, $species, $exp_dir);
+  make_eupath_analysis_config_xml($hubs, $species, $aconfig_dir);
+  make_eupath_presenter_xml($hubs, $species, $presenter_dir);
+}
+
+sub make_eupath_experiment_xml {
+  my ($hubs, $species, $output_dir) = @_;
 
   make_path($output_dir);
+
+  # Write the species experiment xml
+  my $sp_file = catfile($output_dir, $species . ".xml");
+  print_experiments_species_file($hubs, $sp_file);
+
+  # Write each experiment xml
   my $sp_dir = catdir($output_dir, $species);
   make_path($sp_dir);
-  my $sp_file = catfile($output_dir, $species . ".xml");
+  for my $exp (@$hubs) {
+    # Write to the experiment file
+    print_experiment_file($species, $sp_dir, $exp);
+  }
+
+  return;
+}
+
+sub print_experiments_species_file {
+  my ($hubs, $sp_file) = @_;
 
   print("Work on $sp_file\n");
   my $output = new IO::File(">$sp_file");
@@ -164,19 +191,23 @@ sub make_eupath_xml {
   $wr->startTag("datasets");
 
   for my $exp (@$hubs) {
-    # Write to the experiment file
-    print_experiment_file($species, $sp_dir, $exp);
-
     $wr->startTag("dataset", class => "rnaSeqExperiment");
     add_prop($wr, "projetName", '$$projectName$$');
     add_prop($wr, "organismAbbrev", '$$organismAbbrev$$');
     add_prop($wr, "name", $exp->{name});
+
+    # TODO
+    # version (date)
+    # limitNU (default hisat2?)
+    # hasPairedEnds (from alignment metadata)
+    # isStrandSpecific (from alignment metadata)
+    # alignWithCdsCoordinates (false)
     $wr->endTag("dataset");
   }
   $wr->endTag("datasets");
   $wr->end();
 
-  return;
+  return $sp_file;
 }
 
 sub print_experiment_file {
@@ -202,12 +233,89 @@ sub print_experiment_file {
   $wr->end;
 }
 
+sub make_eupath_analysis_config_xml {
+  my ($hubs, $species, $output_dir) = @_;
+
+  make_path($output_dir);
+
+  # Write each analysis xml
+  my $sp_dir = catdir($output_dir, $species);
+  make_path($sp_dir);
+  for my $exp (@$hubs) {
+    # Write to the analysis file
+    print_analysis_file($species, $sp_dir, $exp);
+  }
+
+  return;
+}
+
+sub print_analysis_file {
+  my ($species, $sp_dir, $exp) = @_;
+
+  my $exp_name = $exp->{name};
+  my $exp_file = catfile($sp_dir, $exp_name . ".xml");
+    
+  # Init XML
+  my $output = new IO::File(">$exp_file");
+  my $wr = new XML::Writer( OUTPUT => $output, DATA_MODE => 'true', DATA_INDENT => 2 );
+  $wr->startTag("xml");
+  $wr->startTag("step", class => "ApiCommonData::Load::RnaSeqAnalysis");
+
+  # Set up name
+  $wr->startTag("property", name => "profileSetName", value => $exp_name);
+  $wr->endTag("property");
+
+  # List samples
+  $wr->startTag("property", name => "samples");
+  for my $sample (@{ $exp->{samples} }) {
+    for my $run ( @{ $sample->{runs} }) {
+      my $value = $sample->{name} . "|" . $run;
+      add_value($wr, $value);
+    }
+  } 
+  $wr->endTag("property");
+
+  # TODO: use alignment metadata here
+  $exp->{is_strand_specific} = 0;
+  $wr->startTag("property", name => "isStrandSpecific", value => $exp->{is_strand_specific});
+  $wr->endTag("property");
+
+  # End XML
+  $wr->endTag("step");
+  $wr->endTag("xml");
+  $wr->end;
+}
+
+sub make_eupath_presenter_xml {
+  my ($hubs, $species, $output_dir) = @_;
+
+  make_path($output_dir);
+
+  # Write each presenter xml
+  my $sp_dir = catdir($output_dir, $species);
+  make_path($sp_dir);
+  for my $exp (@$hubs) {
+    # Write to the presenter file
+#    print_presenter_file($species, $sp_dir, $exp);
+  }
+
+  return;
+}
+
 sub add_prop {
   my ($wr, $name, $value) = @_;
 
   $wr->startTag("prop", name => $name);
   $wr->characters($value);
   $wr->endTag("prop");
+}
+
+sub add_value {
+  my ($wr, $value) = @_;
+
+  $wr->startTag("value");
+  $wr->characters($value);
+  $wr->endTag("value");
 }
 
 ###############################################################################

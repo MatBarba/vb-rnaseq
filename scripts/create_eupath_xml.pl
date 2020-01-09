@@ -40,10 +40,10 @@ my $db = Bio::EnsEMBL::RNAseqDB->connect(
 my @assemblies = $db->get_assemblies(%opt);
 for my $assembly (@assemblies) {
   my $species = $assembly->production_name;
-  print("Work on species $species\n");
+  print STDERR "Work on species $species\n";
   my $exps = get_eupath_experiments_species($db, $species);
   if (@$exps == 0) {
-    warn "No experiments to export for $species";
+    warn "No experiments to export for $species\n";
     next;
   }
 
@@ -72,8 +72,8 @@ sub add_alignments_metadata {
   }
 
   # Match all the runs to each exp
-  for my $exp (@$exps) {
-    for my $sample (@{ $exp->{samples} }) {
+  EXP: for my $exp (@$exps) {
+    SAMPLE: for my $sample (@{ $exp->{samples} }) {
       my $exp_runs = $sample->{runs};
 
       # Check each exp_run
@@ -87,7 +87,8 @@ sub add_alignments_metadata {
           if ($match_run->{isSrandSpecific}) { $is_stranded++ } else { $is_not_stranded++ }
         }
         else {
-          warn("Missing run $exp_run in alignment");
+          warn("Missing run $exp_run in alignment\n");
+          next SAMPLE;
         }
       }
 
@@ -95,12 +96,12 @@ sub add_alignments_metadata {
       if ($is_paired * $is_not_paired == 0 and $is_paired + $is_not_paired > 0) {
         $exp->{is_paired} = $is_paired ? 1 : 0;
       } else {
-          warn("Runs are not homogeneously paired: $is_paired vs $is_not_paired (for @$exp_runs)");
+          warn("Runs are not homogeneously paired: $is_paired vs $is_not_paired (for @$exp_runs)\n");
       }
       if ($is_stranded * $is_not_stranded == 0 and $is_stranded + $is_not_stranded > 0) {
         $exp->{is_stranded} = $is_stranded ? 1 : 0;
       } else {
-          warn("Runs are not homogeneously stranded: $is_stranded vs $is_not_stranded (for @$exp_runs)");
+          warn("Runs are not homogeneously stranded: $is_stranded vs $is_not_stranded (for @$exp_runs)\n");
       }
     }
   }
@@ -196,7 +197,7 @@ sub get_study {
     my $first_study = $studies[0];
     my $last_study = $studies[-1];
     $study_name = $first_study->study_sra_acc . "_" . $last_study->study_sra_acc;
-    warn("More thant one study for the bundle: $study_name");
+    warn("More than one study for the bundle: $study_name\n");
   }
   return ($study_name, $study);
 }

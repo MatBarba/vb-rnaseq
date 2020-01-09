@@ -195,7 +195,7 @@ sub _get_bundle_tracks_links {
   
   my $bundle_track_search = $self->resultset('BundleTrack')->search($conditions,
     {
-      prefetch  => 'bundle'
+      prefetch  => 'bundle',
     });
   my @links = $bundle_track_search->all;
   return \@links;
@@ -212,10 +212,35 @@ sub _inactivate_bundles_for_tracks {
   # 1) Get the tracks-bundles links
   my @conditions = map { { 'track_id' => $_ } } @$track_ids_aref;
   my $links = $self->_get_bundle_tracks_links(\@conditions);
+
+  # Check the number of remaining active tracks
   
   # 2) Inactivate the corresponding bundles
   my @bundle_ids = map { $_->bundle_id } @$links;
+
+  # Only inactivate if there are no remaining active tracks in the bundle
+  @bundle_ids = grep { $self->_bundle_has_no_active_tracks($_) } @bundle_ids;
   $self->inactivate_bundles(@bundle_ids);
+}
+
+sub _bundle_has_no_active_tracks {
+  my ($self, $bundle_id) = @_;
+
+  my $conditions = {
+    'track.status' => 'ACTIVE',
+  };
+  my $bundlet_search = $self->resultset('BundleTrack')->search($conditions,
+    {
+      prefetch  => 'track',
+    });
+
+  my $count = 0;
+  for my $bundlet ($bundlet_search->all) {
+    my $track = $bundlet->track;
+    $count++ if $track->status ne 'ACTIVE';
+  }
+
+  return $count == 0;
 }
 
 # INSTANCE METHOD

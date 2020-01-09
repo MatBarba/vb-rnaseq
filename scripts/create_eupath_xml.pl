@@ -68,7 +68,6 @@ sub add_alignments_metadata {
     close $json;
     my $meta = decode_json($line);
     $runs{ $meta->{sraQueryString} } = $meta;
-
   }
 
   # Match all the runs to each exp
@@ -85,9 +84,11 @@ sub add_alignments_metadata {
           my $match_run = $runs{ $exp_run };
           if ($match_run->{hasPairedEnds}) { $is_paired++ } else { $is_not_paired++ }
           if ($match_run->{isSrandSpecific}) { $is_stranded++ } else { $is_not_stranded++ }
+          delete $runs{ $exp_run };
         }
         else {
           warn("Missing run $exp_run in alignment\n");
+          delete $runs{ $exp_run };
           next SAMPLE;
         }
       }
@@ -104,6 +105,13 @@ sub add_alignments_metadata {
           warn("Runs are not homogeneously stranded: $is_stranded vs $is_not_stranded (for @$exp_runs)\n");
       }
     }
+  }
+
+  # Check if there is any remaining runs aligned but not in the db
+  my @runs_left = sort keys %runs;
+  if (@runs_left) {
+    my $nruns = @runs_left;
+    print STDERR "There are $nruns runs aligned that could not be found in the database: " . join(", ", @runs_left) . "\n";
   }
 
   return $exps;
@@ -139,12 +147,14 @@ sub get_eupath_experiments_species {
 
   # Get experiment data
   my @experiments;
+  my %done_exp;
   for my $b ($bundles->all) {
     # Experiment name = study_name
     my ($study_name, $study) = get_study($b);
     my $exp_name = $study_name;
     $exp_name =~ s/[() -]+/_/g;
     $exp_name =~ s/_+$//;
+    next if exists $done_exp{$exp_name};
 
     # Get samples
     my @samples = get_samples($b);
@@ -159,6 +169,7 @@ sub get_eupath_experiments_species {
     };
 
     push @experiments, $exp;
+    $done_exp{$exp_name}++;
   }
   
   return \@experiments;

@@ -168,7 +168,8 @@ sub get_tracks {
       $samples{ $sample->sample_sra_acc }++;
     }
     push @tracks, {
-      name => $track->title_manual || $track->title_auto || $track->merge_id,
+      title => $track->title_manual || $track->title_auto || "",
+      text => $track->text_manual || $track->text_auto || "",
       runs => \@runs,
       samples => [sort keys %samples],
     };
@@ -184,10 +185,12 @@ sub print_tracks {
     for my $track (@{ $exp->{tracks} }) {
       my @line = (
         $species,
+        $track->{title},
+        join(",", @{ $track->{runs} }),
+
         $exp_name,
         join(",", @{ $track->{samples} }),
-        join(",", @{ $track->{runs} }),
-        $track->{name},
+        $track->{text},
       );
       print join("\t", @line) . "\n";
     } 

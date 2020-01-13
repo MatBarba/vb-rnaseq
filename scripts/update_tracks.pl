@@ -62,22 +62,44 @@ if ($opt{copy_tracks}) {
 sub get_tabbed_tracks {
   my ($infile) = @_;
 
-  my @entries;
+  my %entries;
   open my $in, "<", $infile;
   while (my $line = readline $in) {
     next if $line =~ /^\s*$/;
     chomp $line;
-    my ($species, $title, $runs) = split("\t", $line);
-    my $entry = {
-      species => $species,
-      sra_ids => [split(",", $runs)],
-      title => $title
-    };
-    push @entries, $entry;
+    my ($species, $title, $runs_list, $study) = split("\t", $line);
+
+    my @runs = split ",", $runs_list;
+
+    # Append runs if the sample name is already used
+    if (exists $entries{$species}
+        and exists $entries{$species}{$study}
+        and exists $entries{$species}{$study}{$title}) {
+      push @{ $entries{$species}{$study}{$title} }, @runs;
+    } else {
+      $entries{$species}{$study}{$title} = \@runs;
+    }
   }
   close $in;
 
-  return \@entries;
+  # Build entries
+  my @tracks;
+  for my $species (sort keys %entries) {
+    for my $study (sort keys %{$entries{$species}}) {
+      for my $title (sort keys %{$entries{$species}{$study}}) {
+        my $runs = $entries{$species}{$study}{$title};
+        my $track = {
+          species => $species,
+          sra_ids => $runs,
+          title => $title
+        };
+
+        push @tracks, $track;
+      }
+    }
+  }
+
+  return \@tracks;
 }
 
 sub copy_tracks {

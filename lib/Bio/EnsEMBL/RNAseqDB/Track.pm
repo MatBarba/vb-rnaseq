@@ -651,7 +651,9 @@ sub inactivate_tracks {
   });
 
   # Also inactivate corresponding bundles
-  $self->_inactivate_bundles_for_tracks($track_ids_aref);
+  if ($status ne 'ACTIVE' and $status ne "MERGED") {
+    $self->_inactivate_bundles_for_tracks($track_ids_aref);
+  }
 }
 
 ## PRIVATE METHOD

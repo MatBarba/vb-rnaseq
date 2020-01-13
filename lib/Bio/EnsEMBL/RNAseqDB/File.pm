@@ -236,7 +236,7 @@ sub update_file_names {
   
   my @tracks = $self->get_tracks();
 
-  my $nupdates;
+  my $nupdates = 0;
   for my $track (@tracks) {
     my @track_analyses = $track->track_analyses;
     for my $track_an (@track_analyses) {

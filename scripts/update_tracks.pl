@@ -36,7 +36,12 @@ $json->relaxed;
 # Update tracks data
 if ($opt{input_tracks}) {
 $logger->debug("Extract tracks data from the json file");
-  my $entries = $json->decode("" . slurp $opt{input_tracks});
+  my $entries;
+  if ($opt{tabbed}) {
+    $entries = get_tabbed_tracks($opt{input_tracks});
+  } else {
+    $entries = $json->decode("" . slurp $opt{input_tracks});
+  }
   update_tracks($db, $entries, \%opt);
 }
 
@@ -54,10 +59,31 @@ if ($opt{copy_tracks}) {
 ###############################################################################
 # MAIN FUNCTIONS
 
+sub get_tabbed_tracks {
+  my ($infile) = @_;
+
+  my @entries;
+  open my $in, "<", $infile;
+  while (my $line = readline $in) {
+    next if $line =~ /^\s*$/;
+    chomp $line;
+    my ($species, $title, $runs) = split("\t", $line);
+    my $entry = {
+      species => $species,
+      sra_ids => [split(",", $runs)],
+      title => $title
+    };
+    push @entries, $entry;
+  }
+  close $in;
+
+  return \@entries;
+}
+
 sub copy_tracks {
   my $db = shift;
   
-  # Retrieve the list of bundles witht their tracks
+  # Retrieve the list of bundles with their tracks
   my $bundles = $db->resultset('Bundle')->search({},
   {
     prefetch => {
@@ -169,10 +195,9 @@ sub annotate_tracks {
     next if not $track_id;
     $logger->debug("Annotate track $track_id");
 
-    my $track_content = {
-      text_manual   => $entry->{text},
-      title_manual  => $entry->{title},
-    };
+    my $track_content;
+    $track_content->{title_manual} = $entry->{title} if $entry->{title};
+    $track_content->{text_manual} = $entry->{text} if $entry->{text};
     $db->update_track($track_id, $track_content);
   }
   
@@ -332,6 +357,7 @@ sub usage {
     --input_tracks <path> : json file with the entries data, in the format described above
     -merge_tracks         : merge tracks when an entry match several of them
     -annotate_tracks      : fill the title and text fields for each track from the json file
+    --tabbed              : the input file is a simple tabbed file (species, sample name, run ids)
     
     BUNDLES
     --input_bundles <path> : json file with the entries data, in the format described above
@@ -363,6 +389,7 @@ sub opt_check {
     "merge_bundles",
     "annotate_bundles",
     "copy_tracks",
+    "tabbed",
     "help",
     "verbose",
     "debug",

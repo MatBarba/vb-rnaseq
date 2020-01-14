@@ -147,7 +147,7 @@ sub get_study {
     my $first_study = $studies[0];
     my $last_study = $studies[-1];
     $study_name = $first_study->study_sra_acc . "_" . $last_study->study_sra_acc;
-    warn("More than one study for the bundle: $study_name\n");
+    #warn("More than one study for the bundle: $study_name\n");
   }
   return ($study_name, $study);
 }
@@ -155,6 +155,8 @@ sub get_study {
 
 sub get_tracks {
   my ($bundle) = @_;
+
+  my %tracks_titles;
 
   my @tracks;
   for my $bt ($bundle->bundle_tracks->all) {
@@ -167,8 +169,19 @@ sub get_tracks {
       my $sample = $run->sample;
       $samples{ $sample->sample_sra_acc }++;
     }
+
+    my $track_title = $track->title_manual || $track->title_auto || "";
+    if (exists $tracks_titles{$track_title}) {
+      $logger->warn("Track name is duplicated: '$track_title' in " . join(",", @runs));
+    }
+    if ($track_title eq '') {
+      $logger->warn("Track name is empty for " . join(",", @runs));
+    }
+    $tracks_titles{$track_title}++;
+
+
     push @tracks, {
-      title => $track->title_manual || $track->title_auto || "",
+      title => $track_title,
       text => $track->text_manual || $track->text_auto || "",
       runs => \@runs,
       samples => [sort keys %samples],

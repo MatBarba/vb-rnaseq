@@ -49,11 +49,27 @@ for my $assembly (@assemblies) {
 
   $exps = add_alignments_metadata($exps, $opt{alignments}, $species);
 
+  # Only keep one study?
+  if ($opt{study}) {
+    $exps = only_one_study($exps, $opt{study});
+  }
+
   make_eupath_xml($exps, $species, $opt{out}, \%opt);
 }
 
 ###############################################################################
 # SUBS
+
+
+sub only_one_study {
+  my ($exps, $study) = @_;
+  
+  @$exps = grep { $_->{study_id} =~ /$study/ } @$exps;
+
+  die("Study not found in exp: $study") if @$exps == 0;
+
+  return $exps;
+}
 
 sub add_alignments_metadata {
   my ($exps, $aln_dir, $species) = @_;
@@ -249,7 +265,7 @@ sub make_eupath_xml {
   my $presenter_dir = catfile($output_dir, 'presenters');
   make_eupath_experiment_xml($hubs, $species, $exp_dir);
   make_eupath_analysis_config_xml($hubs, $species, $aconfig_dir);
-  make_eupath_presenter_xml($hubs, $species, $presenter_dir, $opt);
+#  make_eupath_presenter_xml($hubs, $species, $presenter_dir, $opt);
 }
 
 sub make_eupath_experiment_xml {
@@ -367,7 +383,7 @@ sub print_analysis_file {
   $wr->endTag("property");
 
   # Use alignment metadata here
-  $exp->{is_strand_specific} = $exp->{is_stranded};
+  $exp->{is_strand_specific} = $exp->{is_stranded} ? 1 : 0;
   $wr->startTag("property", name => "isStrandSpecific", value => $exp->{is_strand_specific});
   $wr->endTag("property");
 
@@ -515,6 +531,7 @@ sub usage {
     FILTERS
     --species <str>   : only use tracks for a given species (production_name)
     --antispecies <str> : skip those species
+    --study <str>     : only export this study id
     
     ACTIONS
     --out <path>      : create xml files in this directory
@@ -543,6 +560,7 @@ sub opt_check {
     "alignments=s",
     "species=s",
     "antispecies=s",
+    "study=s",
     "out=s",
     "build=s",
     "help",

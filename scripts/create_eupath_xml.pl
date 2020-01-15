@@ -88,18 +88,21 @@ sub add_alignments_metadata {
 
   # Match all the runs to each exp
   EXP: for my $exp (@$exps) {
+
+    my (@exp_is_paired, @exp_is_not_paired);
+    my (@exp_is_stranded, @exp_is_not_stranded);
     SAMPLE: for my $sample (@{ $exp->{samples} }) {
       my $exp_runs = $sample->{runs};
 
       # Check each exp_run
-      my ($is_paired, $is_stranded) = (0, 0);
-      my ($is_not_paired, $is_not_stranded) = (0, 0);
+      my (@is_paired, @is_stranded);
+      my (@is_not_paired, @is_not_stranded);
 
       for my $exp_run (@$exp_runs) {
         if (exists $runs{ $exp_run }) {
           my $match_run = $runs{ $exp_run };
-          if ($match_run->{hasPairedEnds}) { $is_paired++ } else { $is_not_paired++ }
-          if ($match_run->{isSrandSpecific}) { $is_stranded++ } else { $is_not_stranded++ }
+          if ($match_run->{hasPairedEnds}) { push @is_paired, $exp_run } else { push @is_not_paired, $exp_run }
+          if ($match_run->{isSrandSpecific}) { push @is_stranded, $exp_run } else { push @is_not_stranded, $exp_run }
           delete $runs{ $exp_run };
         }
         else {
@@ -109,17 +112,40 @@ sub add_alignments_metadata {
         }
       }
 
-      # Check that the experiment is homogeneous
-      if ($is_paired * $is_not_paired == 0 and $is_paired + $is_not_paired > 0) {
-        $exp->{is_paired} = $is_paired ? 1 : 0;
+      # Check that the sample is homogeneous
+      if (scalar(@is_paired) * scalar(@is_not_paired) == 0 and scalar(@is_paired) + scalar(@is_not_paired) > 0) {
+        if (scalar(@is_paired)) {
+          push @exp_is_paired, $sample->{name};
+        }
+        if (scalar(@is_not_paired)) {
+          push @exp_is_not_paired, $sample->{name};
+        }
       } else {
-          warn("Runs are not homogeneously paired: $is_paired vs $is_not_paired (for @$exp_runs)\n");
+        warn("Runs are not homogeneously paired for $sample->{name} in $exp->{name}:\n\tpaired     = " . join(" ", @is_paired) . "\n\tnot paired = " . join(" ", @is_not_paired) . "\n");
       }
-      if ($is_stranded * $is_not_stranded == 0 and $is_stranded + $is_not_stranded > 0) {
-        $exp->{is_stranded} = $is_stranded ? 1 : 0;
+
+      if (scalar(@is_stranded) * scalar(@is_not_stranded) == 0 and scalar(@is_stranded) + scalar(@is_not_stranded) > 0) {
+        if (scalar(@is_stranded)) {
+          push @exp_is_stranded, $sample->{name};
+        }
+        if (scalar(@is_not_stranded)) {
+          push @exp_is_not_stranded, $sample->{name};
+        }
       } else {
-          warn("Runs are not homogeneously stranded: $is_stranded vs $is_not_stranded (for @$exp_runs)\n");
+        warn("Runs are not homogeneously stranded for $sample->{name} in $exp->{name}:\n\tstranded     = " . join(" ", @is_stranded) . "\n\tnot stranded = " . join(" ", @is_not_stranded) . "\n");
       }
+    }
+
+    # Check if the dataset is homogeneous too
+    if (scalar(@exp_is_paired) * scalar(@exp_is_not_paired) == 0 and scalar(@exp_is_paired) + scalar(@exp_is_not_paired) > 0) {
+      $exp->{is_paired} = scalar(@exp_is_paired) ? 1 : 0;
+    } else {
+      warn("Samples are not homogeneously paired for $exp->{name}:\n\tpaired     = " . join(" ", @exp_is_paired) . "\n\tnot paired = " . join(" ", @exp_is_not_paired) . "\n");
+    }
+    if (scalar(@exp_is_stranded) * scalar(@exp_is_not_stranded) == 0 and scalar(@exp_is_stranded) + scalar(@exp_is_not_stranded) > 0) {
+      $exp->{is_stranded} = scalar(@exp_is_stranded) ? 1 : 0;
+    } else {
+      warn("Samples are not homogeneously stranded for $exp->{name}:\n\tstranded     = " . join(" ", @exp_is_stranded) . "\n\tnot stranded = " . join(" ", @exp_is_not_stranded) . "\n");
     }
   }
 
@@ -170,7 +196,10 @@ sub get_eupath_experiments_species {
     my $exp_name = $study_name;
     $exp_name =~ s/[() -]+/_/g;
     $exp_name =~ s/_+$//;
-    next if exists $done_exp{$exp_name};
+
+    if (exists $done_exp{$exp_name}) {
+      warn("Skip '$exp_name' duplicated");
+    }
 
     # Get samples
     my @samples = get_samples($b);
@@ -224,7 +253,7 @@ sub get_study {
     my $first_study = $studies[0];
     my $last_study = $studies[-1];
     $study_name = $first_study->study_sra_acc . "_" . $last_study->study_sra_acc;
-    warn("More than one study for the bundle: $study_name\n");
+    #warn("More than one study for the bundle: $study_name\n");
   }
   return ($study_name, $study);
 }

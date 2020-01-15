@@ -77,6 +77,7 @@ sub add_alignments_metadata {
 
   # Get alignment metadata for each experiment
   my %runs;
+  my %all_runs;
   my @metadata_files = glob("$aln_dir/$species/*/*/metadata.json");
   for my $json_path (@metadata_files) {
     open my $json, "<", $json_path;
@@ -84,6 +85,7 @@ sub add_alignments_metadata {
     close $json;
     my $meta = decode_json($line);
     $runs{ $meta->{sraQueryString} } = $meta;
+    $all_runs{ $meta->{sraQueryString} } = $meta;
   }
 
   # Match all the runs to each exp
@@ -106,8 +108,11 @@ sub add_alignments_metadata {
           delete $runs{ $exp_run };
         }
         else {
-          warn("Missing run $exp_run in alignment\n");
-          delete $runs{ $exp_run };
+          if (exists $all_runs{ $exp_run }) {
+            warn("Missing run $exp_run in alignment (it was deleted by a previous experiment)\n");
+          } else {
+            warn("Missing run $exp_run in alignment\n");
+          }
           next SAMPLE;
         }
       }
@@ -197,9 +202,7 @@ sub get_eupath_experiments_species {
     $exp_name =~ s/[() -]+/_/g;
     $exp_name =~ s/_+$//;
 
-    if (exists $done_exp{$exp_name}) {
-      warn("Skip '$exp_name' duplicated");
-    }
+    my $bundle_title = $b->title_manual // $b->title_auto // $study->title;
 
     # Get samples
     my @samples = get_samples($b);
@@ -207,14 +210,19 @@ sub get_eupath_experiments_species {
     my $exp = {
       study_id => $study->study_sra_acc,
       name => $exp_name,
-      title => $exp_name . " " . $study->title,
+      title => $exp_name . " " . $bundle_title,
       abstract => $study->abstract,
       date => simple_date($study->date),
       samples => \@samples,
     };
 
+    if (exists $done_exp{$exp->{title}}) {
+      warn("Skip '$exp->{title}' duplicated");
+      next;
+    }
+
     push @experiments, $exp;
-    $done_exp{$exp_name}++;
+    $done_exp{$exp->{title}}++;
   }
   
   return \@experiments;

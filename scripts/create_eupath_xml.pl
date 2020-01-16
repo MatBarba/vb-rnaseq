@@ -104,7 +104,7 @@ sub add_alignments_metadata {
         if (exists $runs{ $exp_run }) {
           my $match_run = $runs{ $exp_run };
           if ($match_run->{hasPairedEnds}) { push @is_paired, $exp_run } else { push @is_not_paired, $exp_run }
-          if ($match_run->{isSrandSpecific}) { push @is_stranded, $exp_run } else { push @is_not_stranded, $exp_run }
+          if ($match_run->{isStrandSpecific}) { push @is_stranded, $exp_run } else { push @is_not_stranded, $exp_run }
           delete $runs{ $exp_run };
         }
         else {
